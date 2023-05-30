@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@react-three/fiber": "^8.13.0",
+    "@types/three": "^0.152.1",
+    "react-reconciler": "^0.29.0",
+    "three": "^0.152.2",
+    "zustand": "^3"
+  }
+}
