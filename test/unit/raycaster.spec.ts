@@ -1,0 +1,1 @@
+//TODO: have a test for a mesh which is intersected and has a mesh as a child which is also intersected and assure events on the parent happen only once
