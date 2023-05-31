@@ -11,7 +11,7 @@ type EventLog = {
 
 describe("translate events", () => {
   it("should fire enter and leave events", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
     object.addEventListener("enter", (event) => {
@@ -32,7 +32,7 @@ describe("translate events", () => {
   });
 
   it("should fire enter, press, release, and then leave events", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
     object.addEventListener("enter", (event) => {
@@ -70,7 +70,7 @@ describe("translate events", () => {
   });
 
   it("should capture all events to one object", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object1 = new Object3D();
     const object2 = new Object3D();
@@ -138,7 +138,7 @@ describe("translate events", () => {
   });
 
   it("should remove event catpure", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
     let pressEvent: any;
@@ -170,7 +170,7 @@ describe("translate events", () => {
   });
 
   it("should select (click)", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
     object.addEventListener("select", (event) => {
@@ -191,7 +191,7 @@ describe("translate events", () => {
   });
 
   it("should not select (click)", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
     object.addEventListener("select", (event) => {
@@ -215,8 +215,8 @@ describe("translate events", () => {
   });
 
   it("should fire enter twice and leave twice for two different translators", () => {
-    const inputDevice1 = new MockInputDevice(10, () => {});
-    const inputDevice2 = new MockInputDevice(11, () => {});
+    const inputDevice1 = new MockInputDevice(10);
+    const inputDevice2 = new MockInputDevice(11);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
     object.addEventListener("enter", ({ inputDeviceId }) => {
@@ -252,7 +252,7 @@ describe("translate events", () => {
   });
 
   it("should fire nothing", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
     object.addEventListener("enter", (event) => {
@@ -275,7 +275,7 @@ describe("translate events", () => {
   });
 
   it("should fire press twice for two input device element and then release for both", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
 
@@ -306,7 +306,7 @@ describe("translate events", () => {
   });
 
   it("should fire press for two objects and then release for both", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object1 = new Object3D();
     const object2 = new Object3D();
@@ -342,7 +342,7 @@ describe("translate events", () => {
   });
 
   it("should fire press for one of two objects and then release the one", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object1 = new Object3D();
     const object2 = new Object3D();
@@ -376,7 +376,7 @@ describe("translate events", () => {
   });
 
   it("should fire press for two objects element and then release for one", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object1 = new Object3D();
     const object2 = new Object3D();
@@ -411,7 +411,7 @@ describe("translate events", () => {
   });
 
   it("should fire move for the upper group once", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const group = new Group();
     const child1 = new Object3D();
@@ -451,7 +451,7 @@ describe("translate events", () => {
   });
 
   it("should fire enter Group, enter child1, leave child1, enter child2, leave child2, leave group in that order", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const group = new Group();
     const child1 = new Object3D();
@@ -499,7 +499,7 @@ describe("translate events", () => {
   });
 
   it("should allow stop propagation of the first enter even on the child and then fire a leave event for both the child and the parent", () => {
-    const inputDevice = new MockInputDevice(1, () => {});
+    const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const child = new Object3D();
     child.addEventListener("enter", (event) => {

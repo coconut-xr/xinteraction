@@ -25,7 +25,7 @@ export type EventDispatcher<E> = {
 type ObjectInteractionData = {
   lastIntersectedTime?: number;
   lastLeftTime?: number;
-  lastPressedElementIds: Array<number>;
+  lastPressedElementIds: Set<number>;
   lastPressedElementTimeMap: Map<number, number>;
 };
 
@@ -39,15 +39,13 @@ export class EventTranslator<E> {
   private objectInteractionDataMap = new Map<Object3D, ObjectInteractionData>();
 
   constructor(
+    public readonly inputDeviceId: number,
     protected eventDispatcher: EventDispatcher<E>,
     protected computeIntersections: (
       event: E,
       objects?: Array<Object3D>
     ) => Array<Intersection>,
-    protected getPressedElementIds: (
-      intersection: Intersection
-    ) => Array<number>,
-    protected onPointerMissed: () => void
+    protected getPressedElementIds: (intersection: Intersection) => Set<number>
   ) {}
 
   /**
@@ -101,7 +99,7 @@ export class EventTranslator<E> {
           }
         }
 
-        return true
+        return true;
       },
       this.getPressedElementIds
     );
@@ -116,7 +114,7 @@ export class EventTranslator<E> {
         }
         this.eventDispatcher.leave(object, intersection);
         interactionData.lastLeftTime = currentTime;
-        return true
+        return true;
       });
 
       this.lastPositionChangeTime = currentTime;
@@ -153,7 +151,7 @@ export class EventTranslator<E> {
     object: Object3D,
     interactionData: ObjectInteractionData,
     intersection: Intersection,
-    pressedElementIds: Array<number>
+    pressedElementIds: Set<number>
   ): void {
     const lastPressedElementIds = new Set(
       interactionData.lastPressedElementIds
@@ -263,7 +261,7 @@ export class EventTranslator<E> {
         object,
         (data = {
           lastPressedElementTimeMap: new Map(),
-          lastPressedElementIds: [],
+          lastPressedElementIds: new Set(),
         })
       );
     }

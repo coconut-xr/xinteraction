@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Canvas, MeshProps } from "@react-three/fiber";
+import { Web2DPointers } from "../../dist/react/web-2d-pointers.js";
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
         priority: 0,
       })}
     >
+      <Web2DPointers />
       <ambientLight />
       <directionalLight position={[-1, -1, -1]} />
       <HoverBox position={[-2, 0, 0]} />
