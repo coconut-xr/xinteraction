@@ -55,8 +55,16 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
         object
       ),
     };
-    const data: ThreeEvent<Event> = {
-      ...intersection,
+    const data: ThreeEvent<Event> = {} as any;
+    //assign event properties to data
+    for (let prop in this.event) {
+      const property = this.event[prop as keyof Event];
+      if (typeof property === "function") {
+        continue;
+      }
+      data[prop] = property;
+    }
+    Object.assign(data, intersection, {
       eventObject: object,
       pointer: null as any,
       intersections: null as any,
@@ -72,23 +80,14 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
         }
         translator.blockFollowingIntersections(object);
       },
-      pointerId: inputDeviceElementId,
+      pointerId: this.translator.inputDeviceId,
       // there should be a distinction between target and currentTarget
       target: target,
       currentTarget: target,
       nativeEvent: this.event,
       inputDeviceElementId,
       inputDeviceId: this.translator.inputDeviceId,
-    };
-
-    //assign event properties to data
-    for (let prop in this.event) {
-      const property = this.event[prop as keyof Event];
-      if (typeof property === "function") {
-        continue;
-      }
-      data[prop] = property;
-    }
+    });
 
     return data;
   }
@@ -106,4 +105,5 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
 }
 
 export * from "./web-pointers.js";
-export * from "./pointer.js"
+export * from "./pointer.js";
+export * from "./sphere-collider.js";

@@ -32,6 +32,8 @@ type ObjectInteractionData = {
 
 const traversalIdSymbol = Symbol("traversal-id");
 
+const emptySet = new Set<number>();
+
 export class EventTranslator<E> {
   //state
   private intersections: Array<Intersection> = [];
@@ -82,13 +84,18 @@ export class EventTranslator<E> {
         intersectionIndex,
         pressedElementIds
       ) => {
+        let entered = false;
         if (positionChanged) {
-          this.dispatchEnterAndMove(object, interactionData, intersection);
+          entered = this.dispatchEnterAndMove(
+            object,
+            interactionData,
+            intersection
+          );
           //update last intersection time
           interactionData.lastIntersectedTime = currentTime;
         }
 
-        if (pressChanged) {
+        if (pressChanged || entered) {
           this.dispatchPressAndRelease(
             object,
             interactionData,
@@ -127,6 +134,7 @@ export class EventTranslator<E> {
           }
           this.eventDispatcher.leave(object, intersection);
           interactionData.lastLeftTime = currentTime;
+          interactionData.lastPressedElementIds = emptySet;
           return true;
         }
       );
@@ -202,22 +210,27 @@ export class EventTranslator<E> {
     }
   }
 
+  /**
+   * @returns if the object was entered
+   */
   private dispatchEnterAndMove(
     object: Object3D,
     interactionData: ObjectInteractionData,
     intersection: Intersection
-  ): void {
+  ): boolean {
     if (
       interactionData.lastIntersectedTime != null &&
       interactionData.lastIntersectedTime === this.lastPositionChangeTime
     ) {
       //object was intersected last time
       this.eventDispatcher.move(object, intersection);
+      return false;
     } else {
       //reset to not block the following intersections
       interactionData.blockFollowingIntersections = false;
       //object was not intersected last time
       this.eventDispatcher.enter(object, intersection);
+      return true;
     }
   }
 
@@ -303,7 +316,7 @@ export class EventTranslator<E> {
         object,
         (data = {
           lastPressedElementTimeMap: new Map(),
-          lastPressedElementIds: new Set(),
+          lastPressedElementIds: emptySet,
           blockFollowingIntersections: false,
         })
       );

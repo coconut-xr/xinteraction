@@ -11,13 +11,18 @@ export function raycastFromObject(
 ): Array<Intersection> {
   from.getWorldPosition(raycaster.ray.origin);
   from.getWorldDirection(raycaster.ray.direction);
-  return traverseUntilInteractable<Array<Intersection>, Array<Intersection>>(
+  const intersections = traverseUntilInteractable<
+    Array<Intersection>,
+    Array<Intersection>
+  >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
     (object) => raycaster.intersectObject(object, true),
     (prev, cur) => prev.concat(cur),
     []
   );
+  //sort smallest distance first
+  return intersections.sort((a, b) => a.distance - b.distance);
 }
 
 export function raycastFromCamera(
@@ -27,11 +32,16 @@ export function raycastFromCamera(
   dispatcher: EventDispatcher<Event>
 ): Array<Intersection> {
   raycaster.setFromCamera(coords, from);
-  return traverseUntilInteractable<Array<Intersection>, Array<Intersection>>(
+  const intersections = traverseUntilInteractable<
+    Array<Intersection>,
+    Array<Intersection>
+  >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
     (object) => raycaster.intersectObject(object, true),
     (prev, cur) => prev.concat(cur),
     []
   );
+  //sort smallest distance first
+  return intersections.sort((a, b) => a.distance - b.distance);
 }

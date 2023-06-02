@@ -52,7 +52,7 @@ export function XSphereCollider({
   }, [id, radius, enterDistance, scene]);
   //cleanup translator
   useEffect(() => () => translator.leave({} as any), [translator]);
-  useFrame(() => translator.update({}, true, false));
+  useFrame(() => translator.update({}, true, true));
   return (
     <group ref={groupRef}>
       {visualize && (

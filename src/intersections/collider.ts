@@ -63,6 +63,7 @@ function collideSphere(
   object: Object3D,
   collideDistance: number
 ): Array<Intersection> | Intersection | undefined {
+  object.updateWorldMatrix(true, false);
   if (object instanceof InstancedMesh<BufferGeometry>) {
     object.geometry.computeBoundingSphere();
     object.geometry.computeBoundingBox();

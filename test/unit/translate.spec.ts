@@ -31,6 +31,26 @@ describe("translate events", () => {
     ] satisfies Array<EventLog>);
   });
 
+  it("should fire press when entering a object wheel pressing", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+    const object = new Object3D();
+    object.addEventListener("press", ({ inputDeviceElementId }) => {
+      actualEvents.push({
+        type: "press",
+        objectUUID: object.uuid,
+        inputDeviceElementId,
+      });
+    });
+
+    inputDevice.update([], [101]);
+    inputDevice.update([{ object: object, distance: 0, point: new Vector3() }], undefined);
+
+    expect(actualEvents).to.deep.equal([
+      { type: "press", objectUUID: object.uuid, inputDeviceElementId: 101 },
+    ] satisfies Array<EventLog>);
+  });
+
   it("should fire enter, press, release, and then leave events", () => {
     const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
