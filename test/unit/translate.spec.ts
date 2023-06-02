@@ -527,4 +527,106 @@ describe("translate events", () => {
       { type: "leave", objectUUID: parent.uuid },
     ] satisfies Array<EventLog>);
   });
+
+  it("should call events only once on parent", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+    const child = new Object3D();
+    const parent = new Object3D();
+    parent.addEventListener("enter", () =>
+      actualEvents.push({ type: "enter", objectUUID: parent.uuid })
+    );
+    parent.addEventListener("move", () =>
+      actualEvents.push({ type: "move", objectUUID: parent.uuid })
+    );
+    parent.add(child);
+
+    inputDevice.update([
+      { object: child, distance: 0, point: new Vector3() },
+      { object: parent, distance: 0, point: new Vector3() },
+    ]);
+    inputDevice.update([
+      { object: child, distance: 0, point: new Vector3() },
+      { object: parent, distance: 0, point: new Vector3() },
+    ]);
+
+    expect(actualEvents).to.deep.equal([
+      { type: "enter", objectUUID: parent.uuid },
+      { type: "move", objectUUID: parent.uuid },
+    ] satisfies Array<EventLog>);
+  });
+
+  it("should stop propagation for enter while moving over both objects", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+
+    const object1 = new Object3D();
+    object1.addEventListener("enter", (event) => {
+      actualEvents.push({ type: "enter", objectUUID: object1.uuid });
+      event.stopPropagation();
+    });
+
+    const object2 = new Object3D();
+    object2.addEventListener("enter", () =>
+      actualEvents.push({ type: "enter", objectUUID: object2.uuid })
+    );
+
+    inputDevice.update([
+      { object: object1, distance: 0, point: new Vector3() },
+    ]);
+    inputDevice.update([
+      { object: object1, distance: 0, point: new Vector3() },
+      { object: object2, distance: 0, point: new Vector3() },
+    ]);
+
+    expect(actualEvents).to.deep.equal([
+      { type: "enter", objectUUID: object1.uuid },
+    ] satisfies Array<EventLog>);
+  });
+
+  it("should move over 2 objects which stop propagation on enter and enter and leave the first then enter and leave the second", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+
+    const object1 = new Object3D();
+    object1.addEventListener("enter", (event) => {
+      actualEvents.push({ type: "enter", objectUUID: object1.uuid });
+      event.stopPropagation();
+    });
+    object1.addEventListener("leave", () =>
+      actualEvents.push({ type: "leave", objectUUID: object1.uuid })
+    );
+
+    const object2 = new Object3D();
+    object2.addEventListener("enter", (event) => {
+      actualEvents.push({ type: "enter", objectUUID: object2.uuid });
+      event.stopPropagation();
+    });
+    object2.addEventListener("leave", () =>
+      actualEvents.push({ type: "leave", objectUUID: object2.uuid })
+    );
+
+    inputDevice.update([
+      { object: object1, distance: 0, point: new Vector3() },
+    ]);
+    inputDevice.update([
+      { object: object1, distance: 0, point: new Vector3() },
+      { object: object2, distance: 0, point: new Vector3() },
+    ]);
+    inputDevice.update([
+      { object: object2, distance: 0, point: new Vector3() },
+    ]);
+    inputDevice.update([]);
+
+    expect(actualEvents).to.deep.equal([
+      //enter object 1
+      { type: "enter", objectUUID: object1.uuid },
+      //enter both (nothing happens)
+      //leave object 1
+      { type: "enter", objectUUID: object2.uuid },
+      { type: "leave", objectUUID: object1.uuid },
+      //leave object 2
+      { type: "leave", objectUUID: object2.uuid },
+    ] satisfies Array<EventLog>);
+  });
 });

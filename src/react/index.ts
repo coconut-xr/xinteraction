@@ -4,7 +4,7 @@ import { ThreeEvent, LocalState } from "@react-three/fiber";
 import { EventHandlers } from "@react-three/fiber/dist/declarations/src/core/events.js";
 
 export class R3FEventDispatcher implements EventDispatcher<Event> {
-  private stoppedRef!: { stopped: boolean };
+  private stoppedEventTypeSet!: Set<string>;
   private event!: Event;
   private translator!: EventTranslator<Event>;
 
@@ -24,21 +24,23 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stoppedRef.stopped) {
+    if (this.stoppedEventTypeSet.has(name)) {
       return;
     }
     const instance: LocalState = (object as any).__r3f;
     instance.handlers[name]?.(
-      this.createEvent(object, intersection, inputDeviceElementId) as any
+      this.createEvent(name, object, intersection, inputDeviceElementId) as any
     );
   }
 
   private createEvent(
+    name: string,
     object: Object3D,
     intersection: Intersection,
     inputDeviceElementId?: number | undefined
   ): ThreeEvent<Event> {
-    const stoppedRef = this.stoppedRef;
+    const stoppedEventTypeSet = this.stoppedEventTypeSet;
+    const translator = this.translator;
     const target = {
       setPointerCapture: this.translator.addEventCapture.bind(
         this.translator,
@@ -64,8 +66,13 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
       ray: null as any,
       camera: null as any,
       stopPropagation() {
-        stoppedRef.stopped = true;
+        stoppedEventTypeSet.add(name);
+        if (name != "onPointerEnter") {
+          return;
+        }
+        translator.blockFollowingIntersections(object);
       },
+      pointerId: inputDeviceElementId,
       // there should be a distinction between target and currentTarget
       target: target,
       currentTarget: target,
@@ -87,7 +94,7 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
   }
 
   bind(event: Event, eventTranslator: EventTranslator<Event>): void {
-    this.stoppedRef = { stopped: false };
+    this.stoppedEventTypeSet = new Set();
     this.event = event;
     this.translator = eventTranslator;
   }
@@ -98,4 +105,5 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
   }
 }
 
-export * from "./web-2d-pointers.js";
+export * from "./web-pointers.js";
+export * from "./pointer.js"

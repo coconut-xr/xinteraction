@@ -19,11 +19,9 @@ export class MockInputDevice {
               point: new Vector3(),
             })),
       (intersection) =>
-        new Set(
-          Array.isArray(this.pressedElementIds)
-            ? this.pressedElementIds
-            : this.pressedElementIds.get(intersection.object) ?? []
-        )
+        Array.isArray(this.pressedElementIds)
+          ? this.pressedElementIds
+          : this.pressedElementIds.get(intersection.object) ?? []
     );
   }
 
@@ -52,7 +50,7 @@ type PointerCaptureTarget = {
 };
 
 class MockEventDispatcher implements EventDispatcher<{}> {
-  private stopped = false;
+  private stoppedEventTypeSet = new Set<string>();
   private event: any;
   private translator: EventTranslator<any> = null as any;
 
@@ -75,7 +73,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("press")) {
       return;
     }
     object.dispatchEvent({
@@ -84,7 +82,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       ...this.event,
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("press");
       },
     });
   }
@@ -93,7 +91,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("release")) {
       return;
     }
     object.dispatchEvent({
@@ -102,7 +100,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       ...this.event,
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("release");
       },
     });
   }
@@ -111,7 +109,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("cancel")) {
       return;
     }
     object.dispatchEvent({
@@ -120,7 +118,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       ...this.event,
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("cancel");
       },
     });
   }
@@ -129,7 +127,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("select")) {
       return;
     }
     object.dispatchEvent({
@@ -138,7 +136,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       ...this.event,
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("select");
       },
     });
   }
@@ -147,7 +145,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("move")) {
       return;
     }
     object.dispatchEvent({
@@ -156,7 +154,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       ...this.event,
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("move");
       },
     });
   }
@@ -165,7 +163,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("enter")) {
       return;
     }
     object.dispatchEvent({
@@ -174,7 +172,8 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       ...this.event,
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("enter");
+        this.translator.blockFollowingIntersections(object);
       },
     });
   }
@@ -183,7 +182,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("leave")) {
       return;
     }
     object.dispatchEvent({
@@ -192,7 +191,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       ...this.event,
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("leave");
       },
     });
   }
@@ -201,7 +200,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("wheel")) {
       return;
     }
     object.dispatchEvent({
@@ -210,7 +209,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       mockTarget: this.createTarget(this.translator, object),
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("wheel");
       },
     });
   }
@@ -219,7 +218,7 @@ class MockEventDispatcher implements EventDispatcher<{}> {
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stopped) {
+    if (this.stoppedEventTypeSet.has("losteventcapture")) {
       return;
     }
     object.dispatchEvent({
@@ -228,13 +227,13 @@ class MockEventDispatcher implements EventDispatcher<{}> {
       mockTarget: this.createTarget(this.translator, object),
       inputDeviceElementId,
       stopPropagation: () => {
-        this.stopped = true;
+        this.stoppedEventTypeSet.add("losteventcapture");
       },
     });
   }
   bind(event: {}, translator: EventTranslator<{}>): void {
     this.event = event;
-    this.stopped = false;
+    this.stoppedEventTypeSet.clear();
     this.translator = translator;
   }
   hasEventHandlers(object: Object3D<Event>): boolean {

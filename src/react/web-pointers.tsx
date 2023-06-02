@@ -13,6 +13,7 @@ import {
   Vector3,
 } from "three";
 import React from "react";
+import { raycastFromCamera } from "../intersections/raycaster.js";
 
 //TODO: bugs
 // - going through things fast makes them stay (react problem or xinteraction problem?)
@@ -29,7 +30,7 @@ type PointerMapEntry = {
   pressedInputDeviceElements: Set<number>;
 };
 
-export function Web2DPointers({ visualize = false }: { visualize?: boolean }) {
+export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
   const canvas = useThree(({ gl }) => gl.domElement);
   const ref = useRef<Group>(null);
   const visualizeRef = useRef(visualize);
@@ -153,8 +154,6 @@ function getOrCreatePointerMapEntry(
   return entry;
 }
 
-const raycaster = new Raycaster();
-
 const emptyIntersection: Array<Intersection> = [];
 
 function createPointerMapEntry(
@@ -167,24 +166,25 @@ function createPointerMapEntry(
   object.visible = visualize;
   parent.add(object);
   const pressedInputDeviceElements = new Set<number>();
+  const dispatcher = new R3FEventDispatcher();
   const translator = new EventTranslator<PointerEvent>(
     pointerId,
-    new R3FEventDispatcher(),
+    dispatcher,
     (event) => {
       if (!(event.target instanceof HTMLCanvasElement)) {
         return emptyIntersection;
       }
       //compute rotation based on pointer position
       const { camera, scene, size } = getState();
-      raycaster.setFromCamera(
+      return raycastFromCamera(
+        camera,
         new Vector2(
           (event.offsetX / size.width) * 2 - 1,
           -(event.offsetY / size.height) * 2 + 1
         ),
-        camera
+        scene,
+        dispatcher
       );
-      //TODO: can be optimised by skipping objects that are not interactive
-      return raycaster.intersectObject(scene, true);
     },
     () => pressedInputDeviceElements
   );
