@@ -8,7 +8,6 @@ import {
   Intersection,
   LineSegments,
   Object3D,
-  Raycaster,
   Vector2,
   Vector3,
 } from "three";
@@ -59,7 +58,7 @@ export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
         event.pointerId
       );
       updatePressedButtons(event.buttons, pressedInputDeviceElements);
-      translator.update(event, false, true);
+      translator.update(event, false, true, event.button);
     };
     const pointerup = (event: PointerEvent) => {
       const { pressedInputDeviceElements, translator } = getOrCreate(
@@ -69,21 +68,31 @@ export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
       translator.update(event, false, true);
     };
     const pointerover = (event: PointerEvent) => {
-      const { translator } = getOrCreate(event.pointerId);
-      translator.update(event, true, false);
+      const { translator, pressedInputDeviceElements } = getOrCreate(
+        event.pointerId
+      );
+      updatePressedButtons(event.buttons, pressedInputDeviceElements);
+      translator.update(event, true, true);
     };
     const pointermove = (event: PointerEvent) => {
       const { translator } = getOrCreate(event.pointerId);
       translator.update(event, true, false);
     };
+    const wheel = (event: WheelEvent) => {
+      for (const { translator } of pointerMap.values()) {
+        translator.wheel(event as any);
+      }
+    };
     const pointerout = (event: PointerEvent) => {
       const { translator } = getOrCreate(event.pointerId);
       translator.leave(event);
+      pointerMap.delete(event.pointerId);
     };
     const blur = (event: any) => {
       for (const { translator } of pointerMap.values()) {
         translator.leave(event);
       }
+      pointerMap.clear();
     };
 
     canvas.addEventListener("pointercancel", pointercancel);
@@ -92,7 +101,8 @@ export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
     canvas.addEventListener("pointerover", pointerover);
     canvas.addEventListener("pointerout", pointerout);
     canvas.addEventListener("pointermove", pointermove);
-    window.addEventListener("blur", blur);
+    canvas.addEventListener("wheel", wheel);
+    canvas.addEventListener("blur", blur);
 
     return () => {
       canvas.removeEventListener("pointercancel", pointercancel);
@@ -101,7 +111,8 @@ export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
       canvas.removeEventListener("pointerover", pointerover);
       canvas.removeEventListener("pointerout", pointerout);
       canvas.removeEventListener("pointermove", pointermove);
-      window.removeEventListener("blur", blur);
+      canvas.removeEventListener("wheel", wheel);
+      canvas.removeEventListener("blur", blur);
     };
   }, [canvas, store]);
 
@@ -169,6 +180,7 @@ function createPointerMapEntry(
   const dispatcher = new R3FEventDispatcher();
   const translator = new EventTranslator<PointerEvent>(
     pointerId,
+    false,
     dispatcher,
     (event) => {
       if (!(event.target instanceof HTMLCanvasElement)) {

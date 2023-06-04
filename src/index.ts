@@ -43,6 +43,7 @@ export class EventTranslator<E> {
 
   constructor(
     public readonly inputDeviceId: number,
+    private readonly dispatchPressAlways: boolean,
     protected eventDispatcher: EventDispatcher<E>,
     protected computeIntersections: (
       event: E,
@@ -57,8 +58,14 @@ export class EventTranslator<E> {
    * called when the input device receives a press, release, or move event
    * @param positionChanged flag to indicate that the input device was moved and therefore requires the **sceneIntersections** to recompute. When the **sceneIntersections** are recomputed, we check whether objects where hovered or released and dispatch events accordingly.
    * @param pressChanged flag to indicate that any input device element was either pressed or released. Therefore, we check whether the objects in **sceneIntersections** are released or pressed and dispatch events accordingly.
+   * @param dispatchPressFor list of ids of elements that were pressed after the last update
    */
-  update(event: E, positionChanged: boolean, pressChanged: boolean): void {
+  update(
+    event: E,
+    positionChanged: boolean,
+    pressChanged: boolean,
+    ...dispatchPressFor: Array<number>
+  ): void {
     //binds the event and the translator (this) to the dispatcher, which are used to create and deliver the events finally
     this.eventDispatcher.bind(event, this);
 
@@ -100,7 +107,8 @@ export class EventTranslator<E> {
             object,
             interactionData,
             intersection,
-            pressedElementIds
+            pressedElementIds,
+            dispatchPressFor
           );
           //update lastPressedElementIds
           interactionData.lastPressedElementIds = pressedElementIds;
@@ -179,7 +187,8 @@ export class EventTranslator<E> {
     object: Object3D,
     interactionData: ObjectInteractionData,
     intersection: Intersection,
-    pressedElementIds: Set<number>
+    pressedElementIds: Set<number>,
+    dispatchPressFor: Array<number>
   ): void {
     const lastPressedElementIds = new Set(
       interactionData.lastPressedElementIds
@@ -190,7 +199,12 @@ export class EventTranslator<E> {
         continue;
       }
       //pressedElementId was not pressed last time
-      this.eventDispatcher.press(object, intersection, pressedElementId);
+      if (
+        this.dispatchPressAlways ||
+        dispatchPressFor.includes(pressedElementId)
+      ) {
+        this.eventDispatcher.press(object, intersection, pressedElementId);
+      }
     }
     for (const releasedElementId of lastPressedElementIds) {
       //pressedElementId was not pressed this time

@@ -6,6 +6,8 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@coconut-xr/koestlich": "^0.0.14",
+    "@coconut-xr/kruemel": "^0.0.3",
     "@react-three/drei": "^9.70.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",

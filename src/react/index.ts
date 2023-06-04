@@ -8,29 +8,36 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
   private event!: Event;
   private translator!: EventTranslator<Event>;
 
-  press = this.dispatch.bind(this, "onPointerDown");
-  release = this.dispatch.bind(this, "onPointerUp");
-  cancel = this.dispatch.bind(this, "onPointerCancel");
-  select = this.dispatch.bind(this, "onClick");
-  move = this.dispatch.bind(this, "onPointerMove");
-  enter = this.dispatch.bind(this, "onPointerEnter");
-  leave = this.dispatch.bind(this, "onPointerLeave");
-  wheel = this.dispatch.bind(this, "onWheel");
+  press = this.dispatch.bind(this, ["onPointerDown"]);
+  release = this.dispatch.bind(this, ["onPointerUp"]);
+  cancel = this.dispatch.bind(this, ["onPointerCancel"]);
+  select = this.dispatch.bind(this, ["onClick"]);
+  move = this.dispatch.bind(this, ["onPointerMove"]);
+  enter = this.dispatch.bind(this, ["onPointerEnter", "onPointerOver"]);
+  leave = this.dispatch.bind(this, ["onPointerLeave", "onPointerOut"]);
+  wheel = this.dispatch.bind(this, ["onWheel"]);
   losteventcapture = () => {}; //this.dispatch.bind(this, "lostpointercapture")
 
   private dispatch(
-    name: keyof EventHandlers,
+    names: Array<keyof EventHandlers>,
     object: Object3D<Event>,
     intersection: Intersection<Object3D<Event>>,
     inputDeviceElementId?: number | undefined
   ): void {
-    if (this.stoppedEventTypeSet.has(name)) {
-      return;
+    for (const name of names) {
+      if (this.stoppedEventTypeSet.has(name)) {
+        return;
+      }
+      const instance: LocalState = (object as any).__r3f;
+      instance.handlers[name]?.(
+        this.createEvent(
+          name,
+          object,
+          intersection,
+          inputDeviceElementId
+        ) as any
+      );
     }
-    const instance: LocalState = (object as any).__r3f;
-    instance.handlers[name]?.(
-      this.createEvent(name, object, intersection, inputDeviceElementId) as any
-    );
   }
 
   private createEvent(

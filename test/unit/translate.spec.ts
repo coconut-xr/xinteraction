@@ -31,26 +31,6 @@ describe("translate events", () => {
     ] satisfies Array<EventLog>);
   });
 
-  it("should fire press when entering a object wheel pressing", () => {
-    const inputDevice = new MockInputDevice(1);
-    const actualEvents: Array<EventLog> = [];
-    const object = new Object3D();
-    object.addEventListener("press", ({ inputDeviceElementId }) => {
-      actualEvents.push({
-        type: "press",
-        objectUUID: object.uuid,
-        inputDeviceElementId,
-      });
-    });
-
-    inputDevice.update([], [101]);
-    inputDevice.update([{ object: object, distance: 0, point: new Vector3() }], undefined);
-
-    expect(actualEvents).to.deep.equal([
-      { type: "press", objectUUID: object.uuid, inputDeviceElementId: 101 },
-    ] satisfies Array<EventLog>);
-  });
-
   it("should fire enter, press, release, and then leave events", () => {
     const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
@@ -77,7 +57,7 @@ describe("translate events", () => {
     );
 
     inputDevice.update([{ object: object, distance: 0, point: new Vector3() }]);
-    inputDevice.update(undefined, new Map([[object, [101]]]));
+    inputDevice.update(undefined, new Map([[object, [101]]]), 101);
     inputDevice.update(undefined, new Map());
     inputDevice.update([]);
 
@@ -129,10 +109,11 @@ describe("translate events", () => {
       actualEvents.push({ type: "leave", objectUUID: object2.uuid });
     });
 
-    //click on object 1
+    //press on object 1
     inputDevice.update(
       [{ object: object1, distance: 0, point: new Vector3() }],
-      [1]
+      [1],
+      1
     );
     expect(pressEvent.mockTarget.hasPointerCapture()).to.equal(true);
     //leave object 1 and enter object 2
@@ -174,7 +155,8 @@ describe("translate events", () => {
     //click on object 1
     inputDevice.update(
       [{ object: object, distance: 0, point: new Vector3() }],
-      [1]
+      [1],
+      1
     );
     expect(pressEvent.mockTarget.hasPointerCapture()).to.equal(true);
     pressEvent.mockTarget.releasePointerCapture();
@@ -200,7 +182,8 @@ describe("translate events", () => {
     //enter and press
     inputDevice.update(
       [{ object: object, distance: 0, point: new Vector3() }],
-      [1]
+      [1],
+      1
     );
     //release
     inputDevice.update(undefined, []);
@@ -221,7 +204,8 @@ describe("translate events", () => {
     //enter and press
     inputDevice.update(
       [{ object: object, distance: 0, point: new Vector3() }],
-      [1]
+      [1],
+      1
     );
     //leave
     inputDevice.update([], undefined);
@@ -314,7 +298,12 @@ describe("translate events", () => {
       });
     });
 
-    inputDevice.update([{ object, distance: 0, point: new Vector3() }], [1, 2]);
+    inputDevice.update(
+      [{ object, distance: 0, point: new Vector3() }],
+      [1, 2],
+      1,
+      2
+    );
     inputDevice.update(undefined, []);
 
     expect(actualEvents).to.deep.equal([
@@ -349,7 +338,8 @@ describe("translate events", () => {
         { object: object1, distance: 0, point: new Vector3() },
         { object: object2, distance: 0, point: new Vector3() },
       ],
-      [1]
+      [1],
+      1
     );
     inputDevice.update(undefined, []);
 
@@ -385,7 +375,8 @@ describe("translate events", () => {
         { object: object1, distance: 0, point: new Vector3() },
         { object: object2, distance: 0, point: new Vector3() },
       ],
-      new Map([[object1, [1]]])
+      new Map([[object1, [1]]]),
+      1
     );
     inputDevice.update(undefined, []);
 
@@ -419,7 +410,8 @@ describe("translate events", () => {
         { object: object1, distance: 0, point: new Vector3() },
         { object: object2, distance: 0, point: new Vector3() },
       ],
-      [1]
+      [1],
+      1
     );
     inputDevice.update(undefined, new Map([[object1, [1]]]));
 
@@ -647,6 +639,49 @@ describe("translate events", () => {
       { type: "leave", objectUUID: object1.uuid },
       //leave object 2
       { type: "leave", objectUUID: object2.uuid },
+    ] satisfies Array<EventLog>);
+  });
+
+  it("should not trigger press because the pointer was dragged in", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+    const object = new Object3D();
+    object.addEventListener("press", ({ inputDeviceElementId }) => {
+      actualEvents.push({
+        type: "press",
+        objectUUID: object.uuid,
+        inputDeviceElementId,
+      });
+    });
+
+    inputDevice.update(
+      [{ object: object, distance: 0, point: new Vector3() }],
+      [1]
+    );
+
+    expect(actualEvents).to.deep.equal([] satisfies Array<EventLog>);
+  });
+
+  it("should not trigger press because the pointer was not dragged in (the pointer was pressed inside)", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+    const object = new Object3D();
+    object.addEventListener("press", ({ inputDeviceElementId }) => {
+      actualEvents.push({
+        type: "press",
+        objectUUID: object.uuid,
+        inputDeviceElementId,
+      });
+    });
+
+    inputDevice.update(
+      [{ object: object, distance: 0, point: new Vector3() }],
+      [1],
+      1
+    );
+
+    expect(actualEvents).to.deep.equal([
+      { type: "press", objectUUID: object.uuid, inputDeviceElementId: 1 },
     ] satisfies Array<EventLog>);
   });
 });

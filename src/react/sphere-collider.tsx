@@ -31,6 +31,7 @@ export function XSphereCollider({
     const dispatcher = new R3FEventDispatcher();
     return new EventTranslator<{}>(
       id,
+      true,
       dispatcher,
       () => {
         if (groupRef.current == null) {

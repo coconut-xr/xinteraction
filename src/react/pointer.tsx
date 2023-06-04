@@ -20,6 +20,10 @@ const lineGeometry = new BufferGeometry().setFromPoints([
 export type XPointerFunctions = {
   press(id: number, event: any): void;
   release(id: number, event: any): void;
+  leave(event: any): void;
+  enter(event: any): void;
+  cancel(event: any): void;
+  wheel(event: any): void;
 };
 
 export const XPointer = forwardRef<
@@ -32,10 +36,12 @@ export const XPointer = forwardRef<
   const groupRef = useRef<Group>(null);
   const scene = useThree(({ scene }) => scene);
   const pressedElementIds = useMemo(() => new Set<number>(), []);
+  const disabledRef = useRef(false);
   const translator = useMemo(() => {
     const dispatcher = new R3FEventDispatcher();
     return new EventTranslator<{}>(
       id,
+      false,
       dispatcher,
       () => {
         if (groupRef.current == null) {
@@ -51,18 +57,46 @@ export const XPointer = forwardRef<
     () => ({
       press: (id, event) => {
         pressedElementIds.add(id);
-        translator.update(event, false, true);
+        //TODO: dont update => write to flag in update on frame
+        translator.update(event, false, true, id);
       },
       release: (id, event) => {
         pressedElementIds.delete(id);
+        //TODO: dont update => write to flag in update on frame
         translator.update(event, false, true);
+      },
+      cancel: translator.cancel.bind(translator),
+      leave(event) {
+        translator.leave(event);
+        disabledRef.current = true;
+      },
+      enter() {
+        disabledRef.current = false;
+      },
+      wheel(event) {
+        //TODO: dont update => write to flag in update on frame
+        translator.wheel(event);
       },
     }),
     [translator]
   );
   //cleanup translator
-  useEffect(() => () => translator.leave({} as any), [translator]);
-  useFrame(() => translator.update({}, true, false));
+  useEffect(
+    () => () => {
+      //cleanup by calling leave if not already disabled
+      if (disabledRef.current) {
+        return;
+      }
+      translator.leave({} as any);
+    },
+    [translator]
+  );
+  useFrame(() => {
+    if (disabledRef.current) {
+      return;
+    }
+    translator.update({}, true, false);
+  });
   return (
     <group ref={groupRef}>
       {visualize && (

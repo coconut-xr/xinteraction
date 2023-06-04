@@ -48,3 +48,11 @@ If a input device is captured on one or multiple objects, the captured objects a
 ## Input Device
 
 A input device represents a unit with a positions and one or multiple input device elements. A input device element is a pressable or activateable element belonging to one input device with the same position as the input device. For instance, a input device can be a mouse and all buttons are input device elements. However, in case of a touch device, every individual pointer (finger) is a input device, since each pointer has its own position.
+
+# TODO
+
+[x] fix onPointerUp after pointer leave and reenter (write test for it)  
+[ ] enable calling update only once a frame (for the generic pointer => collect press, release, and wheel events)
+[ ] test event (pointer) capture manually  
+[ ] write tests for raycaster intersections  
+[ ] write tests for collider intersections

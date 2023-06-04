@@ -9,6 +9,7 @@ export class MockInputDevice {
   constructor(public readonly id: number) {
     this.translator = new EventTranslator(
       id,
+      false,
       new MockEventDispatcher(),
       (event, objects) =>
         objects == null
@@ -27,7 +28,8 @@ export class MockInputDevice {
 
   update(
     intersections?: Array<Intersection>,
-    pressedElementIds?: Map<Object3D, Array<number>> | Array<number>
+    pressedElementIds?: Map<Object3D, Array<number>> | Array<number>,
+    ...dispatchPressFor: Array<number>
   ): void {
     if (intersections != null) {
       this.intersections = intersections;
@@ -38,7 +40,8 @@ export class MockInputDevice {
     this.translator.update(
       { inputDeviceId: this.id },
       intersections != null,
-      pressedElementIds != null
+      pressedElementIds != null,
+      ...dispatchPressFor
     );
   }
 }

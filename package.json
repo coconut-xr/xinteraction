@@ -23,6 +23,9 @@
     "typescript": "^5.0.4",
     "zustand": "^3"
   },
+  "peerDependencies": {
+    "three": "*"
+  },
   "exports": {
     ".": "./dist/index.js",
     "./react": "./dist/react/index.js"
