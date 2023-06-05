@@ -57,12 +57,10 @@ export const XPointer = forwardRef<
     () => ({
       press: (id, event) => {
         pressedElementIds.add(id);
-        //TODO: dont update => write to flag in update on frame
         translator.update(event, false, true, id);
       },
       release: (id, event) => {
         pressedElementIds.delete(id);
-        //TODO: dont update => write to flag in update on frame
         translator.update(event, false, true);
       },
       cancel: translator.cancel.bind(translator),
@@ -74,7 +72,6 @@ export const XPointer = forwardRef<
         disabledRef.current = false;
       },
       wheel(event) {
-        //TODO: dont update => write to flag in update on frame
         translator.wheel(event);
       },
     }),

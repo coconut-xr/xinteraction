@@ -14,10 +14,6 @@ import {
 import React from "react";
 import { raycastFromCamera } from "../intersections/raycaster.js";
 
-//TODO: bugs
-// - going through things fast makes them stay (react problem or xinteraction problem?)
-// - stopPropagation does not prevent the element behind to be entered
-
 const lineGeometry = new BufferGeometry().setFromPoints([
   new Vector3(),
   new Vector3(0, 0, 100),

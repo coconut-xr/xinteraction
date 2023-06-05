@@ -52,7 +52,7 @@ A input device represents a unit with a positions and one or multiple input devi
 # TODO
 
 [x] fix onPointerUp after pointer leave and reenter (write test for it)  
-[ ] enable calling update only once a frame (for the generic pointer => collect press, release, and wheel events)
 [ ] test event (pointer) capture manually  
+[ ] test on mobile device with multi touch
 [ ] write tests for raycaster intersections  
 [ ] write tests for collider intersections

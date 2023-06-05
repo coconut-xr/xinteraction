@@ -7,7 +7,7 @@ import {
   XWebPointers,
 } from "xinteraction/react";
 import { Box, OrbitControls } from "@react-three/drei";
-import { Group, MOUSE, Mesh, Vector3Tuple } from "three";
+import { Group, MOUSE, Mesh, Object3D, Vector3, Vector3Tuple } from "three";
 import { Container, RootContainer, Text } from "@coconut-xr/koestlich";
 import {
   Select,
@@ -83,12 +83,61 @@ export default function App() {
       <HoverBox position={[2, 0.5, 0]} />
       <HoverBox position={[4, 0, 0]} />
       <HoverBox position={[-4, 0, 0]} />
+      <DragCube position={[-4, 0, -4]} />
       <Koestlich position={[0, 5, -6]} />
     </Canvas>
   );
 }
 
-//TODO: make sure that dragging a pressed pointer on an object causes a pointer down event
+function DragCube({ position }: { position: Vector3Tuple }) {
+  const ref = useRef<Mesh>(null);
+  const downState = useRef<{
+    pointerId: number;
+    point: Vector3;
+    box: Vector3;
+  }>();
+  useEffect(() => {
+    if (ref.current == null) {
+      return;
+    }
+    ref.current.position.set(...position);
+  }, []);
+  return (
+    <Box
+      onPointerDown={(e) => {
+        if (ref.current == null || downState.current != null) {
+          return;
+        }
+        e.stopPropagation();
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        downState.current = {
+          pointerId: e.pointerId,
+          box: ref.current.position.clone(),
+          point: e.point,
+        };
+      }}
+      onPointerUp={() => {
+        downState.current = undefined;
+      }}
+      onPointerMove={(e) => {
+        if (
+          ref.current == null ||
+          downState.current == null ||
+          e.pointerId != downState.current.pointerId
+        ) {
+          return;
+        }
+        ref.current.position
+          .copy(e.point)
+          .sub(downState.current.point)
+          .add(downState.current.box);
+      }}
+      ref={ref}
+    >
+      <meshBasicMaterial color="yellow" toneMapped={false} />
+    </Box>
+  );
+}
 
 function RotateCubePointer({
   id,
@@ -196,6 +245,7 @@ function HoverBox(props: MeshProps) {
         color={
           pressed.length > 0 ? "green" : hovered.length > 0 ? "red" : "blue"
         }
+        toneMapped={false}
       />
     </mesh>
   );

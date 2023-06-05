@@ -153,7 +153,13 @@ export class EventTranslator<E> {
 
   cancel(event: E): void {
     this.eventDispatcher.bind(event, this);
-    //TODO
+    this.traverseIntersections(
+      this.intersections,
+      (object, interactionData, intersection) => {
+        this.eventDispatcher.cancel(object, intersection);
+        return true;
+      }
+    );
   }
 
   wheel(event: E): void {
