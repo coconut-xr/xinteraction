@@ -52,7 +52,12 @@ A input device represents a unit with a positions and one or multiple input devi
 # TODO
 
 [x] fix onPointerUp after pointer leave and reenter (write test for it)  
+[x] manual down, up, cancel, and wheel for XSphereCollider
+[x] bug: pointer events not on group
+[ ] XLinePointer (allow teleport like pointer)
 [ ] test event (pointer) capture manually  
 [ ] test on mobile device with multi touch
 [ ] write tests for raycaster intersections  
-[ ] write tests for collider intersections
+[ ] write tests for collider intersections  
+[ ] visualize cursor at first hit point (onIntersect -> update cursor ref)  
+[ ] write docs  

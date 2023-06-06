@@ -1,13 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Canvas, GroupProps, MeshProps, useFrame } from "@react-three/fiber";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  XPointer,
-  XPointerFunctions,
+  Canvas,
+  GroupProps,
+  MeshProps,
+  useFrame,
+  useThree,
+} from "@react-three/fiber";
+import {
+  InputDeviceFunctions,
   XSphereCollider,
+  XStraightPointer,
   XWebPointers,
 } from "xinteraction/react";
 import { Box, OrbitControls } from "@react-three/drei";
-import { Group, MOUSE, Mesh, Object3D, Vector3, Vector3Tuple } from "three";
+import {
+  BufferGeometry,
+  Group,
+  MOUSE,
+  Mesh,
+  Object3D,
+  SphereGeometry,
+  Vector3,
+  Vector3Tuple,
+} from "three";
 import { Container, RootContainer, Text } from "@coconut-xr/koestlich";
 import {
   Select,
@@ -49,6 +64,12 @@ const tableData = [
   ["Coconut XR", "3", "Powered by Coconut Capital GmbH"],
 ];
 
+const lineGeometry = new BufferGeometry().setFromPoints([
+  new Vector3(),
+  new Vector3(0, 0, 100),
+]);
+const sphereGeometry = new SphereGeometry(1);
+
 export default function App() {
   return (
     <Canvas
@@ -74,6 +95,7 @@ export default function App() {
       />
       <XWebPointers />
       <ambientLight />
+      <ColliderSelectSphere id={98} />
       <ColliderSphere id={99} />
       <RotateCubePointer id={100} position={[0, 0, 0]} />
       <RotateCubePointer id={101} position={[0, 0, -3]} />
@@ -90,7 +112,7 @@ export default function App() {
 }
 
 function DragCube({ position }: { position: Vector3Tuple }) {
-  const ref = useRef<Mesh>(null);
+  const ref = useRef<Group>(null);
   const downState = useRef<{
     pointerId: number;
     point: Vector3;
@@ -103,7 +125,7 @@ function DragCube({ position }: { position: Vector3Tuple }) {
     ref.current.position.set(...position);
   }, []);
   return (
-    <Box
+    <group
       onPointerDown={(e) => {
         if (ref.current == null || downState.current != null) {
           return;
@@ -134,8 +156,10 @@ function DragCube({ position }: { position: Vector3Tuple }) {
       }}
       ref={ref}
     >
-      <meshBasicMaterial color="yellow" toneMapped={false} />
-    </Box>
+      <Box>
+        <meshBasicMaterial color="yellow" toneMapped={false} />
+      </Box>
+    </group>
   );
 }
 
@@ -146,9 +170,8 @@ function RotateCubePointer({
   id: number;
   position?: Vector3Tuple;
 }) {
-  const ref = useRef<Mesh>(null);
-  const pointerRef = useRef<XPointerFunctions>(null);
-  const [pressed, setPressed] = useState<Array<number>>([]);
+  const ref = useRef<Group>(null);
+  const pointerRef = useRef<InputDeviceFunctions>(null);
   useFrame((_, delta) => {
     if (ref.current == null) {
       return;
@@ -156,41 +179,31 @@ function RotateCubePointer({
     ref.current.rotateY(delta * 1);
   });
   return (
-    <Box
-      onPointerDown={(e) => {
-        e.stopPropagation();
-        setPressed((c) => {
-          if (c.length === 0) {
-            pointerRef.current?.press(1, e);
+    <group {...props} ref={ref}>
+      <Box
+        onPointerDown={(e) => {
+          if ((e as any).inputDeviceId === 98) {
+            return;
           }
-          return [...c, e.pointerId];
-        });
-      }}
-      onPointerLeave={(e) => {
-        e.stopPropagation();
-        setPressed((c) => {
-          const result = c.filter((id) => id != e.pointerId);
-          if (result.length === 0) {
-            pointerRef.current?.release(1, e);
+          e.stopPropagation();
+          pointerRef.current?.press(e.pointerId, e);
+        }}
+        onPointerUp={(e) => {
+          if ((e as any).inputDeviceId === 98) {
+            return;
           }
-          return result;
-        });
-      }}
-      onPointerUp={(e) => {
-        e.stopPropagation();
-        setPressed((c) => {
-          const result = c.filter((id) => id != e.pointerId);
-          if (result.length === 0) {
-            pointerRef.current?.release(1, e);
-          }
-          return result;
-        });
-      }}
-      {...props}
-      ref={ref}
-    >
-      <XPointer ref={pointerRef} id={id} visualize />
-    </Box>
+          e.stopPropagation();
+          pointerRef.current?.release(e.pointerId, e);
+        }}
+      >
+        <group position={[0, 0, 0.6]}>
+          <XStraightPointer ref={pointerRef} id={id} />
+        </group>
+      </Box>
+      <lineSegments geometry={lineGeometry}>
+        <lineBasicMaterial color="red" toneMapped={false} />
+      </lineSegments>
+    </group>
   );
 }
 
@@ -207,10 +220,68 @@ function ColliderSphere({ id }: { id: number }) {
       <XSphereCollider
         id={id}
         radius={0.5}
-        downDistance={0.1}
+        distanceElement={{ id: 1, downDistance: 0.1 }}
         enterDistance={0.5}
-        visualize
       />
+      <mesh scale={0.5} geometry={sphereGeometry}>
+        <meshBasicMaterial color="red" toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
+function ColliderSelectSphere({ id }: { id: number }) {
+  const ref = useRef<Group>(null);
+  const sphereRef = useRef<InputDeviceFunctions>(null);
+  const keyPressMap = useMemo(() => new Set<string>(), []);
+  useEffect(() => {
+    const keyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        sphereRef.current?.press(1, e);
+      }
+      keyPressMap.add(e.key);
+    };
+    const keyUp = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        sphereRef.current?.release(1, e);
+      }
+      keyPressMap.delete(e.key);
+    };
+    window.addEventListener("keydown", keyDown);
+    window.addEventListener("keyup", keyUp);
+    return () => {
+      window.removeEventListener("keydown", keyDown);
+      window.removeEventListener("keyup", keyUp);
+    };
+  }, []);
+  useFrame((_, delta) => {
+    if (ref.current == null) {
+      return;
+    }
+    if (keyPressMap.has("w")) {
+      ref.current.position.z += delta * 1;
+    }
+    if (keyPressMap.has("s")) {
+      ref.current.position.z -= delta * 1;
+    }
+    if (keyPressMap.has("a")) {
+      ref.current.position.x -= delta * 1;
+    }
+    if (keyPressMap.has("d")) {
+      ref.current.position.x += delta * 1;
+    }
+  });
+  return (
+    <group ref={ref} position={[0, 0, 0]}>
+      <XSphereCollider
+        ref={sphereRef}
+        id={id}
+        radius={0.5}
+        enterDistance={0.5}
+      />
+      <mesh scale={0.5} geometry={sphereGeometry}>
+        <meshBasicMaterial color="violet" toneMapped={false} />
+      </mesh>
     </group>
   );
 }
@@ -220,7 +291,6 @@ function HoverBox(props: MeshProps) {
   const [pressed, setPressed] = useState<Array<number>>([]);
   return (
     <mesh
-      onWheel={console.log}
       onPointerEnter={(e) => {
         e.stopPropagation();
         setHovered((c) => [...c, e.pointerId]);

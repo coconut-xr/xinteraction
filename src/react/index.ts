@@ -111,6 +111,13 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
   }
 }
 
+export type InputDeviceFunctions = {
+  press(id: number, event: any): void;
+  release(id: number, event: any): void;
+  cancel(event: any): void;
+  wheel(event: any): void;
+};
+
 export * from "./web-pointers.js";
-export * from "./pointer.js";
+export * from "./straight-pointer.js";
 export * from "./sphere-collider.js";

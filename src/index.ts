@@ -305,19 +305,18 @@ export class EventTranslator<E> {
         if (!checkUniqueTraversal(object, traversalId)) {
           continue outer;
         }
-        if (!this.eventDispatcher.hasEventHandlers(object)) {
-          continue;
-        }
-        const interactionData = this.getInteractionData(object);
-        const continueUpwards = callback(
-          object,
-          interactionData,
-          intersection,
-          intersectionIndex,
-          info
-        );
-        if (!continueUpwards) {
-          continue outer;
+        if (this.eventDispatcher.hasEventHandlers(object)) {
+          const interactionData = this.getInteractionData(object);
+          const continueUpwards = callback(
+            object,
+            interactionData,
+            intersection,
+            intersectionIndex,
+            info
+          );
+          if (!continueUpwards) {
+            continue outer;
+          }
         }
         object = object.parent;
       }
