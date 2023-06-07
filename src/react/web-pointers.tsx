@@ -12,8 +12,12 @@ type PointerMapEntry = {
 
 export function XWebPointers({
   onIntersections,
+  filterIntersections,
 }: {
   onIntersections?: (id: number, intersections: Array<Intersection>) => void;
+  filterIntersections?: (
+    intersections: Array<Intersection>
+  ) => Array<Intersection>;
 }) {
   const canvas = useThree(({ gl }) => gl.domElement);
   const pointerMap = useMemo(() => new Map<number, PointerMapEntry>(), []);
@@ -25,33 +29,36 @@ export function XWebPointers({
       store.getState()
     );
     const pointercancel = (event: PointerEvent) => {
-      const { translator } = getOrCreate(event.pointerId);
+      const { translator } = getOrCreate(event.pointerId, filterIntersections);
       translator.cancel(event);
     };
     const pointerdown = (event: PointerEvent) => {
       const { pressedInputDeviceElements, translator } = getOrCreate(
-        event.pointerId
+        event.pointerId,
+        filterIntersections
       );
       updatePressedButtons(event.buttons, pressedInputDeviceElements);
       translator.update(event, false, true, event.button);
     };
     const pointerup = (event: PointerEvent) => {
       const { pressedInputDeviceElements, translator } = getOrCreate(
-        event.pointerId
+        event.pointerId,
+        filterIntersections
       );
       updatePressedButtons(event.buttons, pressedInputDeviceElements);
       translator.update(event, false, true);
     };
     const pointerover = (event: PointerEvent) => {
       const { translator, pressedInputDeviceElements } = getOrCreate(
-        event.pointerId
+        event.pointerId,
+        filterIntersections
       );
       updatePressedButtons(event.buttons, pressedInputDeviceElements);
       translator.update(event, true, true);
       onIntersections?.(event.pointerId, translator.intersections);
     };
     const pointermove = (event: PointerEvent) => {
-      const { translator } = getOrCreate(event.pointerId);
+      const { translator } = getOrCreate(event.pointerId, filterIntersections);
       translator.update(event, true, false);
       onIntersections?.(event.pointerId, translator.intersections);
     };
@@ -61,7 +68,7 @@ export function XWebPointers({
       }
     };
     const pointerout = (event: PointerEvent) => {
-      const { translator } = getOrCreate(event.pointerId);
+      const { translator } = getOrCreate(event.pointerId, filterIntersections);
       translator.leave(event);
       pointerMap.delete(event.pointerId);
       onIntersections?.(event.pointerId, emptyIntersection);
@@ -92,7 +99,7 @@ export function XWebPointers({
       canvas.removeEventListener("wheel", wheel);
       canvas.removeEventListener("blur", blur);
     };
-  }, [canvas, store]);
+  }, [canvas, filterIntersections, store]);
 
   return null;
 }
@@ -118,13 +125,16 @@ function updatePressedButtons(
 function getOrCreatePointerMapEntry(
   pointerMap: Map<number, PointerMapEntry>,
   getState: () => RootState,
-  pointerId: number
+  pointerId: number,
+  filterIntersections:
+    | ((intersections: Array<Intersection>) => Array<Intersection>)
+    | undefined
 ): PointerMapEntry {
   let entry = pointerMap.get(pointerId);
   if (entry == null) {
     pointerMap.set(
       pointerId,
-      (entry = createPointerMapEntry(pointerId, getState))
+      (entry = createPointerMapEntry(pointerId, getState, filterIntersections))
     );
   }
   return entry;
@@ -134,7 +144,10 @@ const emptyIntersection: Array<Intersection> = [];
 
 function createPointerMapEntry(
   pointerId: number,
-  getState: () => RootState
+  getState: () => RootState,
+  filterIntersections:
+    | ((intersections: Array<Intersection>) => Array<Intersection>)
+    | undefined
 ): PointerMapEntry {
   const pressedInputDeviceElements = new Set<number>();
   const dispatcher = new R3FEventDispatcher();
@@ -155,7 +168,8 @@ function createPointerMapEntry(
           -(event.offsetY / size.height) * 2 + 1
         ),
         scene,
-        dispatcher
+        dispatcher,
+        filterIntersections
       );
     },
     () => pressedInputDeviceElements

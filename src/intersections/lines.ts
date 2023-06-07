@@ -8,10 +8,13 @@ export function intersectLinesFromObject(
   from: Object3D,
   linePoints: Array<Vector3>,
   on: Object3D,
-  dispatcher: EventDispatcher<Event>
+  dispatcher: EventDispatcher<Event>,
+  filterIntersections?: (
+    intersections: Array<Intersection>
+  ) => Array<Intersection>
 ): Array<Intersection> {
   from.updateWorldMatrix(true, false);
-  const intersections = traverseUntilInteractable<
+  let intersections = traverseUntilInteractable<
     Array<Intersection>,
     Array<Intersection>
   >(
@@ -53,6 +56,7 @@ export function intersectLinesFromObject(
     (prev, cur) => prev.concat(cur),
     []
   );
+  intersections = filterIntersections?.(intersections) ?? intersections;
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }

@@ -19,8 +19,11 @@ export const XCurvedPointer = forwardRef<
     id: number;
     points: Array<Vector3>;
     onIntersections?: (intersections: ReadonlyArray<Intersection>) => void;
+    filterIntersections?: (
+      intersections: Array<Intersection>
+    ) => Array<Intersection>;
   }
->(({ id, points, onIntersections }, ref) => {
+>(({ id, points, onIntersections, filterIntersections }, ref) => {
   const objectRef = useRef<Object3D>(null);
   const scene = useThree(({ scene }) => scene);
   const pressedElementIds = useMemo(() => new Set<number>(), []);
@@ -38,12 +41,13 @@ export const XCurvedPointer = forwardRef<
           objectRef.current,
           points,
           scene,
-          dispatcher
+          dispatcher,
+          filterIntersections
         );
       },
       () => pressedElementIds
     );
-  }, [id, points, scene]);
+  }, [id, filterIntersections, points, scene]);
   useImperativeHandle(
     ref,
     () => ({

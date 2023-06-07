@@ -7,11 +7,14 @@ const raycaster = new Raycaster();
 export function intersectRayFromObject(
   from: Object3D,
   on: Object3D,
-  dispatcher: EventDispatcher<Event>
+  dispatcher: EventDispatcher<Event>,
+  filterIntersections?: (
+    intersections: Array<Intersection>
+  ) => Array<Intersection>
 ): Array<Intersection> {
   from.getWorldPosition(raycaster.ray.origin);
   from.getWorldDirection(raycaster.ray.direction);
-  const intersections = traverseUntilInteractable<
+  let intersections = traverseUntilInteractable<
     Array<Intersection>,
     Array<Intersection>
   >(
@@ -21,6 +24,7 @@ export function intersectRayFromObject(
     (prev, cur) => prev.concat(cur),
     []
   );
+  intersections = filterIntersections?.(intersections) ?? intersections;
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }
@@ -29,10 +33,13 @@ export function intersectRayFromCamera(
   from: Camera,
   coords: Vector2,
   on: Object3D,
-  dispatcher: EventDispatcher<Event>
+  dispatcher: EventDispatcher<Event>,
+  filterIntersections?: (
+    intersections: Array<Intersection>
+  ) => Array<Intersection>
 ): Array<Intersection> {
   raycaster.setFromCamera(coords, from);
-  const intersections = traverseUntilInteractable<
+  let intersections = traverseUntilInteractable<
     Array<Intersection>,
     Array<Intersection>
   >(
@@ -42,6 +49,7 @@ export function intersectRayFromCamera(
     (prev, cur) => prev.concat(cur),
     []
   );
+  intersections = filterIntersections?.(intersections) ?? intersections;
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }

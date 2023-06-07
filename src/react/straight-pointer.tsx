@@ -18,8 +18,11 @@ export const XStraightPointer = forwardRef<
   {
     id: number;
     onIntersections?: (intersections: Array<Intersection>) => void;
+    filterIntersections?: (
+      intersections: Array<Intersection>
+    ) => Array<Intersection>;
   }
->(({ id, onIntersections }, ref) => {
+>(({ id, onIntersections, filterIntersections }, ref) => {
   const objectRef = useRef<Object3D>(null);
   const scene = useThree(({ scene }) => scene);
   const pressedElementIds = useMemo(() => new Set<number>(), []);
@@ -33,11 +36,16 @@ export const XStraightPointer = forwardRef<
         if (objectRef.current == null) {
           return emptyIntersections;
         }
-        return intersectRayFromObject(objectRef.current, scene, dispatcher);
+        return intersectRayFromObject(
+          objectRef.current,
+          scene,
+          dispatcher,
+          filterIntersections
+        );
       },
       () => pressedElementIds
     );
-  }, [id, scene]);
+  }, [id, filterIntersections, scene]);
   useImperativeHandle(
     ref,
     () => ({

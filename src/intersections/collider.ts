@@ -22,11 +22,14 @@ export function collideSphereFromObject(
   radius: number,
   collideDistance: number,
   on: Object3D,
-  dispatcher: EventDispatcher<Event>
+  dispatcher: EventDispatcher<Event>,
+  filterIntersections?: (
+    intersections: Array<Intersection>
+  ) => Array<Intersection>
 ): Array<Intersection> {
   from.getWorldPosition(collisionSphere.center);
   collisionSphere.radius = radius;
-  const intersections = traverseUntilInteractable<
+  let intersections = traverseUntilInteractable<
     Array<Intersection>,
     Array<Intersection>
   >(
@@ -36,6 +39,7 @@ export function collideSphereFromObject(
     (prev, cur) => prev.concat(cur),
     []
   );
+  intersections = filterIntersections?.(intersections) ?? intersections;
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }

@@ -12,6 +12,7 @@ import {
   BufferGeometry,
   CircleGeometry,
   Group,
+  Intersection,
   MOUSE,
   Mesh,
   PlaneGeometry,
@@ -20,7 +21,12 @@ import {
   Vector3,
   Vector3Tuple,
 } from "three";
-import { Container, RootContainer, Text } from "@coconut-xr/koestlich";
+import {
+  Container,
+  RootContainer,
+  Text,
+  isIntersectionClipped,
+} from "@coconut-xr/koestlich";
 import {
   Select,
   Button,
@@ -61,6 +67,9 @@ const tableData = [
   ["Coconut XR", "3", "Powered by Coconut Capital GmbH"],
 ];
 
+const filterClippedIntersections = (intersections: Array<Intersection>) =>
+  intersections.filter(isIntersectionClipped);
+
 const lineGeometry = new BufferGeometry().setFromPoints([
   new Vector3(),
   new Vector3(0, 0, 100),
@@ -89,7 +98,7 @@ export default function App() {
           RIGHT: MOUSE.LEFT,
         }}
       />
-      <XWebPointers />
+      <XWebPointers filterIntersections={filterClippedIntersections} />
       <ambientLight />
       <ColliderSelectSphere id={98} />
       <ColliderSphere id={99} />
@@ -198,6 +207,7 @@ function RotateCubePointer({
         >
           <group position={[0, 0, 0.6]}>
             <XStraightPointer
+              filterIntersections={filterClippedIntersections}
               onIntersections={(intersections) => {
                 if (intersectionRef.current == null) {
                   return;
@@ -285,7 +295,12 @@ function RotateCubeCurvedPointer({
         }}
       >
         <group position={[0, 0, 0.6]}>
-          <XCurvedPointer points={curvedLine} ref={pointerRef} id={id} />
+          <XCurvedPointer
+            filterIntersections={filterClippedIntersections}
+            points={curvedLine}
+            ref={pointerRef}
+            id={id}
+          />
         </group>
       </Box>
       <line position={[0, 0, 0.6]} geometry={geometry}>
@@ -306,6 +321,7 @@ function ColliderSphere({ id }: { id: number }) {
   return (
     <group ref={ref}>
       <XSphereCollider
+        filterIntersections={filterClippedIntersections}
         id={id}
         radius={0.5}
         distanceElement={{ id: 1, downDistance: 0.1 }}
@@ -362,6 +378,7 @@ function ColliderSelectSphere({ id }: { id: number }) {
   return (
     <group ref={ref} position={[0, 0, 0]}>
       <XSphereCollider
+        filterIntersections={filterClippedIntersections}
         ref={sphereRef}
         id={id}
         radius={0.5}
