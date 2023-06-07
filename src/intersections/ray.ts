@@ -4,7 +4,7 @@ import { traverseUntilInteractable } from "./index.js";
 
 const raycaster = new Raycaster();
 
-export function raycastFromObject(
+export function intersectRayFromObject(
   from: Object3D,
   on: Object3D,
   dispatcher: EventDispatcher<Event>
@@ -25,7 +25,7 @@ export function raycastFromObject(
   return intersections.sort((a, b) => a.distance - b.distance);
 }
 
-export function raycastFromCamera(
+export function intersectRayFromCamera(
   from: Camera,
   coords: Vector2,
   on: Object3D,

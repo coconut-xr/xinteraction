@@ -1,13 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Canvas,
-  GroupProps,
-  MeshProps,
-  useFrame,
-  useThree,
-} from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, GroupProps, MeshProps, useFrame } from "@react-three/fiber";
 import {
   InputDeviceFunctions,
+  XCurvedPointer,
   XSphereCollider,
   XStraightPointer,
   XWebPointers,
@@ -15,10 +10,12 @@ import {
 import { Box, OrbitControls } from "@react-three/drei";
 import {
   BufferGeometry,
+  CircleGeometry,
   Group,
   MOUSE,
   Mesh,
-  Object3D,
+  PlaneGeometry,
+  Quaternion,
   SphereGeometry,
   Vector3,
   Vector3Tuple,
@@ -84,7 +81,6 @@ export default function App() {
       <OrbitControls
         target={[0, 0, 0]}
         enableZoom={false}
-        enablePan={false}
         minDistance={5}
         maxDistance={5}
         mouseButtons={{
@@ -98,7 +94,8 @@ export default function App() {
       <ColliderSelectSphere id={98} />
       <ColliderSphere id={99} />
       <RotateCubePointer id={100} position={[0, 0, 0]} />
-      <RotateCubePointer id={101} position={[0, 0, -3]} />
+      <Ground />
+      <RotateCubeCurvedPointer id={101} position={[0, 0, -3]} />
       <directionalLight position={[-1, -1, -1]} />
       <HoverBox position={[-2, 0, 0]} />
       <HoverBox position={[-2, 0, -2]} />
@@ -163,7 +160,98 @@ function DragCube({ position }: { position: Vector3Tuple }) {
   );
 }
 
+//TODO: render the first intersection point
 function RotateCubePointer({
+  id,
+  ...props
+}: {
+  id: number;
+  position?: Vector3Tuple;
+}) {
+  const ref = useRef<Group>(null);
+  const intersectionRef = useRef<Mesh>(null);
+  const pointerRef = useRef<InputDeviceFunctions>(null);
+  useFrame((_, delta) => {
+    if (ref.current == null) {
+      return;
+    }
+    ref.current.rotateY(delta * 1);
+  });
+  return (
+    <>
+      <group {...props} ref={ref}>
+        <Box
+          onPointerDown={(e) => {
+            if ((e as any).inputDeviceId === 98) {
+              return;
+            }
+            e.stopPropagation();
+            pointerRef.current?.press(e.pointerId, e);
+          }}
+          onPointerUp={(e) => {
+            if ((e as any).inputDeviceId === 98) {
+              return;
+            }
+            e.stopPropagation();
+            pointerRef.current?.release(e.pointerId, e);
+          }}
+        >
+          <group position={[0, 0, 0.6]}>
+            <XStraightPointer
+              onIntersections={(intersections) => {
+                if (intersectionRef.current == null) {
+                  return;
+                }
+                if (intersections.length === 0) {
+                  intersectionRef.current.visible = false;
+                  return;
+                }
+
+                intersectionRef.current.visible = true;
+                const intersection = intersections[0];
+
+                intersectionRef.current.position.copy(intersection.point);
+                if (intersection.face != null) {
+                  intersectionRef.current.quaternion.setFromUnitVectors(
+                    UP,
+                    intersection.face.normal
+                  );
+                  intersection.object.getWorldQuaternion(quaternionHelper);
+                  intersectionRef.current.quaternion.multiply(quaternionHelper);
+                  offsetHelper.set(0, 0.01, 0);
+                  offsetHelper.applyQuaternion(
+                    intersectionRef.current.quaternion
+                  );
+                  intersectionRef.current.position.add(offsetHelper);
+                }
+              }}
+              ref={pointerRef}
+              id={id}
+            />
+          </group>
+        </Box>
+        <lineSegments position={[0, 0, 0.6]} geometry={lineGeometry}>
+          <lineBasicMaterial color="red" toneMapped={false} />
+        </lineSegments>
+      </group>
+      <mesh ref={intersectionRef} geometry={circle}>
+        <meshBasicMaterial color="purple" />
+      </mesh>
+    </>
+  );
+}
+
+const curvedLine = [
+  new Vector3(0, 0, 0),
+  new Vector3(0, 0.1, 1),
+  new Vector3(0, 0, 2),
+  new Vector3(0, -0.2, 3),
+  new Vector3(0, -0.6, 4),
+  new Vector3(0, -1.4, 5),
+];
+const geometry = new BufferGeometry().setFromPoints(curvedLine);
+
+function RotateCubeCurvedPointer({
   id,
   ...props
 }: {
@@ -197,12 +285,12 @@ function RotateCubePointer({
         }}
       >
         <group position={[0, 0, 0.6]}>
-          <XStraightPointer ref={pointerRef} id={id} />
+          <XCurvedPointer points={curvedLine} ref={pointerRef} id={id} />
         </group>
       </Box>
-      <lineSegments geometry={lineGeometry}>
+      <line position={[0, 0, 0.6]} geometry={geometry}>
         <lineBasicMaterial color="red" toneMapped={false} />
-      </lineSegments>
+      </line>
     </group>
   );
 }
@@ -529,5 +617,68 @@ function Koestlich(props: GroupProps) {
         <Progess value={0.5} />
       </RootContainer>
     </group>
+  );
+}
+
+const plane = new PlaneGeometry(10, 10);
+plane.rotateX(-Math.PI / 2);
+
+const circle = new CircleGeometry(0.3);
+circle.rotateX(-Math.PI / 2);
+
+const UP = new Vector3(0, 1, 0);
+const quaternionHelper = new Quaternion();
+const offsetHelper = new Vector3();
+
+function Ground() {
+  const ref = useRef<Mesh>(null);
+  return (
+    <>
+      <mesh ref={ref} geometry={circle}>
+        <meshBasicMaterial color="red" />
+      </mesh>
+      <mesh
+        rotation-x={Math.PI / 32}
+        onPointerEnter={(e) => {
+          if (ref.current == null || e.pointerId != 101) {
+            return;
+          }
+          ref.current.visible = true;
+          ref.current.position.copy(e.point);
+          if (e.face != null) {
+            ref.current.quaternion.setFromUnitVectors(UP, e.face.normal);
+          }
+        }}
+        onPointerMove={(e) => {
+          if (ref.current == null || e.pointerId != 101) {
+            return;
+          }
+          ref.current.position.copy(e.point);
+          if (e.face != null) {
+            ref.current.quaternion.setFromUnitVectors(UP, e.face.normal);
+            e.object.getWorldQuaternion(quaternionHelper);
+            ref.current.quaternion.multiply(quaternionHelper);
+            offsetHelper.set(0, 0.01, 0);
+            offsetHelper.applyQuaternion(ref.current.quaternion);
+            ref.current.position.add(offsetHelper);
+          }
+        }}
+        onPointerLeave={(e) => {
+          if (ref.current == null || e.pointerId != 101) {
+            return;
+          }
+          ref.current.visible = false;
+        }}
+        position={[0, -0.5, 0]}
+        geometry={plane}
+      >
+        <meshBasicMaterial
+          toneMapped={false}
+          color="brown"
+          opacity={0.5}
+          transparent
+        />
+      </mesh>
+    </>
   );
 }

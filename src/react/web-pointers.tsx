@@ -1,49 +1,28 @@
 import { RootState, useStore, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { EventTranslator } from "../index.js";
 import { R3FEventDispatcher } from "./index.js";
-import {
-  BufferGeometry,
-  Group,
-  Intersection,
-  LineSegments,
-  Object3D,
-  Vector2,
-  Vector3,
-} from "three";
-import React from "react";
-import { raycastFromCamera } from "../intersections/raycaster.js";
-
-const lineGeometry = new BufferGeometry().setFromPoints([
-  new Vector3(),
-  new Vector3(0, 0, 100),
-]);
+import { Intersection, Vector2 } from "three";
+import { intersectRayFromCamera } from "../intersections/ray.js";
 
 type PointerMapEntry = {
-  object: Object3D;
   translator: EventTranslator<PointerEvent>;
   pressedInputDeviceElements: Set<number>;
 };
 
-export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
+export function XWebPointers({
+  onIntersections,
+}: {
+  onIntersections?: (id: number, intersections: Array<Intersection>) => void;
+}) {
   const canvas = useThree(({ gl }) => gl.domElement);
-  const ref = useRef<Group>(null);
-  const visualizeRef = useRef(visualize);
-  visualizeRef.current = visualize;
   const pointerMap = useMemo(() => new Map<number, PointerMapEntry>(), []);
 
   const store = useStore();
 
   useEffect(() => {
-    if (ref.current == null) {
-      return;
-    }
-    const getOrCreate = getOrCreatePointerMapEntry.bind(
-      null,
-      pointerMap,
-      ref.current,
-      visualizeRef,
-      () => store.getState()
+    const getOrCreate = getOrCreatePointerMapEntry.bind(null, pointerMap, () =>
+      store.getState()
     );
     const pointercancel = (event: PointerEvent) => {
       const { translator } = getOrCreate(event.pointerId);
@@ -69,10 +48,12 @@ export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
       );
       updatePressedButtons(event.buttons, pressedInputDeviceElements);
       translator.update(event, true, true);
+      onIntersections?.(event.pointerId, translator.intersections);
     };
     const pointermove = (event: PointerEvent) => {
       const { translator } = getOrCreate(event.pointerId);
       translator.update(event, true, false);
+      onIntersections?.(event.pointerId, translator.intersections);
     };
     const wheel = (event: WheelEvent) => {
       for (const { translator } of pointerMap.values()) {
@@ -83,6 +64,7 @@ export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
       const { translator } = getOrCreate(event.pointerId);
       translator.leave(event);
       pointerMap.delete(event.pointerId);
+      onIntersections?.(event.pointerId, emptyIntersection);
     };
     const blur = (event: any) => {
       for (const { translator } of pointerMap.values()) {
@@ -112,13 +94,7 @@ export function XWebPointers({ visualize = false }: { visualize?: boolean }) {
     };
   }, [canvas, store]);
 
-  useEffect(() => {
-    for (const { object } of pointerMap.values()) {
-      object.visible = visualize;
-    }
-  }, [visualize]);
-
-  return <group ref={ref} />;
+  return null;
 }
 
 function updatePressedButtons(
@@ -141,8 +117,6 @@ function updatePressedButtons(
 
 function getOrCreatePointerMapEntry(
   pointerMap: Map<number, PointerMapEntry>,
-  parent: Object3D,
-  visualizeRef: { current: boolean },
   getState: () => RootState,
   pointerId: number
 ): PointerMapEntry {
@@ -150,12 +124,7 @@ function getOrCreatePointerMapEntry(
   if (entry == null) {
     pointerMap.set(
       pointerId,
-      (entry = createPointerMapEntry(
-        pointerId,
-        parent,
-        visualizeRef.current,
-        getState
-      ))
+      (entry = createPointerMapEntry(pointerId, getState))
     );
   }
   return entry;
@@ -165,13 +134,8 @@ const emptyIntersection: Array<Intersection> = [];
 
 function createPointerMapEntry(
   pointerId: number,
-  parent: Object3D,
-  visualize: boolean,
   getState: () => RootState
 ): PointerMapEntry {
-  const object = new LineSegments(lineGeometry);
-  object.visible = visualize;
-  parent.add(object);
   const pressedInputDeviceElements = new Set<number>();
   const dispatcher = new R3FEventDispatcher();
   const translator = new EventTranslator<PointerEvent>(
@@ -184,7 +148,7 @@ function createPointerMapEntry(
       }
       //compute rotation based on pointer position
       const { camera, scene, size } = getState();
-      return raycastFromCamera(
+      return intersectRayFromCamera(
         camera,
         new Vector2(
           (event.offsetX / size.width) * 2 - 1,
@@ -198,7 +162,6 @@ function createPointerMapEntry(
   );
 
   return {
-    object,
     pressedInputDeviceElements,
     translator,
   };

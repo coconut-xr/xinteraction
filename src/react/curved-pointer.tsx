@@ -5,21 +5,22 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { Intersection, Object3D } from "three";
+import { Intersection, Object3D, Vector3 } from "three";
 import { EventTranslator } from "../index.js";
-import { intersectRayFromObject } from "../intersections/ray.js";
+import { intersectLinesFromObject } from "../intersections/lines.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import { useFrame, useThree } from "@react-three/fiber";
 
 const emptyIntersections: Array<Intersection> = [];
 
-export const XStraightPointer = forwardRef<
+export const XCurvedPointer = forwardRef<
   InputDeviceFunctions,
   {
     id: number;
-    onIntersections?: (intersections: Array<Intersection>) => void;
+    points: Array<Vector3>;
+    onIntersections?: (intersections: ReadonlyArray<Intersection>) => void;
   }
->(({ id, onIntersections }, ref) => {
+>(({ id, points, onIntersections }, ref) => {
   const objectRef = useRef<Object3D>(null);
   const scene = useThree(({ scene }) => scene);
   const pressedElementIds = useMemo(() => new Set<number>(), []);
@@ -33,11 +34,16 @@ export const XStraightPointer = forwardRef<
         if (objectRef.current == null) {
           return emptyIntersections;
         }
-        return intersectRayFromObject(objectRef.current, scene, dispatcher);
+        return intersectLinesFromObject(
+          objectRef.current,
+          points,
+          scene,
+          dispatcher
+        );
       },
       () => pressedElementIds
     );
-  }, [id, scene]);
+  }, [id, points, scene]);
   useImperativeHandle(
     ref,
     () => ({

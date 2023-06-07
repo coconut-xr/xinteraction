@@ -20,8 +20,9 @@ export const XSphereCollider = forwardRef<
     radius: number;
     enterDistance: number;
     distanceElement?: { id: number; downDistance: number };
+    onIntersections?: (intersections: Array<Intersection>) => void;
   }
->(({ id, radius, distanceElement, enterDistance }, ref) => {
+>(({ id, radius, distanceElement, enterDistance, onIntersections }, ref) => {
   const objectRef = useRef<Object3D>(null);
   const scene = useThree(({ scene }) => scene);
   const pressedElementIds = useMemo(() => new Set<number>(), []);
@@ -88,6 +89,9 @@ export const XSphereCollider = forwardRef<
 
   //cleanup translator
   useEffect(() => () => translator.leave({} as any), [translator]);
-  useFrame(() => translator.update({}, true, distanceElement != null));
+  useFrame(() => {
+    translator.update({}, true, distanceElement != null);
+    onIntersections?.(translator.intersections);
+  });
   return <object3D ref={objectRef} />;
 });

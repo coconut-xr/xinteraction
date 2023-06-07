@@ -36,7 +36,7 @@ const emptySet = new Set<number>();
 
 export class EventTranslator<E> {
   //state
-  private intersections: Array<Intersection> = [];
+  public intersections: Array<Intersection> = [];
   private lastPositionChangeTime: number | undefined;
   private capturedEvents: Set<Object3D> | undefined;
   private objectInteractionDataMap = new Map<Object3D, ObjectInteractionData>();

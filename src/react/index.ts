@@ -121,3 +121,4 @@ export type InputDeviceFunctions = {
 export * from "./web-pointers.js";
 export * from "./straight-pointer.js";
 export * from "./sphere-collider.js";
+export * from "./curved-pointer.js"
