@@ -23,8 +23,17 @@ describe("ray intersections", () => {
     from.position.set(1, 1, 1);
     from.rotation.y = Math.PI / 2;
     const group = new Group();
-    const mesh = new Mesh(new BoxGeometry());
-    mesh.position.set(-1, 1, 1);
+
+    const mesh1 = new Mesh(new BoxGeometry());
+    group.add(mesh1);
+    mesh1.position.set(3, 3, 1);
+    mesh1.updateMatrixWorld();
+
+    const mesh2 = new Mesh(new BoxGeometry());
+    group.add(mesh2);
+    mesh2.position.set(-3, 1, 1);
+    mesh2.updateMatrixWorld();
+
     const intersections = intersectRayFromObject(
       from,
       group,

@@ -9,7 +9,7 @@ import React, {
 import { Intersection, Object3D } from "three";
 import { EventTranslator } from "../index.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
-import { collideSphereFromObject } from "../intersections/collider.js";
+import { intersectSphereFromObject } from "../intersections/collider.js";
 
 const emptyIntersections: Array<Intersection> = [];
 
@@ -50,7 +50,7 @@ export const XSphereCollider = forwardRef<
           if (objectRef.current == null) {
             return emptyIntersections;
           }
-          return collideSphereFromObject(
+          return intersectSphereFromObject(
             objectRef.current,
             radius,
             enterDistance,

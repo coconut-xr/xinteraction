@@ -57,13 +57,13 @@ A input device represents a unit with a positions and one or multiple input devi
 [x] XLinePointer (allow teleport like pointer)  
 [ ] spherecast on InstancedGlyphMesh from glpyh
 [x] filter clipped events from Koestlich
-[ ] face info in intersection for sphere collision
+[x] face normal info in intersection for sphere collision
 [ ] quaternion on intersection (world quaternion of input device)
 [x] Koestlich/glyph bug - always intersecting
 [ ] test event (pointer) capture manually  
 [ ] test on mobile device with multi touch  
 [x] write tests for ray intersections  
 [ ] write tests for lines intersections  
-[ ] write tests for collider intersections  
+[x] write tests for collider intersections  
 [x] visualize cursor at first hit point (onIntersect -> update cursor ref)  
 [ ] write docs  
