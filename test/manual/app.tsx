@@ -168,7 +168,7 @@ function DragCube({ position }: { position: Vector3Tuple }) {
         ) {
           return;
         }
-        
+
         //compute offset between old and new input device rotation
         inputDeviceQuaternionOffset
           .copy(downState.current.inputDeviceRotation)
@@ -211,7 +211,7 @@ function RotateCubePointer({
     if (ref.current == null) {
       return;
     }
-    ref.current.rotateY(delta * 1);
+    ref.current.rotateY(delta * 0.1);
   });
   return (
     <>
@@ -249,11 +249,13 @@ function RotateCubePointer({
 
                 intersectionRef.current.position.copy(intersection.point);
                 if (intersection.face != null) {
-                  intersectionRef.current.quaternion.setFromUnitVectors(
+                  quaternionHelper.setFromUnitVectors(
                     UP,
                     intersection.face.normal
                   );
-                  intersection.object.getWorldQuaternion(quaternionHelper);
+                  intersection.object.getWorldQuaternion(
+                    intersectionRef.current.quaternion
+                  );
                   intersectionRef.current.quaternion.multiply(quaternionHelper);
                   offsetHelper.set(0, 0.01, 0);
                   offsetHelper.applyQuaternion(
