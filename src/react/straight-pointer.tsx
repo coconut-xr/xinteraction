@@ -7,7 +7,10 @@ import React, {
 } from "react";
 import { Object3D, Quaternion, Vector3 } from "three";
 import { EventTranslator, XIntersection } from "../index.js";
-import { intersectRayFromObject } from "../intersections/ray.js";
+import {
+  intersectRayFromCapturedEvents,
+  intersectRayFromObject,
+} from "../intersections/ray.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import { useFrame, useThree } from "@react-three/fiber";
 
@@ -35,12 +38,20 @@ export const XStraightPointer = forwardRef<
       id,
       false,
       dispatcher,
-      () => {
+      (_, capturedEvents) => {
         if (objectRef.current == null) {
           return emptyIntersections;
         }
         objectRef.current.getWorldPosition(worldPositionHelper);
         objectRef.current.getWorldQuaternion(worldRotationHelper);
+
+        if (capturedEvents != null) {
+          return intersectRayFromCapturedEvents(
+            worldPositionHelper,
+            worldRotationHelper,
+            capturedEvents
+          );
+        }
 
         return intersectRayFromObject(
           worldPositionHelper,

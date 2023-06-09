@@ -20,14 +20,14 @@ export function isXIntersection(val: Intersection): val is XIntersection {
   return "inputDevicePosition" in val;
 }
 
-export type EventDispatcher<E> = {
+export type EventDispatcher<E, I extends XIntersection> = {
   [Key in ObjectEventTypes]: (
     object: Object3D,
-    intersection: XIntersection,
+    intersection: I,
     inputDeviceElementId?: number
   ) => void;
 } & {
-  bind(event: E, eventTranslater: EventTranslator<E>): void;
+  bind(event: E, eventTranslater: EventTranslator<E, I>): void;
   hasEventHandlers(object: Object3D): boolean;
 };
 
@@ -43,24 +43,25 @@ const traversalIdSymbol = Symbol("traversal-id");
 
 const emptySet = new Set<number>();
 
-export class EventTranslator<E> {
+export class EventTranslator<
+  E = Event,
+  I extends XIntersection = XIntersection
+> {
   //state
-  public intersections: Array<XIntersection> = [];
+  public intersections: Array<I> = [];
   private lastPositionChangeTime: number | undefined;
-  private capturedEvents: Map<Object3D, XIntersection> | undefined;
+  private capturedEvents: Map<Object3D, I> | undefined;
   private objectInteractionDataMap = new Map<Object3D, ObjectInteractionData>();
 
   constructor(
     public readonly inputDeviceId: number,
     private readonly dispatchPressAlways: boolean,
-    protected eventDispatcher: EventDispatcher<E>,
+    protected eventDispatcher: EventDispatcher<E, I>,
     protected computeIntersections: (
       event: E,
-      objectIntersections?: Map<Object3D, XIntersection>
-    ) => Array<XIntersection>,
-    protected getPressedElementIds: (
-      intersection: XIntersection
-    ) => Iterable<number>
+      capturedEvents?: Map<Object3D, I>
+    ) => Array<I>,
+    protected getPressedElementIds: (intersection: I) => Iterable<number>
   ) {}
 
   /**
@@ -84,7 +85,7 @@ export class EventTranslator<E> {
     if (positionChanged) {
       this.intersections = this.computeIntersections(
         event,
-        this.capturedEvents == null ? undefined : this.capturedEvents
+        this.capturedEvents
       );
     }
 
@@ -199,7 +200,7 @@ export class EventTranslator<E> {
   private dispatchPressAndRelease(
     object: Object3D,
     interactionData: ObjectInteractionData,
-    intersection: XIntersection,
+    intersection: I,
     pressedElementIds: Set<number>,
     dispatchPressFor: Array<number>
   ): void {
@@ -243,7 +244,7 @@ export class EventTranslator<E> {
   private dispatchEnterAndMove(
     object: Object3D,
     interactionData: ObjectInteractionData,
-    intersection: XIntersection
+    intersection: I
   ): boolean {
     if (
       interactionData.lastIntersectedTime != null &&
@@ -261,7 +262,7 @@ export class EventTranslator<E> {
     }
   }
 
-  public addEventCapture(object: Object3D, intersection: XIntersection): void {
+  public addEventCapture(object: Object3D, intersection: I): void {
     if (this.capturedEvents == null) {
       this.capturedEvents = new Map();
     }
@@ -288,17 +289,16 @@ export class EventTranslator<E> {
   /**
    * @param callback returns false if the event should stop bubbeling upwards
    */
-  private traverseIntersections<I>(
-    intersections: Array<XIntersection>,
+  private traverseIntersections<T>(
+    intersections: Array<I>,
     callback: (
       object: Object3D,
       interactionData: ObjectInteractionData,
-      intersection: XIntersection,
+      intersection: I,
       interactionIndex: number,
-      info: I
+      info: T
     ) => boolean,
-    intersectionInfo: (intersection: XIntersection) => I = () =>
-      undefined as any
+    intersectionInfo: (intersection: I) => T = () => undefined as any
   ): void {
     const traversalId = Math.random();
     outer: for (

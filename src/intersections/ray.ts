@@ -1,6 +1,7 @@
 import {
   Camera,
   Object3D,
+  Plane,
   Quaternion,
   Raycaster,
   Vector2,
@@ -11,11 +12,65 @@ import { traverseUntilInteractable } from "./index.js";
 
 const raycaster = new Raycaster();
 
+export type XCameraRayIntersection = XIntersection & {
+  distanceViewPlane: number;
+};
+
+const directionHelper = new Vector3();
+const planeHelper = new Plane();
+
+export function intersectRayFromCapturedEvents(
+  fromPosition: Vector3,
+  fromRotation: Quaternion,
+  capturedEvents: Map<Object3D, XIntersection>
+): Array<XIntersection> {
+  directionHelper.set(0, 0, 1).applyQuaternion(fromRotation);
+  return Array.from(capturedEvents).map(([object, intersection]) => {
+    return {
+      ...intersection,
+      point: directionHelper
+        .clone()
+        .multiplyScalar(intersection.distance)
+        .add(fromPosition),
+      inputDevicePosition: fromPosition.clone(),
+      inputDeviceRotation: fromRotation.clone(),
+    };
+  });
+}
+
+export function intersectRayFromCameraCapturedEvents(
+  camera: Camera,
+  coords: Vector2,
+  capturedEvents: Map<Object3D, XCameraRayIntersection>
+): Array<XCameraRayIntersection> {
+  raycaster.setFromCamera(coords, camera);
+  rayQuaternion.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+  camera.getWorldDirection(directionHelper);
+  return Array.from(capturedEvents).map(([object, intersection]) => {
+    //set the plane to the viewPlane + the distance of the prev intersection in the camera distance
+    planeHelper.setFromNormalAndCoplanarPoint(
+      directionHelper,
+      raycaster.ray.origin
+    );
+    planeHelper.constant -= intersection.distanceViewPlane;
+
+    //find captured intersection point by intersecting the ray to the plane of the camera
+    const point = new Vector3();
+    raycaster.ray.intersectPlane(planeHelper, point);
+    return {
+      ...intersection,
+      point,
+      inputDevicePosition: raycaster.ray.origin.clone(),
+      inputDeviceRotation: rayQuaternion.clone(),
+    };
+  });
+}
+
 export function intersectRayFromObject(
   fromPosition: Vector3,
   fromRotation: Quaternion,
   on: Object3D,
-  dispatcher: EventDispatcher<Event>,
+  dispatcher: EventDispatcher<Event, XIntersection>,
   filterIntersections?: (
     intersections: Array<XIntersection>
   ) => Array<XIntersection>
@@ -50,17 +105,21 @@ export function intersectRayFromCamera(
   from: Camera,
   coords: Vector2,
   on: Object3D,
-  dispatcher: EventDispatcher<Event>,
+  dispatcher: EventDispatcher<Event, XCameraRayIntersection>,
   filterIntersections?: (
-    intersections: Array<XIntersection>
-  ) => Array<XIntersection>
-): Array<XIntersection> {
+    intersections: Array<XCameraRayIntersection>
+  ) => Array<XCameraRayIntersection>
+): Array<XCameraRayIntersection> {
   raycaster.setFromCamera(coords, from);
   rayQuaternion.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+  planeHelper.setFromNormalAndCoplanarPoint(
+    from.getWorldDirection(directionHelper),
+    raycaster.ray.origin
+  );
 
   let intersections = traverseUntilInteractable<
-    Array<XIntersection>,
-    Array<XIntersection>
+    Array<XCameraRayIntersection>,
+    Array<XCameraRayIntersection>
   >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
@@ -69,6 +128,7 @@ export function intersectRayFromCamera(
         Object.assign(intersection, {
           inputDevicePosition: raycaster.ray.origin.clone(),
           inputDeviceRotation: rayQuaternion.clone(),
+          distanceViewPlane: planeHelper.distanceToPoint(intersection.point),
         })
       ),
     (prev, cur) => prev.concat(cur),

@@ -4,25 +4,31 @@ import { traverseUntilInteractable } from "./index.js";
 
 const raycaster = new Raycaster();
 
+export type XLinesIntersection = XIntersection & { lineIndex: number };
+
+export function intersectLinesFromCapturedEvents() {
+  //TODO: store the line index on the intersection
+}
+
 export function intersectLinesFromObject(
   from: Object3D,
   fromPosition: Vector3,
   fromRotation: Quaternion,
   linePoints: Array<Vector3>,
   on: Object3D,
-  dispatcher: EventDispatcher<Event>,
+  dispatcher: EventDispatcher<Event, XLinesIntersection>,
   filterIntersections?: (
-    intersections: Array<XIntersection>
-  ) => Array<XIntersection>
-): Array<XIntersection> {
+    intersections: Array<XLinesIntersection>
+  ) => Array<XLinesIntersection>
+): Array<XLinesIntersection> {
   let intersections = traverseUntilInteractable<
-    Array<XIntersection>,
-    Array<XIntersection>
+    Array<XLinesIntersection>,
+    Array<XLinesIntersection>
   >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
     (object) => {
-      const intersections: Array<XIntersection> = [];
+      const intersections: Array<XLinesIntersection> = [];
       let prevAccLineLength = 0;
       for (let i = 1; i < linePoints.length; i++) {
         const start = linePoints[i - 1];
@@ -52,6 +58,7 @@ export function intersectLinesFromObject(
             Object.assign(newIntersection, {
               inputDevicePosition: fromPosition.clone(),
               inputDeviceRotation: fromRotation.clone(),
+              lineIndex: 0,
             })
           );
         }

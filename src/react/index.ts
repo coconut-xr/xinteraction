@@ -3,10 +3,12 @@ import { EventDispatcher, EventTranslator, XIntersection } from "../index.js";
 import { ThreeEvent, LocalState } from "@react-three/fiber";
 import { EventHandlers } from "@react-three/fiber/dist/declarations/src/core/events.js";
 
-export class R3FEventDispatcher implements EventDispatcher<Event> {
+export class R3FEventDispatcher<I extends XIntersection>
+  implements EventDispatcher<Event, I>
+{
   private stoppedEventTypeSet!: Set<string>;
   private event!: Event;
-  private translator!: EventTranslator<Event>;
+  private translator!: EventTranslator<Event, I>;
 
   press = this.dispatch.bind(this, ["onPointerDown"]);
   release = this.dispatch.bind(this, ["onPointerUp"]);
@@ -21,7 +23,7 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
   private dispatch(
     names: Array<keyof EventHandlers>,
     object: Object3D<Event>,
-    intersection: XIntersection,
+    intersection: I,
     inputDeviceElementId?: number | undefined
   ): void {
     for (const name of names) {
@@ -43,7 +45,7 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
   private createEvent(
     name: string,
     object: Object3D,
-    intersection: XIntersection,
+    intersection: I,
     inputDeviceElementId?: number | undefined
   ): ThreeEvent<Event> {
     const stoppedEventTypeSet = this.stoppedEventTypeSet;
@@ -100,7 +102,7 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
     return data;
   }
 
-  bind(event: Event, eventTranslator: EventTranslator<Event>): void {
+  bind(event: Event, eventTranslator: EventTranslator<Event, I>): void {
     this.stoppedEventTypeSet = new Set();
     this.event = event;
     this.translator = eventTranslator;
@@ -122,4 +124,4 @@ export type InputDeviceFunctions = {
 export * from "./web-pointers.js";
 export * from "./straight-pointer.js";
 export * from "./sphere-collider.js";
-export * from "./curved-pointer.js"
+export * from "./curved-pointer.js";

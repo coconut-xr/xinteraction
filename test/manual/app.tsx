@@ -67,7 +67,7 @@ const tableData = [
   ["Coconut XR", "3", "Powered by Coconut Capital GmbH"],
 ];
 
-const filterClippedIntersections = (intersections: Array<XIntersection>) =>
+const filterClippedIntersections = (intersections: Array<any>) =>
   intersections.filter(isIntersectionClipped);
 
 const lineGeometry = new BufferGeometry().setFromPoints([
@@ -153,7 +153,10 @@ function DragCube({ position }: { position: Vector3Tuple }) {
           pointToObjectOffset: ref.current.position.clone().sub(e.point),
         };
       }}
-      onPointerUp={() => {
+      onPointerUp={(e) => {
+        if (downState.current?.pointerId != e.pointerId) {
+          return;
+        }
         downState.current = undefined;
       }}
       onPointerMove={(e) => {
@@ -165,6 +168,7 @@ function DragCube({ position }: { position: Vector3Tuple }) {
         ) {
           return;
         }
+        
         //compute offset between old and new input device rotation
         inputDeviceQuaternionOffset
           .copy(downState.current.inputDeviceRotation)

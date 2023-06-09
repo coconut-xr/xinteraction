@@ -39,7 +39,7 @@ export function intersectSphereFromCapturedEvents(
       distance: intersection.distance,
       inputDevicePosition: fromPosition.clone(),
       inputDeviceRotation: fromRotation.clone(),
-      object,
+      object: intersection.object,
       point,
       face: intersection.face,
     };
@@ -54,7 +54,7 @@ export function intersectSphereFromObject(
   radius: number,
   intersectDistance: number,
   on: Object3D,
-  dispatcher: EventDispatcher<Event>,
+  dispatcher: EventDispatcher<Event, XIntersection>,
   filterIntersections?: (
     intersections: Array<XIntersection>
   ) => Array<XIntersection>

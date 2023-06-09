@@ -48,7 +48,7 @@ export const XSphereCollider = forwardRef<
     const pressedElementIds = useMemo(() => new Set<number>(), []);
     const translator = useMemo(() => {
       const dispatcher = new R3FEventDispatcher();
-      return new EventTranslator<{}>(
+      return new EventTranslator<{}, XIntersection>(
         id,
         true,
         dispatcher,

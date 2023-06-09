@@ -6,12 +6,12 @@ import React, {
   useRef,
 } from "react";
 import { Object3D, Quaternion, Vector3 } from "three";
-import { EventTranslator, XIntersection } from "../index.js";
-import { intersectLinesFromObject } from "../intersections/lines.js";
+import { EventTranslator } from "../index.js";
+import { XLinesIntersection, intersectLinesFromObject } from "../intersections/lines.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import { useFrame, useThree } from "@react-three/fiber";
 
-const emptyIntersections: Array<XIntersection> = [];
+const emptyIntersections: Array<XLinesIntersection> = [];
 
 const worldPositionHelper = new Vector3();
 const worldRotationHelper = new Quaternion();
@@ -21,18 +21,18 @@ export const XCurvedPointer = forwardRef<
   {
     id: number;
     points: Array<Vector3>;
-    onIntersections?: (intersections: ReadonlyArray<XIntersection>) => void;
+    onIntersections?: (intersections: ReadonlyArray<XLinesIntersection>) => void;
     filterIntersections?: (
-      intersections: Array<XIntersection>
-    ) => Array<XIntersection>;
+      intersections: Array<XLinesIntersection>
+    ) => Array<XLinesIntersection>;
   }
 >(({ id, points, onIntersections, filterIntersections }, ref) => {
   const objectRef = useRef<Object3D>(null);
   const scene = useThree(({ scene }) => scene);
   const pressedElementIds = useMemo(() => new Set<number>(), []);
   const translator = useMemo(() => {
-    const dispatcher = new R3FEventDispatcher();
-    return new EventTranslator<{}>(
+    const dispatcher = new R3FEventDispatcher<XLinesIntersection>();
+    return new EventTranslator<{}, XLinesIntersection>(
       id,
       false,
       dispatcher,

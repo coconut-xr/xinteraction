@@ -3,10 +3,14 @@ import { useEffect, useMemo } from "react";
 import { EventTranslator, XIntersection } from "../index.js";
 import { R3FEventDispatcher } from "./index.js";
 import { Vector2 } from "three";
-import { intersectRayFromCamera } from "../intersections/ray.js";
+import {
+  XCameraRayIntersection,
+  intersectRayFromCamera,
+  intersectRayFromCameraCapturedEvents,
+} from "../intersections/ray.js";
 
 type PointerMapEntry = {
-  translator: EventTranslator<PointerEvent>;
+  translator: EventTranslator<PointerEvent, XCameraRayIntersection>;
   pressedInputDeviceElements: Set<number>;
 };
 
@@ -14,10 +18,13 @@ export function XWebPointers({
   onIntersections,
   filterIntersections,
 }: {
-  onIntersections?: (id: number, intersections: Array<XIntersection>) => void;
+  onIntersections?: (
+    id: number,
+    intersections: Array<XCameraRayIntersection>
+  ) => void;
   filterIntersections?: (
-    intersections: Array<XIntersection>
-  ) => Array<XIntersection>;
+    intersections: Array<XCameraRayIntersection>
+  ) => Array<XCameraRayIntersection>;
 }) {
   const canvas = useThree(({ gl }) => gl.domElement);
   const pointerMap = useMemo(() => new Map<number, PointerMapEntry>(), []);
@@ -127,7 +134,9 @@ function getOrCreatePointerMapEntry(
   getState: () => RootState,
   pointerId: number,
   filterIntersections:
-    | ((intersections: Array<XIntersection>) => Array<XIntersection>)
+    | ((
+        intersections: Array<XCameraRayIntersection>
+      ) => Array<XCameraRayIntersection>)
     | undefined
 ): PointerMapEntry {
   let entry = pointerMap.get(pointerId);
@@ -140,36 +149,45 @@ function getOrCreatePointerMapEntry(
   return entry;
 }
 
-const emptyIntersection: Array<XIntersection> = [];
+const emptyIntersection: Array<XCameraRayIntersection> = [];
 
 function createPointerMapEntry(
   pointerId: number,
   getState: () => RootState,
   filterIntersections:
-    | ((intersections: Array<XIntersection>) => Array<XIntersection>)
+    | ((
+        intersections: Array<XCameraRayIntersection>
+      ) => Array<XCameraRayIntersection>)
     | undefined
 ): PointerMapEntry {
   const pressedInputDeviceElements = new Set<number>();
-  const dispatcher = new R3FEventDispatcher();
-  const translator = new EventTranslator<PointerEvent>(
+  const dispatcher = new R3FEventDispatcher<XCameraRayIntersection>();
+  const translator = new EventTranslator<PointerEvent, XCameraRayIntersection>(
     pointerId,
     false,
     dispatcher,
-    (event) => {
+    (event, capturedEvents) => {
       if (!(event.target instanceof HTMLCanvasElement)) {
         return emptyIntersection;
       }
-      //compute rotation based on pointer position
       const { camera, scene, size } = getState();
-      return intersectRayFromCamera(
+      const coords = new Vector2(
+        (event.offsetX / size.width) * 2 - 1,
+        -(event.offsetY / size.height) * 2 + 1
+      );
+      if (capturedEvents == null) {
+        return intersectRayFromCamera(
+          camera,
+          coords,
+          scene,
+          dispatcher,
+          filterIntersections
+        );
+      }
+      return intersectRayFromCameraCapturedEvents(
         camera,
-        new Vector2(
-          (event.offsetX / size.width) * 2 - 1,
-          -(event.offsetY / size.height) * 2 + 1
-        ),
-        scene,
-        dispatcher,
-        filterIntersections
+        coords,
+        capturedEvents
       );
     },
     () => pressedInputDeviceElements
