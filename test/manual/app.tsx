@@ -159,6 +159,12 @@ function DragCube({ position }: { position: Vector3Tuple }) {
         }
         downState.current = undefined;
       }}
+      onPointerLeave={(e) => {
+        if (downState.current?.pointerId != e.pointerId) {
+          return;
+        }
+        downState.current = undefined;
+      }}
       onPointerMove={(e) => {
         if (
           ref.current == null ||

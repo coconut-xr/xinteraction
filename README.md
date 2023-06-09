@@ -69,4 +69,4 @@ A input device represents a unit with a positions and one or multiple input devi
 [ ] write docs  
 [ ] solve event capture: currently we don't use the concrete captured object but instead re-bubble the event up to the captured object. Is that correct/consistent with the web?
 [x] bug: intersect with rotated object
-[ ] event capture buggy when leaving the input device (moving out of window)
+[x] event capture buggy when leaving the input device (moving out of window)
