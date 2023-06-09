@@ -9,13 +9,20 @@ import {
   Mesh,
   Object3D,
   PerspectiveCamera,
+  Quaternion,
   Vector2,
+  Vector3,
 } from "three";
 import { EventDispatcher } from "../../src/index.js";
 
 export const mockEventDispatcher = {
   hasEventHandlers: () => true,
 } as any as EventDispatcher<Event>;
+
+const worldPosition = new Vector3();
+const worldRotation = new Quaternion();
+
+//TODO: test ray event captures
 
 describe("ray intersections", () => {
   it("should have no intersections", () => {
@@ -34,8 +41,12 @@ describe("ray intersections", () => {
     mesh2.position.set(-3, 1, 1);
     mesh2.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
+
     const intersections = intersectRayFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       group,
       mockEventDispatcher
     );
@@ -57,8 +68,12 @@ describe("ray intersections", () => {
     mesh2.position.set(-3, 1, 1);
     mesh2.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
+
     const intersections = intersectRayFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       group,
       mockEventDispatcher
     );
@@ -86,8 +101,12 @@ describe("ray intersections", () => {
     mesh2.updateMatrixWorld();
     mesh3.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
+
     const intersections = intersectRayFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       group,
       mockEventDispatcher
     );
@@ -112,8 +131,12 @@ describe("ray intersections", () => {
     parent.updateMatrixWorld();
     child.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
+
     const intersections = intersectRayFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       parent,
       mockEventDispatcher
     );
@@ -141,8 +164,12 @@ describe("ray intersections", () => {
     mesh2.updateMatrixWorld();
     mesh3.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
+
     const intersections = intersectRayFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       group,
       mockEventDispatcher,
       (is) => is.filter((i) => i.object != mesh2)

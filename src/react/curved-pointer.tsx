@@ -5,23 +5,26 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { Intersection, Object3D, Vector3 } from "three";
-import { EventTranslator } from "../index.js";
+import { Object3D, Quaternion, Vector3 } from "three";
+import { EventTranslator, XIntersection } from "../index.js";
 import { intersectLinesFromObject } from "../intersections/lines.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import { useFrame, useThree } from "@react-three/fiber";
 
-const emptyIntersections: Array<Intersection> = [];
+const emptyIntersections: Array<XIntersection> = [];
+
+const worldPositionHelper = new Vector3();
+const worldRotationHelper = new Quaternion();
 
 export const XCurvedPointer = forwardRef<
   InputDeviceFunctions,
   {
     id: number;
     points: Array<Vector3>;
-    onIntersections?: (intersections: ReadonlyArray<Intersection>) => void;
+    onIntersections?: (intersections: ReadonlyArray<XIntersection>) => void;
     filterIntersections?: (
-      intersections: Array<Intersection>
-    ) => Array<Intersection>;
+      intersections: Array<XIntersection>
+    ) => Array<XIntersection>;
   }
 >(({ id, points, onIntersections, filterIntersections }, ref) => {
   const objectRef = useRef<Object3D>(null);
@@ -33,12 +36,17 @@ export const XCurvedPointer = forwardRef<
       id,
       false,
       dispatcher,
-      () => {
+      (_, objectIntersections) => {
         if (objectRef.current == null) {
           return emptyIntersections;
         }
+        objectRef.current.getWorldPosition(worldPositionHelper);
+        objectRef.current.getWorldQuaternion(worldRotationHelper);
+
         return intersectLinesFromObject(
           objectRef.current,
+          worldPositionHelper,
+          worldRotationHelper,
           points,
           scene,
           dispatcher,

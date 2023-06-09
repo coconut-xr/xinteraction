@@ -6,12 +6,18 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Intersection, Object3D } from "three";
-import { EventTranslator } from "../index.js";
+import { Object3D, Quaternion, Vector3 } from "three";
+import { EventTranslator, XIntersection } from "../index.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
-import { intersectSphereFromObject } from "../intersections/collider.js";
+import {
+  intersectSphereFromCapturedEvents,
+  intersectSphereFromObject,
+} from "../intersections/sphere.js";
 
-const emptyIntersections: Array<Intersection> = [];
+const emptyIntersections: Array<XIntersection> = [];
+
+const worldPositionHelper = new Vector3();
+const worldRotationHelper = new Quaternion();
 
 export const XSphereCollider = forwardRef<
   InputDeviceFunctions,
@@ -20,10 +26,10 @@ export const XSphereCollider = forwardRef<
     radius: number;
     enterDistance: number;
     distanceElement?: { id: number; downDistance: number };
-    onIntersections?: (intersections: Array<Intersection>) => void;
+    onIntersections?: (intersections: Array<XIntersection>) => void;
     filterIntersections?: (
-      intersections: Array<Intersection>
-    ) => Array<Intersection>;
+      intersections: Array<XIntersection>
+    ) => Array<XIntersection>;
   }
 >(
   (
@@ -46,17 +52,29 @@ export const XSphereCollider = forwardRef<
         id,
         true,
         dispatcher,
-        () => {
+        (_, capturedEvents) => {
           if (objectRef.current == null) {
             return emptyIntersections;
           }
-          return intersectSphereFromObject(
-            objectRef.current,
-            radius,
-            enterDistance,
-            scene,
-            dispatcher,
-            filterIntersections
+          objectRef.current.getWorldPosition(worldPositionHelper);
+          objectRef.current.getWorldQuaternion(worldRotationHelper);
+
+          if (capturedEvents == null) {
+            //events not captured -> compute intersections normally
+            return intersectSphereFromObject(
+              worldPositionHelper,
+              worldRotationHelper,
+              radius,
+              enterDistance,
+              scene,
+              dispatcher,
+              filterIntersections
+            );
+          }
+          return intersectSphereFromCapturedEvents(
+            worldPositionHelper,
+            worldRotationHelper,
+            capturedEvents
           );
         },
         (intersection) => {

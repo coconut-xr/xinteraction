@@ -12,7 +12,6 @@ import {
   BufferGeometry,
   CircleGeometry,
   Group,
-  Intersection,
   MOUSE,
   Mesh,
   PlaneGeometry,
@@ -59,6 +58,7 @@ import {
   MagnifyingGlass,
   Bars3,
 } from "@coconut-xr/kruemel/icons/solid";
+import { XIntersection, isXIntersection } from "../../dist/index.js";
 
 const tableData = [
   ["Entry Name", "Entry Number", "Entry Description"],
@@ -67,7 +67,7 @@ const tableData = [
   ["Coconut XR", "3", "Powered by Coconut Capital GmbH"],
 ];
 
-const filterClippedIntersections = (intersections: Array<Intersection>) =>
+const filterClippedIntersections = (intersections: Array<XIntersection>) =>
   intersections.filter(isIntersectionClipped);
 
 const lineGeometry = new BufferGeometry().setFromPoints([
@@ -90,6 +90,7 @@ export default function App() {
       <OrbitControls
         target={[0, 0, 0]}
         enableZoom={false}
+        enablePan={false}
         minDistance={5}
         maxDistance={5}
         mouseButtons={{
@@ -112,17 +113,20 @@ export default function App() {
       <HoverBox position={[4, 0, 0]} />
       <HoverBox position={[-4, 0, 0]} />
       <DragCube position={[-4, 0, -4]} />
-      <Koestlich position={[0, 5, -6]} />
+      {/*<Koestlich position={[0, 5, -6]} />*/}
     </Canvas>
   );
 }
+
+const inputDeviceQuaternionOffset = new Quaternion();
 
 function DragCube({ position }: { position: Vector3Tuple }) {
   const ref = useRef<Group>(null);
   const downState = useRef<{
     pointerId: number;
-    point: Vector3;
-    box: Vector3;
+    pointToObjectOffset: Vector3;
+    inputDeviceRotation: Quaternion;
+    boxRotation: Quaternion;
   }>();
   useEffect(() => {
     if (ref.current == null) {
@@ -133,15 +137,20 @@ function DragCube({ position }: { position: Vector3Tuple }) {
   return (
     <group
       onPointerDown={(e) => {
-        if (ref.current == null || downState.current != null) {
+        if (
+          ref.current == null ||
+          downState.current != null ||
+          !isXIntersection(e)
+        ) {
           return;
         }
         e.stopPropagation();
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
         downState.current = {
           pointerId: e.pointerId,
-          box: ref.current.position.clone(),
-          point: e.point,
+          inputDeviceRotation: e.inputDeviceRotation,
+          boxRotation: ref.current.quaternion.clone(),
+          pointToObjectOffset: ref.current.position.clone().sub(e.point),
         };
       }}
       onPointerUp={() => {
@@ -151,14 +160,29 @@ function DragCube({ position }: { position: Vector3Tuple }) {
         if (
           ref.current == null ||
           downState.current == null ||
-          e.pointerId != downState.current.pointerId
+          e.pointerId != downState.current.pointerId ||
+          !isXIntersection(e)
         ) {
           return;
         }
+        //compute offset between old and new input device rotation
+        inputDeviceQuaternionOffset
+          .copy(downState.current.inputDeviceRotation)
+          .invert()
+          .multiply(e.inputDeviceRotation);
+
+        //calculate new position using the offset from the initial intersection point to the object
+        //then rotating this offset by the rotation offset of the input device
+        //and lastly add the initial position of the box
         ref.current.position
-          .copy(e.point)
-          .sub(downState.current.point)
-          .add(downState.current.box);
+          .copy(downState.current.pointToObjectOffset)
+          .applyQuaternion(inputDeviceQuaternionOffset)
+          .add(e.point);
+
+        //calculating the new rotation by applying the offset rotation of the input device to the original rotation of the box
+        ref.current.quaternion
+          .copy(downState.current.boxRotation)
+          .multiply(inputDeviceQuaternionOffset);
       }}
       ref={ref}
     >
@@ -169,7 +193,6 @@ function DragCube({ position }: { position: Vector3Tuple }) {
   );
 }
 
-//TODO: render the first intersection point
 function RotateCubePointer({
   id,
   ...props
@@ -373,6 +396,12 @@ function ColliderSelectSphere({ id }: { id: number }) {
     }
     if (keyPressMap.has("d")) {
       ref.current.position.x += delta * 1;
+    }
+    if (keyPressMap.has("q")) {
+      ref.current.rotation.y -= delta * 1;
+    }
+    if (keyPressMap.has("e")) {
+      ref.current.rotation.y += delta * 1;
     }
   });
   return (

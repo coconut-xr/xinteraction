@@ -5,22 +5,25 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { Intersection, Object3D } from "three";
-import { EventTranslator } from "../index.js";
+import { Object3D, Quaternion, Vector3 } from "three";
+import { EventTranslator, XIntersection } from "../index.js";
 import { intersectRayFromObject } from "../intersections/ray.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import { useFrame, useThree } from "@react-three/fiber";
 
-const emptyIntersections: Array<Intersection> = [];
+const emptyIntersections: Array<XIntersection> = [];
+
+const worldPositionHelper = new Vector3();
+const worldRotationHelper = new Quaternion();
 
 export const XStraightPointer = forwardRef<
   InputDeviceFunctions,
   {
     id: number;
-    onIntersections?: (intersections: Array<Intersection>) => void;
+    onIntersections?: (intersections: Array<XIntersection>) => void;
     filterIntersections?: (
-      intersections: Array<Intersection>
-    ) => Array<Intersection>;
+      intersections: Array<XIntersection>
+    ) => Array<XIntersection>;
   }
 >(({ id, onIntersections, filterIntersections }, ref) => {
   const objectRef = useRef<Object3D>(null);
@@ -36,8 +39,12 @@ export const XStraightPointer = forwardRef<
         if (objectRef.current == null) {
           return emptyIntersections;
         }
+        objectRef.current.getWorldPosition(worldPositionHelper);
+        objectRef.current.getWorldQuaternion(worldRotationHelper);
+
         return intersectRayFromObject(
-          objectRef.current,
+          worldPositionHelper,
+          worldRotationHelper,
           scene,
           dispatcher,
           filterIntersections

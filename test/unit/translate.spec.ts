@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Group, Object3D, Vector3 } from "three";
+import { Group, Object3D, Quaternion, Vector3 } from "three";
 import { MockInputDevice } from "./mocks.js";
 
 type EventLog = {
@@ -22,7 +22,15 @@ describe("translate events", () => {
       actualEvents.push({ type: "leave", objectUUID: object.uuid })
     );
 
-    inputDevice.update([{ object: object, distance: 0, point: new Vector3() }]);
+    inputDevice.update([
+      {
+        object: object,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ]);
     inputDevice.update([]);
 
     expect(actualEvents).to.deep.equal([
@@ -56,7 +64,15 @@ describe("translate events", () => {
       actualEvents.push({ type: "leave", objectUUID: object.uuid })
     );
 
-    inputDevice.update([{ object: object, distance: 0, point: new Vector3() }]);
+    inputDevice.update([
+      {
+        object: object,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ]);
     inputDevice.update(undefined, new Map([[object, [101]]]), 101);
     inputDevice.update(undefined, new Map());
     inputDevice.update([]);
@@ -111,14 +127,30 @@ describe("translate events", () => {
 
     //press on object 1
     inputDevice.update(
-      [{ object: object1, distance: 0, point: new Vector3() }],
+      [
+        {
+          object: object1,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1],
       1
     );
     expect(pressEvent.mockTarget.hasPointerCapture()).to.equal(true);
     //leave object 1 and enter object 2
     inputDevice.update(
-      [{ object: object2, distance: 0, point: new Vector3() }],
+      [
+        {
+          object: object2,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1]
     );
     expect(pressEvent.mockTarget.hasPointerCapture()).to.equal(true);
@@ -154,7 +186,15 @@ describe("translate events", () => {
 
     //click on object 1
     inputDevice.update(
-      [{ object: object, distance: 0, point: new Vector3() }],
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1],
       1
     );
@@ -181,7 +221,15 @@ describe("translate events", () => {
 
     //enter and press
     inputDevice.update(
-      [{ object: object, distance: 0, point: new Vector3() }],
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1],
       1
     );
@@ -203,7 +251,15 @@ describe("translate events", () => {
 
     //enter and press
     inputDevice.update(
-      [{ object: object, distance: 0, point: new Vector3() }],
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1],
       1
     );
@@ -211,7 +267,15 @@ describe("translate events", () => {
     inputDevice.update([], undefined);
     //enter and release
     inputDevice.update(
-      [{ object: object, distance: 0, point: new Vector3() }],
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1]
     );
 
@@ -239,10 +303,22 @@ describe("translate events", () => {
     );
 
     inputDevice1.update([
-      { object: object, distance: 0, point: new Vector3() },
+      {
+        object: object,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     inputDevice2.update([
-      { object: object, distance: 0, point: new Vector3() },
+      {
+        object: object,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     inputDevice1.update([]);
     inputDevice2.update([]);
@@ -299,7 +375,15 @@ describe("translate events", () => {
     });
 
     inputDevice.update(
-      [{ object, distance: 0, point: new Vector3() }],
+      [
+        {
+          object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1, 2],
       1,
       2
@@ -335,8 +419,20 @@ describe("translate events", () => {
 
     inputDevice.update(
       [
-        { object: object1, distance: 0, point: new Vector3() },
-        { object: object2, distance: 0, point: new Vector3() },
+        {
+          object: object1,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+        {
+          object: object2,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
       ],
       [1],
       1
@@ -372,8 +468,20 @@ describe("translate events", () => {
 
     inputDevice.update(
       [
-        { object: object1, distance: 0, point: new Vector3() },
-        { object: object2, distance: 0, point: new Vector3() },
+        {
+          object: object1,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+        {
+          object: object2,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
       ],
       new Map([[object1, [1]]]),
       1
@@ -407,8 +515,20 @@ describe("translate events", () => {
 
     inputDevice.update(
       [
-        { object: object1, distance: 0, point: new Vector3() },
-        { object: object2, distance: 0, point: new Vector3() },
+        {
+          object: object1,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+        {
+          object: object2,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
       ],
       [1],
       1
@@ -441,16 +561,48 @@ describe("translate events", () => {
 
     //enter
     inputDevice.update([
-      { object: child1, distance: 0, point: new Vector3() },
-      { object: child1, distance: 0, point: new Vector3() },
+      {
+        object: child1,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+      {
+        object: child1,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     //move
     inputDevice.update([
-      { object: child2, distance: 0, point: new Vector3() },
-      { object: child2, distance: 0, point: new Vector3() },
+      {
+        object: child2,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+      {
+        object: child2,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     //move
-    inputDevice.update([{ object: child2, distance: 0, point: new Vector3() }]);
+    inputDevice.update([
+      {
+        object: child2,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ]);
     //leave
     inputDevice.update([]);
 
@@ -489,9 +641,25 @@ describe("translate events", () => {
     });
 
     //enter child1
-    inputDevice.update([{ object: child1, distance: 0, point: new Vector3() }]);
+    inputDevice.update([
+      {
+        object: child1,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ]);
     //leave child1 but enter child2
-    inputDevice.update([{ object: child2, distance: 0, point: new Vector3() }]);
+    inputDevice.update([
+      {
+        object: child2,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ]);
     //leave child2
     inputDevice.update([]);
 
@@ -530,7 +698,15 @@ describe("translate events", () => {
     );
     parent.add(child);
 
-    inputDevice.update([{ object: child, distance: 0, point: new Vector3() }]);
+    inputDevice.update([
+      {
+        object: child,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ]);
     inputDevice.update([]);
 
     expect(actualEvents).to.deep.equal([
@@ -554,12 +730,36 @@ describe("translate events", () => {
     parent.add(child);
 
     inputDevice.update([
-      { object: child, distance: 0, point: new Vector3() },
-      { object: parent, distance: 0, point: new Vector3() },
+      {
+        object: child,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+      {
+        object: parent,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     inputDevice.update([
-      { object: child, distance: 0, point: new Vector3() },
-      { object: parent, distance: 0, point: new Vector3() },
+      {
+        object: child,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+      {
+        object: parent,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
 
     expect(actualEvents).to.deep.equal([
@@ -584,11 +784,29 @@ describe("translate events", () => {
     );
 
     inputDevice.update([
-      { object: object1, distance: 0, point: new Vector3() },
+      {
+        object: object1,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     inputDevice.update([
-      { object: object1, distance: 0, point: new Vector3() },
-      { object: object2, distance: 0, point: new Vector3() },
+      {
+        object: object1,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+      {
+        object: object2,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
 
     expect(actualEvents).to.deep.equal([
@@ -619,14 +837,38 @@ describe("translate events", () => {
     );
 
     inputDevice.update([
-      { object: object1, distance: 0, point: new Vector3() },
+      {
+        object: object1,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     inputDevice.update([
-      { object: object1, distance: 0, point: new Vector3() },
-      { object: object2, distance: 0, point: new Vector3() },
+      {
+        object: object1,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+      {
+        object: object2,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     inputDevice.update([
-      { object: object2, distance: 0, point: new Vector3() },
+      {
+        object: object2,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
     ]);
     inputDevice.update([]);
 
@@ -655,7 +897,15 @@ describe("translate events", () => {
     });
 
     inputDevice.update(
-      [{ object: object, distance: 0, point: new Vector3() }],
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1]
     );
 
@@ -675,7 +925,15 @@ describe("translate events", () => {
     });
 
     inputDevice.update(
-      [{ object: object, distance: 0, point: new Vector3() }],
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
       [1],
       1
     );

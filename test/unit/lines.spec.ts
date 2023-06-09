@@ -1,3 +1,5 @@
+//TODO: test lines event captures
+
 describe("lines intersections", () => {
     it("should not contain objects multiple times")
     it("should have no intersections")

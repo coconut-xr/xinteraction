@@ -1,7 +1,12 @@
 import { expect } from "chai";
-import { Object3D, Group, Mesh, BoxGeometry } from "three";
+import { Object3D, Group, Mesh, BoxGeometry, Vector3, Quaternion } from "three";
 import { mockEventDispatcher } from "./ray.spec.js";
-import { intersectSphereFromObject } from "../../src/intersections/collider.js";
+import { intersectSphereFromObject } from "../../src/intersections/sphere.js";
+
+const worldPosition = new Vector3();
+const worldRotation = new Quaternion();
+
+//TODO: test sphere event captures
 
 describe("sphere collider intersections", () => {
   it("should have no intersections", () => {
@@ -19,8 +24,12 @@ describe("sphere collider intersections", () => {
     mesh2.position.set(-3, 1, 1);
     mesh2.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
+
     const intersections = intersectSphereFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       0.5,
       0,
       group,
@@ -43,8 +52,11 @@ describe("sphere collider intersections", () => {
     mesh2.position.set(-3, 1, 1);
     mesh2.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
     const intersections = intersectSphereFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       0.5,
       0,
       group,
@@ -67,8 +79,11 @@ describe("sphere collider intersections", () => {
     mesh2.position.set(1, 0.5, 1); //0.5 offset
     mesh2.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
     const intersections = intersectSphereFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       0.5,
       0,
       group,
@@ -95,8 +110,11 @@ describe("sphere collider intersections", () => {
     parent.updateMatrixWorld();
     child.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
     const intersections = intersectSphereFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       0.5,
       0,
       parent,
@@ -125,8 +143,11 @@ describe("sphere collider intersections", () => {
     mesh3.position.set(1, 1, 0.2); //0.8 offset
     mesh3.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
     const intersections = intersectSphereFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       0.5,
       0,
       group,
@@ -156,14 +177,17 @@ describe("sphere collider intersections", () => {
     mesh2.position.set(-3, 1, 1);
     mesh2.updateMatrixWorld();
 
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
     const [intersection] = intersectSphereFromObject(
-      from,
+      worldPosition,
+      worldRotation,
       0.5,
       0,
       group,
       mockEventDispatcher
     );
-    const {x,y,z} = intersection.point
+    const { x, y, z } = intersection.point;
     expect(x).be.closeTo(1.3, 0.0001);
     expect(y).be.closeTo(1, 0.0001);
     expect(z).be.closeTo(1, 0.0001);

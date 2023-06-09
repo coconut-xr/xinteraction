@@ -1,41 +1,79 @@
 import {
   BufferGeometry,
   InstancedMesh,
-  Intersection,
   Matrix4,
   Mesh,
   Object3D,
   Vector3,
-  Line,
-  LineSegments,
-  Box3,
   Sphere,
-  Triangle,
+  Quaternion,
 } from "three";
-import { EventDispatcher } from "../index.js";
+import { EventDispatcher, XIntersection } from "../index.js";
 import { traverseUntilInteractable } from "./index.js";
+
+const oldInputDevicePointOffset = new Vector3();
+const inputDeviceQuaternionOffset = new Quaternion();
+
+export function intersectSphereFromCapturedEvents(
+  fromPosition: Vector3,
+  fromRotation: Quaternion,
+  capturedEvents: Map<Object3D, XIntersection>
+) {
+  //events are captured
+  return Array.from(capturedEvents.entries()).map(([object, intersection]) => {
+    //compute old inputDevicePosition-point offset
+    oldInputDevicePointOffset
+      .copy(intersection.point)
+      .sub(intersection.inputDevicePosition);
+    //compute oldInputDeviceQuaternion-newInputDeviceQuaternion offset
+    inputDeviceQuaternionOffset
+      .copy(intersection.inputDeviceRotation)
+      .invert()
+      .multiply(fromRotation);
+    //apply quaternion offset to old inputDevicePosition-point offset and add to new inputDevicePosition
+    const point = oldInputDevicePointOffset
+      .clone()
+      .applyQuaternion(inputDeviceQuaternionOffset)
+      .add(fromPosition);
+    return {
+      distance: intersection.distance,
+      inputDevicePosition: fromPosition.clone(),
+      inputDeviceRotation: fromRotation.clone(),
+      object,
+      point,
+      face: intersection.face,
+    };
+  });
+}
 
 const collisionSphere = new Sphere();
 
 export function intersectSphereFromObject(
-  from: Object3D,
+  fromPosition: Vector3,
+  fromQuaternion: Quaternion,
   radius: number,
   intersectDistance: number,
   on: Object3D,
   dispatcher: EventDispatcher<Event>,
   filterIntersections?: (
-    intersections: Array<Intersection>
-  ) => Array<Intersection>
-): Array<Intersection> {
-  from.getWorldPosition(collisionSphere.center);
+    intersections: Array<XIntersection>
+  ) => Array<XIntersection>
+): Array<XIntersection> {
+  collisionSphere.center.copy(fromPosition);
   collisionSphere.radius = radius;
   let intersections = traverseUntilInteractable<
-    Array<Intersection>,
-    Array<Intersection>
+    Array<XIntersection>,
+    Array<XIntersection>
   >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
-    (object) => intersectSphereRecursive(object, intersectDistance),
+    (object) =>
+      intersectSphereRecursive(
+        object,
+        fromPosition,
+        fromQuaternion,
+        intersectDistance
+      ),
     (prev, cur) => prev.concat(cur),
     []
   );
@@ -46,17 +84,30 @@ export function intersectSphereFromObject(
 
 function intersectSphereRecursive(
   object: Object3D,
+  worldPosition: Vector3,
+  worldQuaternion: Quaternion,
   collideDistance: number,
-  target: Array<Intersection> = []
-): Array<Intersection> {
-  const intersections = intersectSphere(object, collideDistance);
+  target: Array<XIntersection> = []
+): Array<XIntersection> {
+  const intersections = intersectSphere(
+    object,
+    worldPosition,
+    worldQuaternion,
+    collideDistance
+  );
   if (Array.isArray(intersections)) {
     target.push(...intersections);
   } else if (intersections != null) {
     target.push(intersections);
   }
   for (const child of object.children) {
-    intersectSphereRecursive(child, collideDistance, target);
+    intersectSphereRecursive(
+      child,
+      worldPosition,
+      worldQuaternion,
+      collideDistance,
+      target
+    );
   }
   return target;
 }
@@ -66,13 +117,15 @@ const matrixHelper = new Matrix4();
 
 function intersectSphere(
   object: Object3D,
+  worldPosition: Vector3,
+  worldQuaternion: Quaternion,
   collideDistance: number
-): Array<Intersection> | Intersection | undefined {
+): Array<XIntersection> | XIntersection | undefined {
   object.updateWorldMatrix(true, false);
   if (object instanceof InstancedMesh<BufferGeometry>) {
     object.geometry.computeBoundingSphere();
     object.geometry.computeBoundingBox();
-    const intersections: Array<Intersection> = [];
+    const intersections: Array<XIntersection> = [];
     for (let i = 0; i < object.count; i++) {
       object.getMatrixAt(i, matrixHelper);
       invertedMatrixHelper.copy(matrixHelper);
@@ -89,6 +142,8 @@ function intersectSphere(
       invertedMatrixHelper.invert();
       const intersection = intersectSphereBox(
         object,
+        worldPosition,
+        worldQuaternion,
         matrixHelper,
         invertedMatrixHelper,
         object.geometry,
@@ -115,6 +170,8 @@ function intersectSphere(
     invertedMatrixHelper.copy(object.matrixWorld).invert();
     return intersectSphereBox(
       object,
+      worldPosition,
+      worldQuaternion,
       object.matrixWorld,
       invertedMatrixHelper,
       object.geometry,
@@ -142,12 +199,14 @@ const vectorHelper = new Vector3();
 
 function intersectSphereBox(
   object: Object3D,
+  worldPosition: Vector3,
+  worldQuaternion: Quaternion,
   matrixWorld: Matrix4,
   invertedMatrixWorld: Matrix4,
   geometry: BufferGeometry,
   collideDistance: number,
   instanceId?: number
-): Intersection | undefined {
+): XIntersection | undefined {
   helperSphere.copy(collisionSphere).applyMatrix4(invertedMatrixWorld);
   geometry.boundingBox!.clampPoint(helperSphere.center, vectorHelper);
 
@@ -177,6 +236,8 @@ function intersectSphereBox(
     },
     point,
     instanceId,
+    inputDevicePosition: worldPosition.clone(),
+    inputDeviceRotation: worldQuaternion.clone(),
   };
 }
 

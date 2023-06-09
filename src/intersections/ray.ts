@@ -1,26 +1,40 @@
-import { Camera, Intersection, Object3D, Raycaster, Vector2 } from "three";
-import { EventDispatcher } from "../index.js";
+import {
+  Camera,
+  Object3D,
+  Quaternion,
+  Raycaster,
+  Vector2,
+  Vector3,
+} from "three";
+import { EventDispatcher, XIntersection } from "../index.js";
 import { traverseUntilInteractable } from "./index.js";
 
 const raycaster = new Raycaster();
 
 export function intersectRayFromObject(
-  from: Object3D,
+  fromPosition: Vector3,
+  fromRotation: Quaternion,
   on: Object3D,
   dispatcher: EventDispatcher<Event>,
   filterIntersections?: (
-    intersections: Array<Intersection>
-  ) => Array<Intersection>
-): Array<Intersection> {
-  from.getWorldPosition(raycaster.ray.origin);
-  from.getWorldDirection(raycaster.ray.direction);
+    intersections: Array<XIntersection>
+  ) => Array<XIntersection>
+): Array<XIntersection> {
+  raycaster.ray.origin.copy(fromPosition);
+  raycaster.ray.direction.set(0, 0, 1).applyQuaternion(fromRotation);
   let intersections = traverseUntilInteractable<
-    Array<Intersection>,
-    Array<Intersection>
+    Array<XIntersection>,
+    Array<XIntersection>
   >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
-    (object) => raycaster.intersectObject(object, true),
+    (object) =>
+      raycaster.intersectObject(object, true).map((intersection) =>
+        Object.assign(intersection, {
+          inputDevicePosition: fromPosition.clone(),
+          inputDeviceRotation: fromRotation.clone(),
+        })
+      ),
     (prev, cur) => prev.concat(cur),
     []
   );
@@ -29,23 +43,34 @@ export function intersectRayFromObject(
   return intersections.sort((a, b) => a.distance - b.distance);
 }
 
+const rayQuaternion = new Quaternion();
+const ZAXIS = new Vector3();
+
 export function intersectRayFromCamera(
   from: Camera,
   coords: Vector2,
   on: Object3D,
   dispatcher: EventDispatcher<Event>,
   filterIntersections?: (
-    intersections: Array<Intersection>
-  ) => Array<Intersection>
-): Array<Intersection> {
+    intersections: Array<XIntersection>
+  ) => Array<XIntersection>
+): Array<XIntersection> {
   raycaster.setFromCamera(coords, from);
+  rayQuaternion.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+
   let intersections = traverseUntilInteractable<
-    Array<Intersection>,
-    Array<Intersection>
+    Array<XIntersection>,
+    Array<XIntersection>
   >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
-    (object) => raycaster.intersectObject(object, true),
+    (object) =>
+      raycaster.intersectObject(object, true).map((intersection) =>
+        Object.assign(intersection, {
+          inputDevicePosition: raycaster.ray.origin.clone(),
+          inputDeviceRotation: rayQuaternion.clone(),
+        })
+      ),
     (prev, cur) => prev.concat(cur),
     []
   );

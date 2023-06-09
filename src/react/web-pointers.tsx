@@ -1,8 +1,8 @@
 import { RootState, useStore, useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
-import { EventTranslator } from "../index.js";
+import { EventTranslator, XIntersection } from "../index.js";
 import { R3FEventDispatcher } from "./index.js";
-import { Intersection, Vector2 } from "three";
+import { Vector2 } from "three";
 import { intersectRayFromCamera } from "../intersections/ray.js";
 
 type PointerMapEntry = {
@@ -14,10 +14,10 @@ export function XWebPointers({
   onIntersections,
   filterIntersections,
 }: {
-  onIntersections?: (id: number, intersections: Array<Intersection>) => void;
+  onIntersections?: (id: number, intersections: Array<XIntersection>) => void;
   filterIntersections?: (
-    intersections: Array<Intersection>
-  ) => Array<Intersection>;
+    intersections: Array<XIntersection>
+  ) => Array<XIntersection>;
 }) {
   const canvas = useThree(({ gl }) => gl.domElement);
   const pointerMap = useMemo(() => new Map<number, PointerMapEntry>(), []);
@@ -127,7 +127,7 @@ function getOrCreatePointerMapEntry(
   getState: () => RootState,
   pointerId: number,
   filterIntersections:
-    | ((intersections: Array<Intersection>) => Array<Intersection>)
+    | ((intersections: Array<XIntersection>) => Array<XIntersection>)
     | undefined
 ): PointerMapEntry {
   let entry = pointerMap.get(pointerId);
@@ -140,13 +140,13 @@ function getOrCreatePointerMapEntry(
   return entry;
 }
 
-const emptyIntersection: Array<Intersection> = [];
+const emptyIntersection: Array<XIntersection> = [];
 
 function createPointerMapEntry(
   pointerId: number,
   getState: () => RootState,
   filterIntersections:
-    | ((intersections: Array<Intersection>) => Array<Intersection>)
+    | ((intersections: Array<XIntersection>) => Array<XIntersection>)
     | undefined
 ): PointerMapEntry {
   const pressedInputDeviceElements = new Set<number>();

@@ -1,5 +1,5 @@
-import { Object3D, Event, Intersection } from "three";
-import { EventDispatcher, EventTranslator } from "../index.js";
+import { Object3D, Event } from "three";
+import { EventDispatcher, EventTranslator, XIntersection } from "../index.js";
 import { ThreeEvent, LocalState } from "@react-three/fiber";
 import { EventHandlers } from "@react-three/fiber/dist/declarations/src/core/events.js";
 
@@ -21,7 +21,7 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
   private dispatch(
     names: Array<keyof EventHandlers>,
     object: Object3D<Event>,
-    intersection: Intersection<Object3D<Event>>,
+    intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     for (const name of names) {
@@ -43,7 +43,7 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
   private createEvent(
     name: string,
     object: Object3D,
-    intersection: Intersection,
+    intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): ThreeEvent<Event> {
     const stoppedEventTypeSet = this.stoppedEventTypeSet;
@@ -51,7 +51,8 @@ export class R3FEventDispatcher implements EventDispatcher<Event> {
     const target = {
       setPointerCapture: this.translator.addEventCapture.bind(
         this.translator,
-        object
+        object,
+        intersection
       ),
       releasePointerCapture: this.translator.removeEventCapture.bind(
         this.translator,

@@ -1,27 +1,28 @@
-import { Intersection, Object3D, Raycaster, Vector3 } from "three";
-import { EventDispatcher } from "../index.js";
+import { Object3D, Quaternion, Raycaster, Vector3 } from "three";
+import { EventDispatcher, XIntersection } from "../index.js";
 import { traverseUntilInteractable } from "./index.js";
 
 const raycaster = new Raycaster();
 
 export function intersectLinesFromObject(
   from: Object3D,
+  fromPosition: Vector3,
+  fromRotation: Quaternion,
   linePoints: Array<Vector3>,
   on: Object3D,
   dispatcher: EventDispatcher<Event>,
   filterIntersections?: (
-    intersections: Array<Intersection>
-  ) => Array<Intersection>
-): Array<Intersection> {
-  from.updateWorldMatrix(true, false);
+    intersections: Array<XIntersection>
+  ) => Array<XIntersection>
+): Array<XIntersection> {
   let intersections = traverseUntilInteractable<
-    Array<Intersection>,
-    Array<Intersection>
+    Array<XIntersection>,
+    Array<XIntersection>
   >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
     (object) => {
-      const intersections: Array<Intersection> = [];
+      const intersections: Array<XIntersection> = [];
       let prevAccLineLength = 0;
       for (let i = 1; i < linePoints.length; i++) {
         const start = linePoints[i - 1];
@@ -47,7 +48,12 @@ export function intersectLinesFromObject(
             //duplicate detected
             continue;
           }
-          intersections.push(newIntersection);
+          intersections.push(
+            Object.assign(newIntersection, {
+              inputDevicePosition: fromPosition.clone(),
+              inputDeviceRotation: fromRotation.clone(),
+            })
+          );
         }
         prevAccLineLength += lineLength;
       }
