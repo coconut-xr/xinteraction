@@ -1,13 +1,49 @@
-import { Object3D, Quaternion, Raycaster, Vector3 } from "three";
+import {
+  Line,
+  Line3,
+  Object3D,
+  Plane,
+  Quaternion,
+  Raycaster,
+  Vector3,
+} from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
 import { traverseUntilInteractable } from "./index.js";
 
 const raycaster = new Raycaster();
 
-export type XLinesIntersection = XIntersection & { lineIndex: number };
+export type XLinesIntersection = XIntersection & {
+  lineIndex: number;
+  distanceOnLine: number;
+};
 
-export function intersectLinesFromCapturedEvents() {
-  //TODO: store the line index on the intersection
+const directionHelper = new Vector3();
+const lineHelper = new Line3();
+
+export function intersectLinesFromCapturedEvents(
+  from: Object3D,
+  fromPosition: Vector3,
+  fromRotation: Quaternion,
+  linePoints: Array<Vector3>,
+  capturedEvents: Map<Object3D, XLinesIntersection>
+) {
+  return Array.from(capturedEvents).map(([object, intersection]) => {
+    directionHelper.set(0, 0, 1).applyQuaternion(fromRotation);
+    lineHelper
+      .set(
+        linePoints[intersection.lineIndex],
+        linePoints[intersection.lineIndex + 1]
+      )
+      .applyMatrix4(from.matrixWorld);
+
+    const point = lineHelper.at(intersection.distanceOnLine, new Vector3());
+    return {
+      ...intersection,
+      point,
+      inputDevicePosition: fromPosition.clone(),
+      inputDeviceRotation: fromRotation.clone(),
+    };
+  });
 }
 
 export function intersectLinesFromObject(
@@ -46,7 +82,6 @@ export function intersectLinesFromObject(
         raycaster.far = lineLength;
         const newIntersections = raycaster.intersectObject(object, true);
         for (const newIntersection of newIntersections) {
-          newIntersection.distance += prevAccLineLength;
           const duplicateIntersectionIndex = intersections.findIndex(
             ({ object }) => object === newIntersection.object
           );
@@ -54,11 +89,14 @@ export function intersectLinesFromObject(
             //duplicate detected
             continue;
           }
+          const distanceOnLine = newIntersection.distance;
+          newIntersection.distance += prevAccLineLength;
           intersections.push(
             Object.assign(newIntersection, {
               inputDevicePosition: fromPosition.clone(),
               inputDeviceRotation: fromRotation.clone(),
-              lineIndex: 0,
+              lineIndex: i - 1,
+              distanceOnLine,
             })
           );
         }

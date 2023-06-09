@@ -7,7 +7,11 @@ import React, {
 } from "react";
 import { Object3D, Quaternion, Vector3 } from "three";
 import { EventTranslator } from "../index.js";
-import { XLinesIntersection, intersectLinesFromObject } from "../intersections/lines.js";
+import {
+  XLinesIntersection,
+  intersectLinesFromCapturedEvents,
+  intersectLinesFromObject,
+} from "../intersections/lines.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import { useFrame, useThree } from "@react-three/fiber";
 
@@ -21,7 +25,9 @@ export const XCurvedPointer = forwardRef<
   {
     id: number;
     points: Array<Vector3>;
-    onIntersections?: (intersections: ReadonlyArray<XLinesIntersection>) => void;
+    onIntersections?: (
+      intersections: ReadonlyArray<XLinesIntersection>
+    ) => void;
     filterIntersections?: (
       intersections: Array<XLinesIntersection>
     ) => Array<XLinesIntersection>;
@@ -36,21 +42,30 @@ export const XCurvedPointer = forwardRef<
       id,
       false,
       dispatcher,
-      (_, objectIntersections) => {
+      (_, capturedEvents) => {
         if (objectRef.current == null) {
           return emptyIntersections;
         }
         objectRef.current.getWorldPosition(worldPositionHelper);
         objectRef.current.getWorldQuaternion(worldRotationHelper);
 
-        return intersectLinesFromObject(
+        if (capturedEvents == null) {
+          return intersectLinesFromObject(
+            objectRef.current,
+            worldPositionHelper,
+            worldRotationHelper,
+            points,
+            scene,
+            dispatcher,
+            filterIntersections
+          );
+        }
+        return intersectLinesFromCapturedEvents(
           objectRef.current,
           worldPositionHelper,
           worldRotationHelper,
           points,
-          scene,
-          dispatcher,
-          filterIntersections
+          capturedEvents
         );
       },
       () => pressedElementIds
