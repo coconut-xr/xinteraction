@@ -17,7 +17,7 @@ import { EventDispatcher } from "../../src/index.js";
 
 export const mockEventDispatcher = {
   hasEventHandlers: () => true,
-} as any as EventDispatcher<Event>;
+} as any as EventDispatcher<Event, any>;
 
 const worldPosition = new Vector3();
 const worldRotation = new Quaternion();

@@ -91,6 +91,7 @@ export function intersectLinesFromObject(
           }
           const distanceOnLine = newIntersection.distance;
           newIntersection.distance += prevAccLineLength;
+          console.log("prev", prevAccLineLength)
           intersections.push(
             Object.assign(newIntersection, {
               inputDevicePosition: fromPosition.clone(),

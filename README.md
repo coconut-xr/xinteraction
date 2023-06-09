@@ -63,8 +63,10 @@ A input device represents a unit with a positions and one or multiple input devi
 [x] test event (pointer) capture manually  
 [ ] test on mobile device with multi touch  
 [x] write tests for ray intersections  
-[ ] write tests for lines intersections  
+[x] write tests for lines intersections  
 [x] write tests for collider intersections  
+[ ] write tests for event capturing for sphere, ray, and lines intersection  
+[ ] fix code so that tests run
 [x] visualize cursor at first hit point (onIntersect -> update cursor ref)  
 [ ] write docs  
 [ ] solve event capture: currently we don't use the concrete captured object but instead re-bubble the event up to the captured object. Is that correct/consistent with the web?

@@ -58,7 +58,7 @@ type PointerCaptureTarget = {
   hasPointerCapture: (id: number) => void;
 };
 
-class MockEventDispatcher implements EventDispatcher<{}> {
+class MockEventDispatcher implements EventDispatcher<{}, any> {
   private stoppedEventTypeSet = new Set<string>();
   private event: any;
   private translator: EventTranslator<any> = null as any;
