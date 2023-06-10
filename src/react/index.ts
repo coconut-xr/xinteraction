@@ -22,7 +22,7 @@ export class R3FEventDispatcher<I extends XIntersection>
 
   private dispatch(
     names: Array<keyof EventHandlers>,
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: I,
     inputDeviceElementId?: number | undefined
   ): void {
@@ -30,11 +30,11 @@ export class R3FEventDispatcher<I extends XIntersection>
       if (this.stoppedEventTypeSet.has(name)) {
         return;
       }
-      const instance: LocalState = (object as any).__r3f;
+      const instance: LocalState = (eventObject as any).__r3f;
       instance.handlers[name]?.(
         this.createEvent(
           name,
-          object,
+          eventObject,
           intersection,
           inputDeviceElementId
         ) as any
@@ -44,7 +44,7 @@ export class R3FEventDispatcher<I extends XIntersection>
 
   private createEvent(
     name: string,
-    object: Object3D,
+    eventObject: Object3D,
     intersection: I,
     inputDeviceElementId?: number | undefined
   ): ThreeEvent<Event> {
@@ -53,16 +53,16 @@ export class R3FEventDispatcher<I extends XIntersection>
     const target = {
       setPointerCapture: this.translator.addEventCapture.bind(
         this.translator,
-        object,
+        eventObject,
         intersection
       ),
       releasePointerCapture: this.translator.removeEventCapture.bind(
         this.translator,
-        object
+        eventObject
       ),
       hasPointerCapture: this.translator.hasEventCapture.bind(
         this.translator,
-        object
+        eventObject
       ),
     };
     const data: ThreeEvent<Event> = {} as any;
@@ -75,7 +75,7 @@ export class R3FEventDispatcher<I extends XIntersection>
       data[prop] = property;
     }
     Object.assign(data, intersection, {
-      eventObject: object,
+      eventObject,
       pointer: null as any,
       intersections: null as any,
       stopped: null as any,
@@ -88,7 +88,7 @@ export class R3FEventDispatcher<I extends XIntersection>
         if (name != "onPointerEnter") {
           return;
         }
-        translator.blockFollowingIntersections(object);
+        translator.blockFollowingIntersections(eventObject);
       },
       pointerId: this.translator.inputDeviceId,
       // there should be a distinction between target and currentTarget

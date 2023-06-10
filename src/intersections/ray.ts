@@ -25,7 +25,7 @@ export function intersectRayFromCapturedEvents(
   capturedEvents: Map<Object3D, XIntersection>
 ): Array<XIntersection> {
   directionHelper.set(0, 0, 1).applyQuaternion(fromRotation);
-  return Array.from(capturedEvents).map(([object, intersection]) => {
+  return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
     return {
       ...intersection,
       point: directionHelper
@@ -34,6 +34,7 @@ export function intersectRayFromCapturedEvents(
         .add(fromPosition),
       inputDevicePosition: fromPosition.clone(),
       inputDeviceRotation: fromRotation.clone(),
+      capturedObject,
     };
   });
 }
@@ -46,7 +47,7 @@ export function intersectRayFromCameraCapturedEvents(
   raycaster.setFromCamera(coords, camera);
   rayQuaternion.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
   camera.getWorldDirection(directionHelper);
-  return Array.from(capturedEvents).map(([object, intersection]) => {
+  return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
     //set the plane to the viewPlane + the distance of the prev intersection in the camera distance
     planeHelper.setFromNormalAndCoplanarPoint(
       directionHelper,
@@ -62,6 +63,7 @@ export function intersectRayFromCameraCapturedEvents(
       point,
       inputDevicePosition: raycaster.ray.origin.clone(),
       inputDeviceRotation: rayQuaternion.clone(),
+      capturedObject,
     };
   });
 }

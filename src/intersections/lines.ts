@@ -1,12 +1,4 @@
-import {
-  Line,
-  Line3,
-  Object3D,
-  Plane,
-  Quaternion,
-  Raycaster,
-  Vector3,
-} from "three";
+import { Line3, Object3D, Quaternion, Raycaster, Vector3 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
 import { traverseUntilInteractable } from "./index.js";
 
@@ -26,8 +18,8 @@ export function intersectLinesFromCapturedEvents(
   fromRotation: Quaternion,
   linePoints: Array<Vector3>,
   capturedEvents: Map<Object3D, XLinesIntersection>
-) {
-  return Array.from(capturedEvents).map(([object, intersection]) => {
+): Array<XLinesIntersection> {
+  return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
     directionHelper.set(0, 0, 1).applyQuaternion(fromRotation);
     lineHelper
       .set(
@@ -42,6 +34,7 @@ export function intersectLinesFromCapturedEvents(
       point,
       inputDevicePosition: fromPosition.clone(),
       inputDeviceRotation: fromRotation.clone(),
+      capturedObject,
     };
   });
 }

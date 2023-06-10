@@ -55,7 +55,6 @@ A input device represents a unit with a positions and one or multiple input devi
 [x] manual down, up, cancel, and wheel for XSphereCollider
 [x] bug: pointer events not on group  
 [x] XLinePointer (allow teleport like pointer)  
-[ ] spherecast on InstancedGlyphMesh from glpyh
 [x] filter clipped events from Koestlich
 [x] face normal info in intersection for sphere collision
 [x] quaternion on intersection (world quaternion of input device)
@@ -65,12 +64,15 @@ A input device represents a unit with a positions and one or multiple input devi
 [x] write tests for ray intersections  
 [x] write tests for lines intersections  
 [x] write tests for collider intersections  
-[ ] write tests for event capturing for sphere, ray, and lines intersection  
+[ ] spherecast on InstancedGlyphMesh from glpyh
+[x] write tests for event capturing for sphere, ray, and lines intersection  
+[x] write tests that ensures that captured events are targetting the correct objects
+[x] make sure that captured events appear on the correct target (the object that was captured not the intersected object)
 [ ] fix code so that tests run
 [x] visualize cursor at first hit point (onIntersect -> update cursor ref)  
 [ ] write docs  
-[ ] solve event capture: currently we don't use the concrete captured object but instead re-bubble the event up to the captured object. Is that correct/consistent with the web?
 [x] bug: intersect with rotated object
 [x] event capture buggy when leaving the input device (moving out of window)
 [ ] double grab example
-[ ] pointer down on mobile not working
+[x] pointer down on mobile not working
+[ ] onPressMissed, onReleaseMissed, and onSelectMissed on input device

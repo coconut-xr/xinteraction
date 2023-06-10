@@ -18,32 +18,35 @@ export function intersectSphereFromCapturedEvents(
   fromPosition: Vector3,
   fromRotation: Quaternion,
   capturedEvents: Map<Object3D, XIntersection>
-) {
+): Array<XIntersection> {
   //events are captured
-  return Array.from(capturedEvents.entries()).map(([object, intersection]) => {
-    //compute old inputDevicePosition-point offset
-    oldInputDevicePointOffset
-      .copy(intersection.point)
-      .sub(intersection.inputDevicePosition);
-    //compute oldInputDeviceQuaternion-newInputDeviceQuaternion offset
-    inputDeviceQuaternionOffset
-      .copy(intersection.inputDeviceRotation)
-      .invert()
-      .multiply(fromRotation);
-    //apply quaternion offset to old inputDevicePosition-point offset and add to new inputDevicePosition
-    const point = oldInputDevicePointOffset
-      .clone()
-      .applyQuaternion(inputDeviceQuaternionOffset)
-      .add(fromPosition);
-    return {
-      distance: intersection.distance,
-      inputDevicePosition: fromPosition.clone(),
-      inputDeviceRotation: fromRotation.clone(),
-      object: intersection.object,
-      point,
-      face: intersection.face,
-    };
-  });
+  return Array.from(capturedEvents.entries()).map(
+    ([capturedObject, intersection]) => {
+      //compute old inputDevicePosition-point offset
+      oldInputDevicePointOffset
+        .copy(intersection.point)
+        .sub(intersection.inputDevicePosition);
+      //compute oldInputDeviceQuaternion-newInputDeviceQuaternion offset
+      inputDeviceQuaternionOffset
+        .copy(intersection.inputDeviceRotation)
+        .invert()
+        .multiply(fromRotation);
+      //apply quaternion offset to old inputDevicePosition-point offset and add to new inputDevicePosition
+      const point = oldInputDevicePointOffset
+        .clone()
+        .applyQuaternion(inputDeviceQuaternionOffset)
+        .add(fromPosition);
+      return {
+        distance: intersection.distance,
+        inputDevicePosition: fromPosition.clone(),
+        inputDeviceRotation: fromRotation.clone(),
+        object: intersection.object,
+        point,
+        face: intersection.face,
+        capturedObject,
+      };
+    }
+  );
 }
 
 const collisionSphere = new Sphere();

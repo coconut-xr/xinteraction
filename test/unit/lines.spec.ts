@@ -3,7 +3,10 @@
 import { expect } from "chai";
 import { Object3D, Group, Mesh, BoxGeometry, Quaternion, Vector3 } from "three";
 import { mockEventDispatcher } from "./ray.spec.js";
-import { intersectLinesFromObject } from "../../src/intersections/lines.js";
+import {
+  intersectLinesFromCapturedEvents,
+  intersectLinesFromObject,
+} from "../../src/intersections/lines.js";
 
 const worldPosition = new Vector3();
 const worldRotation = new Quaternion();
@@ -210,5 +213,121 @@ describe("lines intersections", () => {
       mesh2.uuid,
       mesh3.uuid,
     ]);
+  });
+});
+
+describe("lines intersections for captured events", () => {
+  it("should return new intersections for all captured objects", () => {
+    const object1 = new Object3D();
+    const object2 = new Object3D();
+    const from = new Object3D();
+    const intersections = intersectLinesFromCapturedEvents(
+      from,
+      from.getWorldPosition(new Vector3()),
+      from.getWorldQuaternion(new Quaternion()),
+      [new Vector3(0, 0, 0), new Vector3(0, 0, 1)],
+      new Map([
+        [
+          object1,
+          {
+            distance: 0,
+            distanceOnLine: 1,
+            lineIndex: 0,
+            inputDevicePosition: new Vector3(),
+            inputDeviceRotation: new Quaternion(),
+            object: object1,
+            point: new Vector3(),
+          },
+        ],
+        [
+          object2,
+          {
+            distance: 0,
+            distanceOnLine: 1,
+            lineIndex: 0,
+            inputDevicePosition: new Vector3(),
+            inputDeviceRotation: new Quaternion(),
+            object: object2,
+            point: new Vector3(),
+          },
+        ],
+      ])
+    );
+    expect(intersections.map((i) => i.object)).to.deep.equal([
+      object1,
+      object2,
+    ]);
+  });
+  it("should target the intersections directly to the captured objects", () => {
+    const object1 = new Object3D();
+    const object2 = new Object3D();
+    const object3 = new Object3D();
+    const object4 = new Object3D();
+    const from = new Object3D();
+    const intersections = intersectLinesFromCapturedEvents(
+      from,
+      from.getWorldPosition(new Vector3()),
+      from.getWorldQuaternion(new Quaternion()),
+      [new Vector3(0, 0, 0), new Vector3(0, 0, 1)],
+      new Map([
+        [
+          object3,
+          {
+            distance: 0,
+            distanceOnLine: 1,
+            lineIndex: 0,
+            inputDevicePosition: new Vector3(),
+            inputDeviceRotation: new Quaternion(),
+            object: object1,
+            point: new Vector3(),
+          },
+        ],
+        [
+          object4,
+          {
+            distance: 0,
+            distanceOnLine: 1,
+            lineIndex: 0,
+            inputDevicePosition: new Vector3(),
+            inputDeviceRotation: new Quaternion(),
+            object: object2,
+            point: new Vector3(),
+          },
+        ],
+      ])
+    );
+    expect(intersections.map((i) => i.capturedObject)).to.deep.equal([
+      object3,
+      object4,
+    ]);
+  });
+  it("should move the intersection point in relation to the lines movement", () => {
+    const object = new Object3D();
+    const from = new Object3D();
+    from.position.x = 1; //move 1 to right
+    from.rotation.y = Math.PI / 2; //rotate 90° to right
+    const intersections = intersectLinesFromCapturedEvents(
+      from,
+      from.getWorldPosition(new Vector3()),
+      from.getWorldQuaternion(new Quaternion()),
+      [new Vector3(0, 0, 0), new Vector3(0, 0, 1)],
+      new Map([
+        [
+          object,
+          {
+            distance: 0,
+            distanceOnLine: 1,
+            lineIndex: 0,
+            inputDevicePosition: new Vector3(0, 0, 0),
+            inputDeviceRotation: new Quaternion(),
+            object: object,
+            point: new Vector3(0, 0, 1),
+          },
+        ],
+      ])
+    );
+    expect(intersections[0].point.x).be.closeTo(2, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(0, 0.0001);
   });
 });

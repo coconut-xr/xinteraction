@@ -14,6 +14,7 @@ export type ObjectEventTypes =
 export type XIntersection = Intersection & {
   inputDevicePosition: Vector3;
   inputDeviceRotation: Quaternion;
+  capturedObject?: Object3D;
 };
 
 export function isXIntersection(val: Intersection): val is XIntersection {
@@ -93,7 +94,7 @@ export class EventTranslator<
     this.traverseIntersections<Set<number>>(
       this.intersections,
       (
-        object,
+        eventObject,
         interactionData,
         intersection,
         intersectionIndex,
@@ -102,7 +103,7 @@ export class EventTranslator<
         let entered = false;
         if (positionChanged) {
           entered = this.dispatchEnterAndMove(
-            object,
+            eventObject,
             interactionData,
             intersection
           );
@@ -112,7 +113,7 @@ export class EventTranslator<
 
         if (pressChanged || entered) {
           this.dispatchPressAndRelease(
-            object,
+            eventObject,
             interactionData,
             intersection,
             pressedElementIds,
@@ -143,12 +144,12 @@ export class EventTranslator<
       //leave events
       this.traverseIntersections(
         prevIntersections,
-        (object, interactionData, intersection) => {
+        (eventObject, interactionData, intersection) => {
           if (interactionData.lastIntersectedTime === currentTime) {
             //object was intersected this time –> therefore also all the ancestors –> can stop bubbeling up here
             return false;
           }
-          this.eventDispatcher.leave(object, intersection);
+          this.eventDispatcher.leave(eventObject, intersection);
           interactionData.lastLeftTime = currentTime;
           interactionData.lastPressedElementIds = emptySet;
           return true;
@@ -163,8 +164,8 @@ export class EventTranslator<
     this.eventDispatcher.bind(event, this);
     this.traverseIntersections(
       this.intersections,
-      (object, interactionData, intersection) => {
-        this.eventDispatcher.cancel(object, intersection);
+      (eventObject, interactionData, intersection) => {
+        this.eventDispatcher.cancel(eventObject, intersection);
         return true;
       }
     );
@@ -174,8 +175,8 @@ export class EventTranslator<
     this.eventDispatcher.bind(event, this);
     this.traverseIntersections(
       this.intersections,
-      (object, interactionData, intersection) => {
-        this.eventDispatcher.wheel(object, intersection);
+      (eventObject, interactionData, intersection) => {
+        this.eventDispatcher.wheel(eventObject, intersection);
         return true;
       }
     );
@@ -185,8 +186,8 @@ export class EventTranslator<
     this.eventDispatcher.bind(event, this);
     this.traverseIntersections(
       this.intersections,
-      (object, interactionData, intersection) => {
-        this.eventDispatcher.leave(object, intersection);
+      (eventObject, interactionData, intersection) => {
+        this.eventDispatcher.leave(eventObject, intersection);
         return true;
       }
     );
@@ -198,7 +199,7 @@ export class EventTranslator<
   }
 
   private dispatchPressAndRelease(
-    object: Object3D,
+    eventObject: Object3D,
     interactionData: ObjectInteractionData,
     intersection: I,
     pressedElementIds: Set<number>,
@@ -217,12 +218,16 @@ export class EventTranslator<
         this.dispatchPressAlways ||
         dispatchPressFor.includes(pressedElementId)
       ) {
-        this.eventDispatcher.press(object, intersection, pressedElementId);
+        this.eventDispatcher.press(eventObject, intersection, pressedElementId);
       }
     }
     for (const releasedElementId of lastPressedElementIds) {
       //pressedElementId was not pressed this time
-      this.eventDispatcher.release(object, intersection, releasedElementId);
+      this.eventDispatcher.release(
+        eventObject,
+        intersection,
+        releasedElementId
+      );
 
       const lastPressedElementTime =
         interactionData.lastPressedElementTimeMap.get(releasedElementId);
@@ -232,9 +237,13 @@ export class EventTranslator<
           interactionData.lastLeftTime < lastPressedElementTime)
       ) {
         //the object wasn't left since it was pressed last
-        this.eventDispatcher.select(object, intersection, releasedElementId);
+        this.eventDispatcher.select(
+          eventObject,
+          intersection,
+          releasedElementId
+        );
       }
-      this.removeEventCapture(object);
+      this.removeEventCapture(eventObject);
     }
   }
 
@@ -242,7 +251,7 @@ export class EventTranslator<
    * @returns if the object was entered
    */
   private dispatchEnterAndMove(
-    object: Object3D,
+    eventObject: Object3D,
     interactionData: ObjectInteractionData,
     intersection: I
   ): boolean {
@@ -251,30 +260,30 @@ export class EventTranslator<
       interactionData.lastIntersectedTime === this.lastPositionChangeTime
     ) {
       //object was intersected last time
-      this.eventDispatcher.move(object, intersection);
+      this.eventDispatcher.move(eventObject, intersection);
       return false;
     } else {
       //reset to not block the following intersections
       interactionData.blockFollowingIntersections = false;
       //object was not intersected last time
-      this.eventDispatcher.enter(object, intersection);
+      this.eventDispatcher.enter(eventObject, intersection);
       return true;
     }
   }
 
-  public addEventCapture(object: Object3D, intersection: I): void {
+  public addEventCapture(eventObject: Object3D, intersection: I): void {
     if (this.capturedEvents == null) {
       this.capturedEvents = new Map();
     }
-    this.capturedEvents.set(object, intersection);
+    this.capturedEvents.set(eventObject, intersection);
   }
 
-  public removeEventCapture(object: Object3D): void {
+  public removeEventCapture(eventObject: Object3D): void {
     if (this.capturedEvents == null) {
       return;
     }
-    this.eventDispatcher.losteventcapture(object, undefined as any);
-    if (!this.capturedEvents.delete(object)) {
+    this.eventDispatcher.losteventcapture(eventObject, undefined as any);
+    if (!this.capturedEvents.delete(eventObject)) {
       return;
     }
     if (this.capturedEvents.size === 0) {
@@ -282,8 +291,8 @@ export class EventTranslator<
     }
   }
 
-  public hasEventCapture(object: Object3D): boolean {
-    return this.capturedEvents?.has(object) ?? false;
+  public hasEventCapture(eventObject: Object3D): boolean {
+    return this.capturedEvents?.has(eventObject) ?? false;
   }
 
   /**
@@ -292,7 +301,7 @@ export class EventTranslator<
   private traverseIntersections<T>(
     intersections: Array<I>,
     callback: (
-      object: Object3D,
+      eventObject: Object3D,
       interactionData: ObjectInteractionData,
       intersection: I,
       interactionIndex: number,
@@ -307,16 +316,17 @@ export class EventTranslator<
       intersectionIndex++
     ) {
       const intersection = intersections[intersectionIndex];
-      let object: Object3D | null = intersection.object;
+      let eventObject: Object3D | null =
+        intersection.capturedObject ?? intersection.object;
       const info = intersectionInfo(intersection);
-      while (object != null) {
-        if (!checkUniqueTraversal(object, traversalId)) {
+      while (eventObject != null) {
+        if (!checkUniqueTraversal(eventObject, traversalId)) {
           continue outer;
         }
-        if (this.eventDispatcher.hasEventHandlers(object)) {
-          const interactionData = this.getInteractionData(object);
+        if (this.eventDispatcher.hasEventHandlers(eventObject)) {
+          const interactionData = this.getInteractionData(eventObject);
           const continueUpwards = callback(
-            object,
+            eventObject,
             interactionData,
             intersection,
             intersectionIndex,
@@ -326,21 +336,21 @@ export class EventTranslator<
             continue outer;
           }
         }
-        object = object.parent;
+        eventObject = eventObject.parent;
       }
     }
   }
 
-  public blockFollowingIntersections(object: Object3D): void {
-    const interactionData = this.getInteractionData(object);
+  public blockFollowingIntersections(eventObject: Object3D): void {
+    const interactionData = this.getInteractionData(eventObject);
     interactionData.blockFollowingIntersections = true;
   }
 
-  private getInteractionData(object: Object3D): ObjectInteractionData {
-    let data = this.objectInteractionDataMap.get(object);
+  private getInteractionData(eventObject: Object3D): ObjectInteractionData {
+    let data = this.objectInteractionDataMap.get(eventObject);
     if (data == null) {
       this.objectInteractionDataMap.set(
-        object,
+        eventObject,
         (data = {
           lastPressedElementTimeMap: new Map(),
           lastPressedElementIds: emptySet,

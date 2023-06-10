@@ -942,4 +942,62 @@ describe("translate events", () => {
       { type: "press", objectUUID: object.uuid, inputDeviceElementId: 1 },
     ] satisfies Array<EventLog>);
   });
+
+  it("should fire the event on the 'eventObject' not the intersected 'object'", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+
+    const child = new Object3D();
+    child.addEventListener("press", ({ inputDeviceElementId, eventObject }) => {
+      actualEvents.push({
+        type: "press",
+        objectUUID: eventObject.uuid,
+        inputDeviceElementId,
+      });
+    });
+
+    const parent = new Object3D();
+    parent.addEventListener(
+      "press",
+      ({ inputDeviceElementId, eventObject }) => {
+        actualEvents.push({
+          type: "press",
+          objectUUID: eventObject.uuid,
+          inputDeviceElementId,
+        });
+      }
+    );
+
+    const root = new Object3D();
+    root.addEventListener("press", ({ inputDeviceElementId, eventObject }) => {
+      actualEvents.push({
+        type: "press",
+        objectUUID: eventObject.uuid,
+        inputDeviceElementId,
+      });
+    });
+
+    root.add(parent);
+    parent.add(child);
+
+    inputDevice.update(
+      [
+        {
+          object: child,
+          capturedObject: parent,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
+      [1],
+      1
+    );
+
+    expect(actualEvents).to.deep.equal([
+      { type: "press", objectUUID: parent.uuid, inputDeviceElementId: 1 },
+      { type: "press", objectUUID: root.uuid, inputDeviceElementId: 1 },
+    ] satisfies Array<EventLog>);
+  });
 });

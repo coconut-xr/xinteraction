@@ -1,7 +1,18 @@
 import { expect } from "chai";
-import { Object3D, Group, Mesh, BoxGeometry, Vector3, Quaternion } from "three";
+import {
+  Object3D,
+  Group,
+  Mesh,
+  BoxGeometry,
+  Vector3,
+  Quaternion,
+  Euler,
+} from "three";
 import { mockEventDispatcher } from "./ray.spec.js";
-import { intersectSphereFromObject } from "../../src/intersections/sphere.js";
+import {
+  intersectSphereFromCapturedEvents,
+  intersectSphereFromObject,
+} from "../../src/intersections/sphere.js";
 
 const worldPosition = new Vector3();
 const worldRotation = new Quaternion();
@@ -197,5 +208,100 @@ describe("sphere collider intersections", () => {
     expect(nx).be.closeTo(-1, 0.0001);
     expect(ny).be.closeTo(0, 0.0001);
     expect(nz).be.closeTo(0, 0.0001);
+  });
+});
+
+describe("sphere collider intersections for captured events", () => {
+  it("should return new intersections for all captured objects", () => {
+    const object1 = new Object3D();
+    const object2 = new Object3D();
+    const intersections = intersectSphereFromCapturedEvents(
+      new Vector3(),
+      new Quaternion(),
+      new Map([
+        [
+          object1,
+          {
+            distance: 0,
+            inputDevicePosition: new Vector3(),
+            inputDeviceRotation: new Quaternion(),
+            object: object1,
+            point: new Vector3(),
+          },
+        ],
+        [
+          object2,
+          {
+            distance: 0,
+            inputDevicePosition: new Vector3(),
+            inputDeviceRotation: new Quaternion(),
+            object: object2,
+            point: new Vector3(),
+          },
+        ],
+      ])
+    );
+    expect(intersections.map((i) => i.object)).to.deep.equal([
+      object1,
+      object2,
+    ]);
+  });
+  it("should target the intersections directly to the captured objects", () => {
+    const object1 = new Object3D();
+    const object2 = new Object3D();
+    const object3 = new Object3D();
+    const object4 = new Object3D();
+    const intersections = intersectSphereFromCapturedEvents(
+      new Vector3(),
+      new Quaternion(),
+      new Map([
+        [
+          object3,
+          {
+            distance: 0,
+            inputDevicePosition: new Vector3(),
+            inputDeviceRotation: new Quaternion(),
+            object: object1,
+            point: new Vector3(),
+          },
+        ],
+        [
+          object4,
+          {
+            distance: 0,
+            inputDevicePosition: new Vector3(),
+            inputDeviceRotation: new Quaternion(),
+            object: object2,
+            point: new Vector3(),
+          },
+        ],
+      ])
+    );
+    expect(intersections.map((i) => i.capturedObject)).to.deep.equal([
+      object3,
+      object4,
+    ]);
+  });
+  it("should move the intersection point in relation to the sphere colliders movement", () => {
+    const object = new Object3D();
+    const intersections = intersectSphereFromCapturedEvents(
+      new Vector3(1, 0, 0), //move 1 to right
+      new Quaternion().setFromEuler(new Euler(0, Math.PI / 2, 0)), //rotate 90° to right
+      new Map([
+        [
+          object,
+          {
+            distance: 0,
+            inputDevicePosition: new Vector3(0, 0, 0),
+            inputDeviceRotation: new Quaternion(),
+            object: object,
+            point: new Vector3(0, 0, 1),
+          },
+        ],
+      ])
+    );
+    expect(intersections[0].point.x).be.closeTo(2, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(0, 0.0001);
   });
 });

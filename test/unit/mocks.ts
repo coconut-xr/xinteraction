@@ -24,6 +24,7 @@ export class MockInputDevice {
               point: new Vector3(),
               inputDevicePosition: new Vector3(),
               inputDeviceRotation: new Quaternion(),
+              capturedObject: object,
             })),
       (intersection) =>
         Array.isArray(this.pressedElementIds)
@@ -83,17 +84,19 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
   }
 
   press(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("press")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "press",
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       ...this.event,
+      ...intersection,
+      eventObject,
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("press");
@@ -101,17 +104,19 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     });
   }
   release(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("release")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "release",
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       ...this.event,
+      ...intersection,
+      eventObject,
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("release");
@@ -119,17 +124,19 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     });
   }
   cancel(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("cancel")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "cancel",
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       ...this.event,
+      ...intersection,
+      eventObject,
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("cancel");
@@ -137,17 +144,19 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     });
   }
   select(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("select")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "select",
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       ...this.event,
+      ...intersection,
+      eventObject,
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("select");
@@ -155,17 +164,19 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     });
   }
   move(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("move")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "move",
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       ...this.event,
+      ...intersection,
+      eventObject,
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("move");
@@ -173,36 +184,40 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     });
   }
   enter(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("enter")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "enter",
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       ...this.event,
+      ...intersection,
+      eventObject,
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("enter");
-        this.translator.blockFollowingIntersections(object);
+        this.translator.blockFollowingIntersections(eventObject);
       },
     });
   }
   leave(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("leave")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "leave",
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       ...this.event,
+      ...intersection,
+      eventObject,
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("leave");
@@ -210,17 +225,19 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     });
   }
   wheel(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("wheel")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "wheel",
       ...this.event,
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      ...intersection,
+      eventObject,
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("wheel");
@@ -228,17 +245,19 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     });
   }
   losteventcapture(
-    object: Object3D<Event>,
+    eventObject: Object3D<Event>,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("losteventcapture")) {
       return;
     }
-    object.dispatchEvent({
+    eventObject.dispatchEvent({
       type: "losteventcapture",
       ...this.event,
-      mockTarget: this.createTarget(this.translator, object, intersection),
+      ...intersection,
+      eventObject,
+      mockTarget: this.createTarget(this.translator, eventObject, intersection),
       inputDeviceElementId,
       stopPropagation: () => {
         this.stoppedEventTypeSet.add("losteventcapture");
