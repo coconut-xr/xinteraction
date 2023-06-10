@@ -61,7 +61,7 @@ export function XWebPointers({
         filterIntersections
       );
       updatePressedButtons(event.buttons, pressedInputDeviceElements);
-      translator.update(event, true, true);
+      translator.update(event, true, true, event.button);
       onIntersections?.(event.pointerId, translator.intersections);
     };
     const pointermove = (event: PointerEvent) => {

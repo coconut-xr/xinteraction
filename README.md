@@ -61,7 +61,7 @@ A input device represents a unit with a positions and one or multiple input devi
 [x] quaternion on intersection (world quaternion of input device)
 [x] Koestlich/glyph bug - always intersecting
 [x] test event (pointer) capture manually  
-[ ] test on mobile device with multi touch  
+[x] test on mobile device with multi touch  
 [x] write tests for ray intersections  
 [x] write tests for lines intersections  
 [x] write tests for collider intersections  
@@ -72,3 +72,5 @@ A input device represents a unit with a positions and one or multiple input devi
 [ ] solve event capture: currently we don't use the concrete captured object but instead re-bubble the event up to the captured object. Is that correct/consistent with the web?
 [x] bug: intersect with rotated object
 [x] event capture buggy when leaving the input device (moving out of window)
+[ ] double grab example
+[ ] pointer down on mobile not working
