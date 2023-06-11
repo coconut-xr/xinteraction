@@ -73,6 +73,8 @@ A input device represents a unit with a positions and one or multiple input devi
 [ ] write docs  
 [x] bug: intersect with rotated object
 [x] event capture buggy when leaving the input device (moving out of window)
-[ ] double grab example
+[x] double grab example
 [x] pointer down on mobile not working
 [ ] onPressMissed, onReleaseMissed, and onSelectMissed on input device
+[ ] computeBounding... only when necassary
+[ ] write tests for camera ray intersection

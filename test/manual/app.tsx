@@ -59,6 +59,7 @@ import {
   Bars3,
 } from "@coconut-xr/kruemel/icons/solid";
 import { XIntersection, isXIntersection } from "../../dist/index.js";
+import DoubleGrabScene from "./double-grab.js";
 
 const tableData = [
   ["Entry Name", "Entry Number", "Entry Description"],
@@ -77,9 +78,10 @@ const lineGeometry = new BufferGeometry().setFromPoints([
 const sphereGeometry = new SphereGeometry(1);
 
 export default function App() {
+  return <DoubleGrabScene />;
   return (
     <Canvas
-      style={{ width: "100wh", height: "100vh" }}
+      style={{ width: "100wh", height: "100vh", touchAction: "none" }}
       camera={{ position: [0, 0, -5] }}
       gl={{ localClippingEnabled: true }}
       events={() => ({
