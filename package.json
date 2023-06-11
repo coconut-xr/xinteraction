@@ -1,6 +1,26 @@
 {
   "name": "@coconut-xr/xinteraction",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "homepage": "https://coconut-xr.github.io/xinteraction",
+  "license": "SEE LICENSE IN LICENSE",
+  "description": "interactions for three.js",
+  "author": "Bela Bohlender",
+  "keywords": [
+    "r3f",
+    "three.js",
+    "react",
+    "webxr",
+    "interaction",
+    "userinterface",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:coconut-xr/xinteraction.git"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "nyc mocha ./test/unit/*.spec.ts",
     "build": "tsc -p build.tsconfig.json",
@@ -39,6 +59,7 @@
   "peerDependencies": {
     "three": "*"
   },
+  "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js",
     "./react": "./dist/react/index.js"
