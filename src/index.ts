@@ -36,7 +36,7 @@ type ObjectInteractionData = {
   lastIntersectedTime?: number;
   lastLeftTime?: number;
   lastPressedElementIds: Set<number>;
-  lastPressedElementTimeMap: Map<number, number>;
+  lastPressedElementEventTimeMap: Map<number, number>;
   blockFollowingIntersections: boolean;
 };
 
@@ -59,7 +59,7 @@ export class EventTranslator<
     "lastIntersectedTime" | "blockFollowingIntersections"
   > = {
     lastPressedElementIds: emptySet,
-    lastPressedElementTimeMap: new Map(),
+    lastPressedElementEventTimeMap: new Map(),
   };
 
   constructor(
@@ -128,14 +128,15 @@ export class EventTranslator<
         }
         for (const releasedElementId of lastPressedElementIds) {
           this.onReleaseMissed?.(event);
-          const lastPressedElementTime =
-            this.voidInteractionData.lastPressedElementTimeMap.get(
+          const lastPressedElementEventTime =
+            this.voidInteractionData.lastPressedElementEventTimeMap.get(
               releasedElementId
             );
           if (
-            this.voidInteractionData.lastLeftTime == null ||
-            (lastPressedElementTime != null &&
-              this.voidInteractionData.lastLeftTime < lastPressedElementTime)
+            lastPressedElementEventTime != null &&
+            (this.voidInteractionData.lastLeftTime == null ||
+              this.voidInteractionData.lastLeftTime <
+                lastPressedElementEventTime)
           ) {
             this.onSelectMissed?.(event);
           }
@@ -145,10 +146,12 @@ export class EventTranslator<
         this.voidInteractionData.lastPressedElementIds = pressedElementIds;
         //update lastPressedElementTimeMap
         for (const pressedElementId of pressedElementIds) {
-          this.voidInteractionData.lastPressedElementTimeMap.set(
-            pressedElementId,
-            currentTime
-          );
+          if (dispatchPressFor.includes(pressedElementId)) {
+            this.voidInteractionData.lastPressedElementEventTimeMap.set(
+              pressedElementId,
+              currentTime
+            );
+          }
         }
       }
     }
@@ -163,18 +166,13 @@ export class EventTranslator<
         intersectionIndex,
         pressedElementIds
       ) => {
-        let entered = false;
         if (positionChanged) {
-          entered = this.dispatchEnterAndMove(
-            eventObject,
-            interactionData,
-            intersection
-          );
+          this.dispatchEnterAndMove(eventObject, interactionData, intersection);
           //update last intersection time
           interactionData.lastIntersectedTime = currentTime;
         }
 
-        if (pressChanged || entered) {
+        if (pressChanged) {
           this.dispatchPressAndRelease(
             eventObject,
             interactionData,
@@ -186,10 +184,12 @@ export class EventTranslator<
           interactionData.lastPressedElementIds = pressedElementIds;
           //update lastPressedElementTimeMap
           for (const pressedElementId of pressedElementIds) {
-            interactionData.lastPressedElementTimeMap.set(
-              pressedElementId,
-              currentTime
-            );
+            if (dispatchPressFor.includes(pressedElementId)) {
+              interactionData.lastPressedElementEventTimeMap.set(
+                pressedElementId,
+                currentTime
+              );
+            }
           }
         }
 
@@ -292,12 +292,12 @@ export class EventTranslator<
         releasedElementId
       );
 
-      const lastPressedElementTime =
-        interactionData.lastPressedElementTimeMap.get(releasedElementId);
+      const lastPressedElementEventTime =
+        interactionData.lastPressedElementEventTimeMap.get(releasedElementId);
       if (
-        interactionData.lastLeftTime == null ||
-        (lastPressedElementTime != null &&
-          interactionData.lastLeftTime < lastPressedElementTime)
+        lastPressedElementEventTime != null &&
+        (interactionData.lastLeftTime == null ||
+          interactionData.lastLeftTime < lastPressedElementEventTime)
       ) {
         //the object wasn't left since it was pressed last
         this.eventDispatcher.select(
@@ -317,20 +317,18 @@ export class EventTranslator<
     eventObject: Object3D,
     interactionData: ObjectInteractionData,
     intersection: I
-  ): boolean {
+  ): void {
     if (
       interactionData.lastIntersectedTime != null &&
       interactionData.lastIntersectedTime === this.lastPositionChangeTime
     ) {
       //object was intersected last time
       this.eventDispatcher.move(eventObject, intersection);
-      return false;
     } else {
       //reset to not block the following intersections
       interactionData.blockFollowingIntersections = false;
       //object was not intersected last time
       this.eventDispatcher.enter(eventObject, intersection);
-      return true;
     }
   }
 
@@ -415,7 +413,7 @@ export class EventTranslator<
       this.objectInteractionDataMap.set(
         eventObject,
         (data = {
-          lastPressedElementTimeMap: new Map(),
+          lastPressedElementEventTimeMap: new Map(),
           lastPressedElementIds: emptySet,
           blockFollowingIntersections: false,
         })

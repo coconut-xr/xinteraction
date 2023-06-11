@@ -127,7 +127,7 @@ describe("ray intersections", () => {
 
     const child = new Mesh(new BoxGeometry());
     parent.add(child);
-    child.position.set(3, 1, 1);
+    child.position.set(-3, 0, 0); //therefore at (3,1,1)
 
     parent.updateMatrixWorld();
     child.updateMatrixWorld();
@@ -141,7 +141,11 @@ describe("ray intersections", () => {
       parent,
       mockEventDispatcher
     );
-    expect(intersections.map((i) => i.object.uuid)).to.deep.equal([child.uuid]);
+    expect(intersections.map((i) => i.distance)).to.deep.equal([1.5, 4.5]);
+    expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
+      child.uuid,
+      parent.uuid,
+    ]);
   });
   it("should filter intersections", () => {
     const from = new Object3D();

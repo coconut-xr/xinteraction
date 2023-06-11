@@ -7,6 +7,8 @@ import {
   Vector3,
   Quaternion,
   Euler,
+  Sphere,
+  Intersection,
 } from "three";
 import { mockEventDispatcher } from "./ray.spec.js";
 import {
@@ -40,7 +42,6 @@ describe("sphere collider intersections", () => {
       worldPosition,
       worldRotation,
       0.5,
-      0,
       group,
       mockEventDispatcher
     );
@@ -67,7 +68,6 @@ describe("sphere collider intersections", () => {
       worldPosition,
       worldRotation,
       0.5,
-      0,
       group,
       mockEventDispatcher
     );
@@ -80,12 +80,12 @@ describe("sphere collider intersections", () => {
 
     const mesh1 = new Mesh(new BoxGeometry(1, 1, 1));
     group.add(mesh1);
-    mesh1.position.set(1.9, 1, 1); //0.9 offset from collider < collider radius (0.5) + mesh bounding box "radius" (0.5)
+    mesh1.position.set(1.9, 1, 1); //0.4 offset from collider < collider radius (0.5) + mesh bounding box "radius" (0.5)
     mesh1.updateMatrixWorld();
 
     const mesh2 = new Mesh(new BoxGeometry(1, 1, 1));
     group.add(mesh2);
-    mesh2.position.set(1, 0.5, 1); //0.5 offset
+    mesh2.position.set(1, 0.5, 1); //0 offset because of 1 radius
     mesh2.updateMatrixWorld();
 
     from.getWorldPosition(worldPosition);
@@ -94,7 +94,6 @@ describe("sphere collider intersections", () => {
       worldPosition,
       worldRotation,
       0.5,
-      0,
       group,
       mockEventDispatcher
     );
@@ -102,19 +101,19 @@ describe("sphere collider intersections", () => {
       mesh2.uuid,
       mesh1.uuid,
     ]);
-    expect(intersections[0].distance).be.closeTo(-0.5, 0.0001);
-    expect(intersections[1].distance).be.closeTo(-0.1, 0.0001);
+    expect(intersections[0].distance).be.closeTo(0, 0.0001);
+    expect(intersections[1].distance).be.closeTo(0.4, 0.0001);
   });
   it("should have intersection with closest from parent mesh and child mesh", () => {
     const from = new Object3D();
     from.position.set(1, 1, 1);
 
     const parent = new Mesh(new BoxGeometry(1, 1, 1));
-    parent.position.set(1.9, 1, 1); //distance -0.1
+    parent.position.set(1.9, 1, 1); //distance 0.4
 
     const child = new Mesh(new BoxGeometry(1, 1, 1));
     parent.add(child);
-    child.position.set(0.5, 1, 1); //distance -0.5
+    child.position.set(-1.4, 0, 0); //therefore at (0.5, 1, 1) => distance 0 because child width, height, depth = 0.5
 
     parent.updateMatrixWorld();
     child.updateMatrixWorld();
@@ -125,12 +124,15 @@ describe("sphere collider intersections", () => {
       worldPosition,
       worldRotation,
       0.5,
-      0,
       parent,
       mockEventDispatcher
     );
-    expect(intersections[0].distance).be.closeTo(-0.5, 0.0001);
-    expect(intersections.map((i) => i.object.uuid)).to.deep.equal([child.uuid]);
+    expect(intersections[0].distance).be.closeTo(0, 0.0001);
+    expect(intersections[1].distance).be.closeTo(0.4, 0.0001);
+    expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
+      child.uuid,
+      parent.uuid,
+    ]);
   });
   it("should filter intersections", () => {
     const from = new Object3D();
@@ -139,17 +141,17 @@ describe("sphere collider intersections", () => {
 
     const mesh1 = new Mesh(new BoxGeometry(1, 1, 1));
     group.add(mesh1);
-    mesh1.position.set(1.9, 1, 1); //0.9 offset from collider < collider radius (0.5) + mesh bounding box "radius" (0.5)
+    mesh1.position.set(1.9, 1, 1); //0.4 offset from collider < collider radius (0.5) + mesh bounding box "radius" (0.5)
     mesh1.updateMatrixWorld();
 
     const mesh2 = new Mesh(new BoxGeometry(1, 1, 1));
     group.add(mesh2);
-    mesh2.position.set(1, 0.5, 1); //0.5 offset
+    mesh2.position.set(1, 0.5, 1); //0 offset
     mesh2.updateMatrixWorld();
 
     const mesh3 = new Mesh(new BoxGeometry(1, 1, 1));
     group.add(mesh3);
-    mesh3.position.set(1, 1, 0.2); //0.8 offset
+    mesh3.position.set(1, 1, 0.2); //0.3 offset
     mesh3.updateMatrixWorld();
 
     from.getWorldPosition(worldPosition);
@@ -158,7 +160,6 @@ describe("sphere collider intersections", () => {
       worldPosition,
       worldRotation,
       0.5,
-      0,
       group,
       mockEventDispatcher,
       (is) => is.filter((i) => i.object != mesh2)
@@ -167,8 +168,8 @@ describe("sphere collider intersections", () => {
       mesh3.uuid,
       mesh1.uuid,
     ]);
-    expect(intersections[0].distance).be.closeTo(-0.2, 0.0001);
-    expect(intersections[1].distance).be.closeTo(-0.1, 0.0001);
+    expect(intersections[0].distance).be.closeTo(0.3, 0.0001);
+    expect(intersections[1].distance).be.closeTo(0.4, 0.0001);
   });
 
   it("should intersect the face with the correct normal", () => {
@@ -192,7 +193,6 @@ describe("sphere collider intersections", () => {
       worldPosition,
       worldRotation,
       0.5,
-      0,
       group,
       mockEventDispatcher
     );
@@ -206,6 +206,35 @@ describe("sphere collider intersections", () => {
     expect(nx).be.closeTo(-1, 0.0001);
     expect(ny).be.closeTo(0, 0.0001);
     expect(nz).be.closeTo(0, 0.0001);
+  });
+
+  it("should intersect using spherecast", () => {
+    const object = new Object3D();
+    (object as any).spherecast = (
+      sphere: Sphere,
+      intersections: Array<Intersection>
+    ) => {
+      const sphereHelper = new Sphere(new Vector3(2, 0, 0), 0.5);
+      const point = sphereHelper.clampPoint(sphere.center, new Vector3());
+      if (sphere.containsPoint(point)) {
+        intersections.push({
+          distance: sphere.center.distanceTo(point),
+          object,
+          point,
+        });
+      }
+    };
+    const intersections = intersectSphereFromObject(
+      new Vector3(),
+      new Quaternion(),
+      1.6,
+      object,
+      mockEventDispatcher
+    );
+    expect(intersections[0].point.x).be.closeTo(1.5, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(0, 0.0001);
+    expect(intersections.map((i) => i.distance)).to.deep.equal([1.5]);
   });
 });
 

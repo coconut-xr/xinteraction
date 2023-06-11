@@ -23,7 +23,6 @@ export const XSphereCollider = forwardRef<
   InputDeviceFunctions,
   {
     id: number;
-    radius: number;
     enterDistance: number;
     distanceElement?: { id: number; downDistance: number };
     onIntersections?: (intersections: Array<XIntersection>) => void;
@@ -35,7 +34,6 @@ export const XSphereCollider = forwardRef<
   (
     {
       id,
-      radius,
       distanceElement,
       enterDistance,
       onIntersections,
@@ -64,7 +62,6 @@ export const XSphereCollider = forwardRef<
             return intersectSphereFromObject(
               worldPositionHelper,
               worldRotationHelper,
-              radius,
               enterDistance,
               scene,
               dispatcher,
@@ -89,14 +86,7 @@ export const XSphereCollider = forwardRef<
           return pressedElementIds;
         }
       );
-    }, [
-      id,
-      filterIntersections,
-      radius,
-      enterDistance,
-      distanceElement,
-      scene,
-    ]);
+    }, [id, filterIntersections, enterDistance, distanceElement, scene]);
 
     useEffect(
       () => () => {

@@ -7,6 +7,7 @@ import {
   Vector3,
   Sphere,
   Quaternion,
+  Intersection,
 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
 import { traverseUntilInteractable } from "./index.js";
@@ -55,7 +56,6 @@ export function intersectSphereFromObject(
   fromPosition: Vector3,
   fromQuaternion: Quaternion,
   radius: number,
-  intersectDistance: number,
   on: Object3D,
   dispatcher: EventDispatcher<Event, XIntersection>,
   filterIntersections?: (
@@ -70,13 +70,7 @@ export function intersectSphereFromObject(
   >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
-    (object) =>
-      intersectSphereRecursive(
-        object,
-        fromPosition,
-        fromQuaternion,
-        intersectDistance
-      ),
+    (object) => intersectSphereRecursive(object, fromQuaternion),
     (prev, cur) => prev.concat(cur),
     []
   );
@@ -87,30 +81,17 @@ export function intersectSphereFromObject(
 
 function intersectSphereRecursive(
   object: Object3D,
-  worldPosition: Vector3,
-  worldQuaternion: Quaternion,
-  collideDistance: number,
+  inputDeviceRotation: Quaternion,
   target: Array<XIntersection> = []
 ): Array<XIntersection> {
-  const intersections = intersectSphere(
-    object,
-    worldPosition,
-    worldQuaternion,
-    collideDistance
-  );
+  const intersections = intersectSphere(object, inputDeviceRotation);
   if (Array.isArray(intersections)) {
     target.push(...intersections);
   } else if (intersections != null) {
     target.push(intersections);
   }
   for (const child of object.children) {
-    intersectSphereRecursive(
-      child,
-      worldPosition,
-      worldQuaternion,
-      collideDistance,
-      target
-    );
+    intersectSphereRecursive(child, inputDeviceRotation, target);
   }
   return target;
 }
@@ -118,13 +99,26 @@ function intersectSphereRecursive(
 const invertedMatrixHelper = new Matrix4();
 const matrixHelper = new Matrix4();
 
+function isSpherecastable(obj: Object3D): obj is Object3D & {
+  spherecast(sphere: Sphere, intersects: Intersection[]): void;
+} {
+  return "spherecast" in obj;
+}
+
 function intersectSphere(
   object: Object3D,
-  worldPosition: Vector3,
-  worldQuaternion: Quaternion,
-  collideDistance: number
+  inputDeviceRotation: Quaternion
 ): Array<XIntersection> | XIntersection | undefined {
   object.updateWorldMatrix(true, false);
+  if (isSpherecastable(object)) {
+    const intersections: Array<Intersection> = [];
+    object.spherecast(collisionSphere, intersections);
+    return intersections.map((intersection) => ({
+      ...intersection,
+      inputDevicePosition: collisionSphere.center.clone(),
+      inputDeviceRotation: inputDeviceRotation.clone(),
+    }));
+  }
   if (object instanceof InstancedMesh<BufferGeometry>) {
     if (object.geometry.boundingSphere == null) {
       object.geometry.computeBoundingSphere();
@@ -137,24 +131,17 @@ function intersectSphere(
       object.getMatrixAt(i, matrixHelper);
       invertedMatrixHelper.copy(matrixHelper);
       invertedMatrixHelper.premultiply(object.matrixWorld);
-      if (
-        !intersectSphereSphere(
-          invertedMatrixHelper,
-          object.geometry,
-          collideDistance
-        )
-      ) {
+      if (!intersectSphereSphere(invertedMatrixHelper, object.geometry)) {
         continue;
       }
       invertedMatrixHelper.invert();
       const intersection = intersectSphereBox(
         object,
-        worldPosition,
-        worldQuaternion,
+        collisionSphere.center,
+        inputDeviceRotation,
         matrixHelper,
         invertedMatrixHelper,
         object.geometry,
-        collideDistance,
         i
       );
       if (intersection != null) {
@@ -166,13 +153,7 @@ function intersectSphere(
     if (object.geometry.boundingSphere == null) {
       object.geometry.computeBoundingSphere();
     }
-    if (
-      !intersectSphereSphere(
-        object.matrixWorld,
-        object.geometry,
-        collideDistance
-      )
-    ) {
+    if (!intersectSphereSphere(object.matrixWorld, object.geometry)) {
       return undefined;
     }
     if (object.geometry.boundingBox == null) {
@@ -181,12 +162,11 @@ function intersectSphere(
     invertedMatrixHelper.copy(object.matrixWorld).invert();
     return intersectSphereBox(
       object,
-      worldPosition,
-      worldQuaternion,
+      collisionSphere.center,
+      inputDeviceRotation,
       object.matrixWorld,
       invertedMatrixHelper,
-      object.geometry,
-      collideDistance
+      object.geometry
     );
   }
   return undefined;
@@ -196,13 +176,12 @@ const helperSphere = new Sphere();
 
 function intersectSphereSphere(
   matrixWorld: Matrix4,
-  geometry: BufferGeometry,
-  collideDistance: number
+  geometry: BufferGeometry
 ): boolean {
   helperSphere.copy(geometry.boundingSphere!).applyMatrix4(matrixWorld);
   return (
     helperSphere.center.distanceToSquared(collisionSphere.center) <
-    (collideDistance + collisionSphere.radius + helperSphere.radius) ** 2
+    (collisionSphere.radius + helperSphere.radius) ** 2
   );
 }
 
@@ -210,12 +189,11 @@ const vectorHelper = new Vector3();
 
 function intersectSphereBox(
   object: Object3D,
-  worldPosition: Vector3,
-  worldQuaternion: Quaternion,
+  inputDevicePosition: Vector3,
+  inputDeviceRotation: Quaternion,
   matrixWorld: Matrix4,
   invertedMatrixWorld: Matrix4,
   geometry: BufferGeometry,
-  collideDistance: number,
   instanceId?: number
 ): XIntersection | undefined {
   helperSphere.copy(collisionSphere).applyMatrix4(invertedMatrixWorld);
@@ -230,13 +208,13 @@ function intersectSphereBox(
   );
   if (
     distanceToSphereCenterSquared >
-    (helperSphere.radius + collideDistance) ** 2
+    helperSphere.radius * helperSphere.radius
   ) {
     return undefined;
   }
   const point = vectorHelper.clone();
   return {
-    distance: Math.sqrt(distanceToSphereCenterSquared) - helperSphere.radius,
+    distance: Math.sqrt(distanceToSphereCenterSquared),
     object,
     face: {
       a: 0,
@@ -247,8 +225,8 @@ function intersectSphereBox(
     },
     point,
     instanceId,
-    inputDevicePosition: worldPosition.clone(),
-    inputDeviceRotation: worldQuaternion.clone(),
+    inputDevicePosition: inputDevicePosition.clone(),
+    inputDeviceRotation: inputDeviceRotation.clone(),
   };
 }
 

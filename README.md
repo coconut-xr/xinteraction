@@ -44,7 +44,6 @@ Stopping the propagation for an event causes terminates the event propagation to
 
 If a input device is captured on one or multiple objects, the captured objects are used instead of the intersections.
 
-
 ## Input Device
 
 A input device represents a unit with a positions and one or multiple input device elements. A input device element is a pressable or activateable element belonging to one input device with the same position as the input device. For instance, a input device can be a mouse and all buttons are input device elements. However, in case of a touch device, every individual pointer (finger) is a input device, since each pointer has its own position.
@@ -64,13 +63,10 @@ A input device represents a unit with a positions and one or multiple input devi
 [x] write tests for ray intersections  
 [x] write tests for lines intersections  
 [x] write tests for collider intersections  
-[ ] spherecast on InstancedGlyphMesh from glpyh
 [x] write tests for event capturing for sphere, ray, and lines intersection  
 [x] write tests that ensures that captured events are targetting the correct objects
 [x] make sure that captured events appear on the correct target (the object that was captured not the intersected object)
-[ ] fix code so that tests run
 [x] visualize cursor at first hit point (onIntersect -> update cursor ref)  
-[ ] write docs  
 [x] bug: intersect with rotated object
 [x] event capture buggy when leaving the input device (moving out of window)
 [x] double grab example
@@ -79,5 +75,8 @@ A input device represents a unit with a positions and one or multiple input devi
 [x] write testsfor onMissed...
 [x] computeBounding... only when necassary
 [x] write tests for camera ray intersection
-[ ] bug: move while holding button causes select when released
-[ ] write test for above bug
+[x] bug: move while holding button causes select when released
+[x] fix code so that tests run
+[x] spherecast on InstancedGlyphMesh from glpyh
+[ ] write docs  
+[x] write test for above bug

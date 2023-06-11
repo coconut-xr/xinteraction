@@ -360,9 +360,8 @@ function ColliderSphere({ id }: { id: number }) {
       <XSphereCollider
         filterIntersections={filterClippedIntersections}
         id={id}
-        radius={0.5}
-        distanceElement={{ id: 1, downDistance: 0 }}
-        enterDistance={0.5}
+        distanceElement={{ id: 1, downDistance: 0.5 }}
+        enterDistance={1}
       />
       <mesh scale={0.5} geometry={sphereGeometry}>
         <meshBasicMaterial color="red" toneMapped={false} />
@@ -424,8 +423,7 @@ function ColliderSelectSphere({ id }: { id: number }) {
         filterIntersections={filterClippedIntersections}
         ref={sphereRef}
         id={id}
-        radius={0.5}
-        enterDistance={0.5}
+        enterDistance={1}
       />
       <mesh scale={0.5} geometry={sphereGeometry}>
         <meshBasicMaterial color="violet" toneMapped={false} />

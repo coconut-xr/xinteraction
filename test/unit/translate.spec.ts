@@ -884,13 +884,13 @@ describe("translate events", () => {
     ] satisfies Array<EventLog>);
   });
 
-  it("should not trigger press because the pointer was dragged in", () => {
+  it("should not trigger select because the pointer was dragged in", () => {
     const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
-    object.addEventListener("press", ({ inputDeviceElementId }) => {
+    object.addEventListener("select", ({ inputDeviceElementId }) => {
       actualEvents.push({
-        type: "press",
+        type: "select",
         objectUUID: object.uuid,
         inputDeviceElementId,
       });
@@ -909,16 +909,18 @@ describe("translate events", () => {
       [1]
     );
 
+    inputDevice.update(undefined, []);
+
     expect(actualEvents).to.deep.equal([] satisfies Array<EventLog>);
   });
 
-  it("should not trigger press because the pointer was not dragged in (the pointer was pressed inside)", () => {
+  it("should trigger select because the pointer was not dragged in (the pointer was pressed inside)", () => {
     const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
     const object = new Object3D();
-    object.addEventListener("press", ({ inputDeviceElementId }) => {
+    object.addEventListener("select", ({ inputDeviceElementId }) => {
       actualEvents.push({
-        type: "press",
+        type: "select",
         objectUUID: object.uuid,
         inputDeviceElementId,
       });
@@ -938,8 +940,10 @@ describe("translate events", () => {
       1
     );
 
+    inputDevice.update(undefined, []);
+
     expect(actualEvents).to.deep.equal([
-      { type: "press", objectUUID: object.uuid, inputDeviceElementId: 1 },
+      { type: "select", objectUUID: object.uuid, inputDeviceElementId: 1 },
     ] satisfies Array<EventLog>);
   });
 
@@ -1053,22 +1057,29 @@ describe("translator's onMissed... events", () => {
 
     expect(actualEvents).to.deep.equal(["releaseMissed"]);
   });
-  it("should fire onSelectMissed", () => {
+  it("should not trigger select because the pointer was dragged into the void", () => {
     const actualEvents: Array<string> = [];
-    const inputDevice = new MockInputDevice(
-      1,
-      () => actualEvents.push("pressMissed"),
-      () => actualEvents.push("releaseMissed"),
-      () => actualEvents.push("selectMissed")
+    const inputDevice = new MockInputDevice(1, undefined, undefined, () =>
+      actualEvents.push("selectMissed")
     );
 
-    inputDevice.update(undefined, [101], 101);
+    inputDevice.update([], [1]);
+
     inputDevice.update(undefined, []);
 
-    expect(actualEvents).to.deep.equal([
-      "pressMissed",
-      "releaseMissed",
-      "selectMissed",
-    ]);
+    expect(actualEvents).to.deep.equal([]);
+  });
+
+  it("should trigger select because the pointer was not dragged into the void", () => {
+    const actualEvents: Array<string> = [];
+    const inputDevice = new MockInputDevice(1, undefined, undefined, () =>
+      actualEvents.push("selectMissed")
+    );
+
+    inputDevice.update([], [1], 1);
+
+    inputDevice.update(undefined, []);
+
+    expect(actualEvents).to.deep.equal(["selectMissed"]);
   });
 });

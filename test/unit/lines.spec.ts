@@ -152,7 +152,7 @@ describe("lines intersections", () => {
 
     const child = new Mesh(new BoxGeometry());
     parent.add(child);
-    child.position.set(1, 1, 0);
+    child.position.set(-0.6, 0, 0); //therefore at (1,1,0)
     child.updateMatrixWorld();
 
     from.getWorldPosition(worldPosition);
