@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import { useThree, useFrame } from "@react-three/fiber";
 import React, {
   useRef,
@@ -46,7 +47,7 @@ export const XSphereCollider = forwardRef<
     const pressedElementIds = useMemo(() => new Set<number>(), []);
     const translator = useMemo(() => {
       const dispatcher = new R3FEventDispatcher();
-      return new EventTranslator<{}, XIntersection>(
+      return new EventTranslator<any, XIntersection>(
         id,
         true,
         dispatcher,

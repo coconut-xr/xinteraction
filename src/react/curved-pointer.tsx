@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import React, {
   forwardRef,
   useEffect,
@@ -38,7 +39,7 @@ export const XCurvedPointer = forwardRef<
   const pressedElementIds = useMemo(() => new Set<number>(), []);
   const translator = useMemo(() => {
     const dispatcher = new R3FEventDispatcher<XLinesIntersection>();
-    return new EventTranslator<{}, XLinesIntersection>(
+    return new EventTranslator<any, XLinesIntersection>(
       id,
       false,
       dispatcher,

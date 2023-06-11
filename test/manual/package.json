@@ -11,7 +11,7 @@
     "@react-three/drei": "^9.70.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "xinteraction": "file:../.."
+    "@coconut-xr/xinteraction": "file:../.."
   },
   "devDependencies": {
     "@types/react": "^18.0.34",

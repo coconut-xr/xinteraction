@@ -2,7 +2,7 @@ import { Box } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useCallback, useMemo, useRef } from "react";
 import { Matrix4, Mesh, Quaternion, Vector3 } from "three";
-import { XWebPointers } from "xinteraction/react";
+import { XWebPointers } from "@coconut-xr/xinteraction/react";
 import { isXIntersection } from "../../dist/index.js";
 
 export default function DoubleGrabScene() {

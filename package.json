@@ -1,8 +1,12 @@
 {
-  "name": "xinteraction",
+  "name": "@coconut-xr/xinteraction",
+  "version": "0.0.0",
   "scripts": {
     "test": "nyc mocha ./test/unit/*.spec.ts",
     "build": "tsc -p build.tsconfig.json",
+    "check": "run-s check:prettier check:eslint",
+    "check:prettier": "prettier --check 'src/**/*.{ts,tsx}'",
+    "check:eslint": "eslint src",
     "fix": "run-s fix:prettier fix:eslint",
     "fix:prettier": "prettier --write 'src/**/*.{ts,tsx}'",
     "fix:eslint": "eslint src --fix"
@@ -14,14 +18,23 @@
     "@types/mocha": "^10.0.1",
     "@types/react": "^18.2.7",
     "@types/three": "^0.152.1",
+    "@typescript-eslint/eslint-plugin": "^5.59.9",
+    "@typescript-eslint/parser": "^5.59.9",
     "chai": "^4.3.7",
+    "eslint": "^8.42.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
+    "prettier": "^2.8.8",
     "react-reconciler": "^0.29.0",
     "three": "^0.152.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4",
-    "zustand": "^3"
+    "zustand": "^3",
+    "npm-run-all": "^4.1.5"
   },
   "peerDependencies": {
     "three": "*"

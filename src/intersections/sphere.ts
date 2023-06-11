@@ -119,7 +119,7 @@ function intersectSphere(
       inputDeviceRotation: inputDeviceRotation.clone(),
     }));
   }
-  if (object instanceof InstancedMesh<BufferGeometry>) {
+  if (object instanceof InstancedMesh) {
     if (object.geometry.boundingSphere == null) {
       object.geometry.computeBoundingSphere();
     }
@@ -149,7 +149,7 @@ function intersectSphere(
       }
     }
   }
-  if (object instanceof Mesh<BufferGeometry>) {
+  if (object instanceof Mesh) {
     if (object.geometry.boundingSphere == null) {
       object.geometry.computeBoundingSphere();
     }

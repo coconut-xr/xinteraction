@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, GroupProps, MeshProps, useFrame } from "@react-three/fiber";
 import {
   InputDeviceFunctions,
@@ -6,7 +6,7 @@ import {
   XSphereCollider,
   XStraightPointer,
   XWebPointers,
-} from "xinteraction/react";
+} from "@coconut-xr/xinteraction/react";
 import { Box, OrbitControls } from "@react-three/drei";
 import {
   BufferGeometry,

@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import React, {
   forwardRef,
   useEffect,
@@ -34,7 +35,7 @@ export const XStraightPointer = forwardRef<
   const pressedElementIds = useMemo(() => new Set<number>(), []);
   const translator = useMemo(() => {
     const dispatcher = new R3FEventDispatcher();
-    return new EventTranslator<{}>(
+    return new EventTranslator<any>(
       id,
       false,
       dispatcher,

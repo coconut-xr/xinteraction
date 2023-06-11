@@ -18,7 +18,9 @@ export class R3FEventDispatcher<I extends XIntersection>
   enter = this.dispatch.bind(this, ["onPointerEnter", "onPointerOver"]);
   leave = this.dispatch.bind(this, ["onPointerLeave", "onPointerOut"]);
   wheel = this.dispatch.bind(this, ["onWheel"]);
-  losteventcapture = () => {}; //this.dispatch.bind(this, "lostpointercapture")
+  losteventcapture = () => {
+    //nothing
+  }; //this.dispatch.bind(this, "lostpointercapture")
 
   private dispatch(
     names: Array<keyof EventHandlers>,
@@ -67,7 +69,7 @@ export class R3FEventDispatcher<I extends XIntersection>
     };
     const data: ThreeEvent<Event> = {} as any;
     //assign event properties to data
-    for (let prop in this.event) {
+    for (const prop in this.event) {
       const property = this.event[prop as keyof Event];
       if (typeof property === "function") {
         continue;
