@@ -142,7 +142,6 @@ function DoubleGrabCube() {
         if (!isXIntersection(e)) {
           return;
         }
-        console.log(e.pointerId);
         e.stopPropagation();
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
         updateObjectMatrix();
@@ -169,7 +168,6 @@ function DoubleGrabCube() {
         if (intersection == null) {
           return;
         }
-        console.log(e.pointerId);
         intersection.currentPosition = e.point;
         intersection.currentRotation = e.inputDeviceRotation;
       }}

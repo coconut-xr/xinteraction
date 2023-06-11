@@ -78,10 +78,10 @@ export const XSphereCollider = forwardRef<
           );
         },
         (intersection) => {
-          if (distanceElement == null) {
+          if (distanceElement == null || intersection == null) {
             return pressedElementIds;
           }
-          if (intersection.distance <= distanceElement.id) {
+          if (intersection.distance <= distanceElement.downDistance) {
             pressedElementIds.add(distanceElement.id);
           } else {
             pressedElementIds.delete(distanceElement.id);

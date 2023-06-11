@@ -78,7 +78,7 @@ const lineGeometry = new BufferGeometry().setFromPoints([
 const sphereGeometry = new SphereGeometry(1);
 
 export default function App() {
-  return <DoubleGrabScene />;
+  //return <DoubleGrabScene />;
   return (
     <Canvas
       style={{ width: "100wh", height: "100vh", touchAction: "none" }}
@@ -115,7 +115,7 @@ export default function App() {
       <HoverBox position={[4, 0, 0]} />
       <HoverBox position={[-4, 0, 0]} />
       <DragCube position={[-4, 0, -4]} />
-      {/*<Koestlich position={[0, 5, -6]} />*/}
+      <Koestlich position={[0, 5, -6]} />
     </Canvas>
   );
 }
@@ -361,7 +361,7 @@ function ColliderSphere({ id }: { id: number }) {
         filterIntersections={filterClippedIntersections}
         id={id}
         radius={0.5}
-        distanceElement={{ id: 1, downDistance: 0.1 }}
+        distanceElement={{ id: 1, downDistance: 0 }}
         enterDistance={0.5}
       />
       <mesh scale={0.5} geometry={sphereGeometry}>

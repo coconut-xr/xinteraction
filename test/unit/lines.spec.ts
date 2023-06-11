@@ -1,5 +1,3 @@
-//TODO: test lines event captures
-
 import { expect } from "chai";
 import { Object3D, Group, Mesh, BoxGeometry, Quaternion, Vector3 } from "three";
 import { mockEventDispatcher } from "./ray.spec.js";

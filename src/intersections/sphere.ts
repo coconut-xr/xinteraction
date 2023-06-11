@@ -126,8 +126,12 @@ function intersectSphere(
 ): Array<XIntersection> | XIntersection | undefined {
   object.updateWorldMatrix(true, false);
   if (object instanceof InstancedMesh<BufferGeometry>) {
-    object.geometry.computeBoundingSphere();
-    object.geometry.computeBoundingBox();
+    if (object.geometry.boundingSphere == null) {
+      object.geometry.computeBoundingSphere();
+    }
+    if (object.geometry.boundingBox == null) {
+      object.geometry.computeBoundingBox();
+    }
     const intersections: Array<XIntersection> = [];
     for (let i = 0; i < object.count; i++) {
       object.getMatrixAt(i, matrixHelper);
@@ -159,7 +163,9 @@ function intersectSphere(
     }
   }
   if (object instanceof Mesh<BufferGeometry>) {
-    object.geometry.computeBoundingSphere();
+    if (object.geometry.boundingSphere == null) {
+      object.geometry.computeBoundingSphere();
+    }
     if (
       !intersectSphereSphere(
         object.matrixWorld,
@@ -169,7 +175,9 @@ function intersectSphere(
     ) {
       return undefined;
     }
-    object.geometry.computeBoundingBox();
+    if (object.geometry.boundingBox == null) {
+      object.geometry.computeBoundingBox();
+    }
     invertedMatrixHelper.copy(object.matrixWorld).invert();
     return intersectSphereBox(
       object,

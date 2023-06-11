@@ -17,8 +17,6 @@ import {
 const worldPosition = new Vector3();
 const worldRotation = new Quaternion();
 
-//TODO: test sphere event captures
-
 describe("sphere collider intersections", () => {
   it("should have no intersections", () => {
     const from = new Object3D();

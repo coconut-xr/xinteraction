@@ -1001,3 +1001,74 @@ describe("translate events", () => {
     ] satisfies Array<EventLog>);
   });
 });
+
+describe("translator's onMissed... events", () => {
+  it("should not fire any missed events", () => {
+    const actualEvents: Array<string> = [];
+    const inputDevice = new MockInputDevice(
+      1,
+      () => actualEvents.push("pressMissed"),
+      () => actualEvents.push("releaseMissed"),
+      () => actualEvents.push("selectMissed")
+    );
+    const object = new Object3D();
+
+    inputDevice.update([
+      {
+        object,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ]);
+    inputDevice.update(undefined, new Map([[object, [101]]]), 101);
+    inputDevice.update(undefined, new Map());
+
+    expect(actualEvents).to.deep.equal([]);
+  });
+  it("should fire onPressMissed", () => {
+    const actualEvents: Array<string> = [];
+    const inputDevice = new MockInputDevice(
+      1,
+      () => actualEvents.push("pressMissed"),
+      () => actualEvents.push("releaseMissed"),
+      () => actualEvents.push("selectMissed")
+    );
+
+    inputDevice.update([], [101], 101);
+
+    expect(actualEvents).to.deep.equal(["pressMissed"]);
+  });
+  it("should fire onReleaseMissed", () => {
+    const actualEvents: Array<string> = [];
+    const inputDevice = new MockInputDevice(
+      1,
+      () => actualEvents.push("pressMissed"),
+      () => actualEvents.push("releaseMissed")
+    );
+
+    inputDevice.update([], [101]);
+    inputDevice.update([], []);
+
+    expect(actualEvents).to.deep.equal(["releaseMissed"]);
+  });
+  it("should fire onSelectMissed", () => {
+    const actualEvents: Array<string> = [];
+    const inputDevice = new MockInputDevice(
+      1,
+      () => actualEvents.push("pressMissed"),
+      () => actualEvents.push("releaseMissed"),
+      () => actualEvents.push("selectMissed")
+    );
+
+    inputDevice.update(undefined, [101], 101);
+    inputDevice.update(undefined, []);
+
+    expect(actualEvents).to.deep.equal([
+      "pressMissed",
+      "releaseMissed",
+      "selectMissed",
+    ]);
+  });
+});

@@ -10,7 +10,12 @@ export class MockInputDevice {
   private intersections: Array<XIntersection> = [];
   private pressedElementIds: Map<Object3D, Array<number>> | Array<number> = [];
 
-  constructor(public readonly id: number) {
+  constructor(
+    public readonly id: number,
+    protected onPressMissed?: (event: {}) => void,
+    protected onReleaseMissed?: (event: {}) => void,
+    protected onSelectMissed?: (event: {}) => void
+  ) {
     this.translator = new EventTranslator(
       id,
       false,
@@ -29,7 +34,12 @@ export class MockInputDevice {
       (intersection) =>
         Array.isArray(this.pressedElementIds)
           ? this.pressedElementIds
-          : this.pressedElementIds.get(intersection.object) ?? []
+          : intersection != null
+          ? this.pressedElementIds.get(intersection.object) ?? []
+          : [],
+      onPressMissed,
+      onReleaseMissed,
+      onSelectMissed
     );
   }
 

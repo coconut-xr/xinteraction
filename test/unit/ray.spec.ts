@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import {
   intersectRayFromCamera,
+  intersectRayFromCameraCapturedEvents,
   intersectRayFromCapturedEvents,
   intersectRayFromObject,
 } from "../../src/intersections/ray.js";
@@ -23,8 +24,6 @@ export const mockEventDispatcher = {
 
 const worldPosition = new Vector3();
 const worldRotation = new Quaternion();
-
-//TODO: test ray event captures
 
 describe("ray intersections", () => {
   it("should have no intersections", () => {
@@ -182,7 +181,7 @@ describe("ray intersections", () => {
     ]);
   });
   it("should compute intersections from camera", () => {
-    const from = new PerspectiveCamera();
+    const from = new PerspectiveCamera(180);
 
     const group = new Group();
 
@@ -197,11 +196,12 @@ describe("ray intersections", () => {
     mesh2.updateMatrixWorld();
 
     from.lookAt(mesh2.position);
+    from.rotateY(-Math.PI / 2); //rotate 90° deg to right
     from.updateMatrixWorld();
 
     const intersections = intersectRayFromCamera(
       from,
-      new Vector2(),
+      new Vector2(-1), //rotate 90° deg to left
       group,
       mockEventDispatcher
     );
@@ -301,5 +301,37 @@ describe("ray intersections for captured events", () => {
     expect(intersections[0].point.x).be.closeTo(2, 0.0001);
     expect(intersections[0].point.y).be.closeTo(0, 0.0001);
     expect(intersections[0].point.z).be.closeTo(0, 0.0001);
+  });
+
+  it("should move the intersection point in relation to the camera movement", () => {
+    const from = new PerspectiveCamera(90);
+
+    from.rotation.y = Math.PI;
+    from.position.x = 1; //move 1 to right
+    from.updateMatrixWorld();
+
+    const object = new Object3D();
+
+    const intersections = intersectRayFromCameraCapturedEvents(
+      from,
+      new Vector2(-1, 0), //rotate 45° to right
+      new Map([
+        [
+          object,
+          {
+            distance: 1,
+            distanceViewPlane: 1,
+            inputDevicePosition: new Vector3(0, 0, 0),
+            inputDeviceRotation: new Quaternion(),
+            object: object,
+            point: new Vector3(0, 0, 1),
+          },
+        ],
+      ])
+    );
+
+    expect(intersections[0].point.x).be.closeTo(2, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(1, 0.0001);
   });
 });

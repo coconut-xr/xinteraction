@@ -54,6 +54,14 @@ export class EventTranslator<
   private capturedEvents: Map<Object3D, I> | undefined;
   private objectInteractionDataMap = new Map<Object3D, ObjectInteractionData>();
 
+  private voidInteractionData: Omit<
+    ObjectInteractionData,
+    "lastIntersectedTime" | "blockFollowingIntersections"
+  > = {
+    lastPressedElementIds: emptySet,
+    lastPressedElementTimeMap: new Map(),
+  };
+
   constructor(
     public readonly inputDeviceId: number,
     private readonly dispatchPressAlways: boolean,
@@ -62,7 +70,10 @@ export class EventTranslator<
       event: E,
       capturedEvents?: Map<Object3D, I>
     ) => Array<I>,
-    protected getPressedElementIds: (intersection: I) => Iterable<number>
+    protected getPressedElementIds: (intersection?: I) => Iterable<number>,
+    protected onPressMissed?: (event: E) => void,
+    protected onReleaseMissed?: (event: E) => void,
+    protected onSelectMissed?: (event: E) => void
   ) {}
 
   /**
@@ -88,6 +99,58 @@ export class EventTranslator<
         event,
         this.capturedEvents
       );
+      if (this.intersections.length > 0) {
+        //leave void
+        this.voidInteractionData.lastLeftTime = currentTime;
+        this.voidInteractionData.lastPressedElementIds = emptySet;
+      }
+    }
+
+    //TODO: refactor (the following code is the same for "objects")
+
+    //onPressMissed, onReleaseMissed, onSelectMissed
+    if (pressChanged) {
+      const pressedElementIds = new Set(this.getPressedElementIds());
+
+      //dispatch onPressMissed if intersected with nothing
+      if (this.intersections.length === 0) {
+        const lastPressedElementIds = new Set(
+          this.voidInteractionData.lastPressedElementIds
+        );
+        for (const pressedElementId of pressedElementIds) {
+          lastPressedElementIds.delete(pressedElementId);
+          if (
+            dispatchPressFor.includes(pressedElementId) ||
+            this.dispatchPressAlways
+          ) {
+            this.onPressMissed?.(event);
+          }
+        }
+        for (const releasedElementId of lastPressedElementIds) {
+          this.onReleaseMissed?.(event);
+          const lastPressedElementTime =
+            this.voidInteractionData.lastPressedElementTimeMap.get(
+              releasedElementId
+            );
+          if (
+            this.voidInteractionData.lastLeftTime == null ||
+            (lastPressedElementTime != null &&
+              this.voidInteractionData.lastLeftTime < lastPressedElementTime)
+          ) {
+            this.onSelectMissed?.(event);
+          }
+        }
+
+        //update lastPressedElementIds
+        this.voidInteractionData.lastPressedElementIds = pressedElementIds;
+        //update lastPressedElementTimeMap
+        for (const pressedElementId of pressedElementIds) {
+          this.voidInteractionData.lastPressedElementTimeMap.set(
+            pressedElementId,
+            currentTime
+          );
+        }
+      }
     }
 
     //enter, move, press, release, click, losteventcapture events

@@ -75,6 +75,9 @@ A input device represents a unit with a positions and one or multiple input devi
 [x] event capture buggy when leaving the input device (moving out of window)
 [x] double grab example
 [x] pointer down on mobile not working
-[ ] onPressMissed, onReleaseMissed, and onSelectMissed on input device
-[ ] computeBounding... only when necassary
-[ ] write tests for camera ray intersection
+[x] onPressMissed, onReleaseMissed, and onSelectMissed on input device
+[x] write testsfor onMissed...
+[x] computeBounding... only when necassary
+[x] write tests for camera ray intersection
+[ ] bug: move while holding button causes select when released
+[ ] write test for above bug
