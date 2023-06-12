@@ -24,4 +24,4 @@ _**interaction** on the 3D web for any (**x**) input device_
 * [Pointing Input Devices](https://coconut-xr.github.io/xinteraction/#/pointing.md) Explains pointing interactions based straight rays
 * [Curved Pointing Input Devices](https://coconut-xr.github.io/xinteraction/#/curved.md) Explains interactions using a curved line
 * [Distance Based Input Device](https://coconut-xr.github.io/xinteraction/#/distance.md) Explains interactions like touching or grabbing
-- [Event Capture](https://coconut-xr.github.io/xinteraction/#/event-capture.md) Explains event capture for dragging
+* [Event Capture](https://coconut-xr.github.io/xinteraction/#/event-capture.md) Explains event capture for dragging
