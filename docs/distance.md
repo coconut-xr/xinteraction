@@ -1,6 +1,6 @@
-# Distance based Input Device
+# Distance-based Input Device
 
-The previous sections demonstrated interactions based on straight or curved pointers. However, in 3D environments interactions often are based on distance, such as grab and touch interactions. In the following example, we show how we create a sphere distance based input device using the `XSphereCollider` component and then control the input devices position using the "A" and "D" keys. The `XSphereCollider` interacts with the objects in the scene based on the provided `radius`. Once a object intersects the radius of the sphere, the `onPointerEnter` is issued on the object. In the example, we add a red cube, which is scaled by the factor 1.2 when clicked. We also bind press and release events for the sphere to the enter key, which allows to cause a `click` event on the red cube, by first moving the sphere inside the cube and then pressing and releasing "enter", just like grabbing with a controller.
+The previous sections demonstrated interactions based on straight or curved pointers. However, in 3D environments, interactions often are based on distance, such as grab and touch interactions. In the following example, we show how we create a sphere distance-based input device using the `XSphereCollider` component and then control the input device's position using the "A" and "D" keys. The `XSphereCollider` interacts with the objects in the scene based on the provided `radius`. Once an object intersects the sphere's radius, the `onPointerEnter` is issued on the object. In the example, we add a red cube, which is scaled by the factor 1.2 when clicked. We also bind press and release events for the sphere to the enter key, which allows causing a `click` event on the red cube, by first moving the sphere inside the cube and then pressing and releasing "enter", just like grabbing with a controller.
 
 [CodeSandbox](https://codesandbox.io/s/xinteraction-distance-th5p4n?file=/src/app.tsx)
 
@@ -90,7 +90,7 @@ function Box(props: any) {
 
 # Touch
 
-Instead or in addition of using events, such as pressing the enter key, to trigger events on input devices, it is also possible to issue press events when an object is at a certain distance to the input device. This, for instance, allows to create touch interactions. In the following we modify the previous example by adding the `distanceElement` property to the `XSphereCollider` component. This property takes a `downRadius` and a `id`. The `downRadius` is the distance to the sphere center required for the input device to issue an press event and the `id` represents the id of the input device element (button) that is pressed. Using the `distanceElement` a touch interaction can be created. In the following example, moving the sphere in and out of the cube, a click event is caused on the cube.
+Instead or in addition to using events, such as pressing the enter key, to trigger events on input devices, it is also possible to issue press events when an object is at a certain distance from the input device. This, for instance, allows to create touch interactions. In the following, we modify the previous example by adding the `distanceElement` property to the `XSphereCollider` component. This property takes a `downRadius` and an `id`. The `downRadius` is the distance to the sphere center required for the input device to issue a press event, and the `id` represents the id of the input device element (button) that is pressed. Using the `distanceElement`, a touch interaction can be created. In the following example, moving the sphere in and out of the cube, a click event is caused on the cube.
 
 [CodeSandbox](https://codesandbox.io/s/xinteraction-touch-g5jv48?file=/src/app.tsx)
 
@@ -167,6 +167,6 @@ function Box(props: any) {
 }
 ```
 
-In the next section we introduce the event capture concept (in the web known as pointer capture) and show how to event captures to build a dragging interaction.
+In the next section, we introduce the event capture concept (in the web known as pointer capture) and show how to use event captures to build a dragging interaction.
 
 <span style="font-size: 2rem">⤷ [Next Section](event-capture.md)</span>

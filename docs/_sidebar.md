@@ -3,6 +3,7 @@
 - [Pointing Input Devices](pointing.md)
 - [Curved Pointing Input Devices](curved.md)
 - [Distance Based Input Device](distance.md)
+- [Event Capture](event-capture.md)
 
 - [<br>Glossary](glossary.md)
 

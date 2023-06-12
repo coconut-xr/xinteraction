@@ -1,10 +1,10 @@
 # Event Capture
 
-**xinteraction** allows to capture the events of a pointer to an object. In R3F we can use `event.target.setPointerCapture(e.pointerId)` for capturing all subsequent events to the intersected object. Capturing the events is important for implementing interactions, such as dragging, since it causes the events to the same object event when this object is not intersected anymore until the capture is released or the input device issues a release event.
+**xinteraction** allows to capture the events of a pointer to an object. In R3F, we can use `event.target.setPointerCapture(e.pointerId)` for capturing all subsequent events to the intersected object. Capturing the events is important for implementing interactions, such as dragging, since it causes the events to the same object event when this object is not intersected anymore until the capture is released or the input device issues a release event.
 
-In the following example, we show how to build a dragging interaction. Because of **xinteraction** the follwing code works with any arbitrary input device and therefore also in WebXR.
+In the following example, we show how to build a dragging interaction. Because of **xinteraction**, the following code works with any arbitrary input device and also in WebXR.
 
-Once the mesh in the `DragCube` receives a `onPointerDown` event, we use `setPointerCapture` to capture the subequent events and set the `downState`, which contains the initial offset between the intersection `point`. For every `onPointerMove` event, we can then calculate the new position by summing the current position of the intersection `point` with the initial offset. Every time the `onPointerLeave` or `onPointerUp` events are called, the `downState` is reset, terminating the drag interaction.
+Once the mesh in the `DragCube` receives an `onPointerDown` event, we use `setPointerCapture` to capture the subsequent events and set the `downState`, which contains the initial offset between the intersection `point`. For every `onPointerMove` event, we can then calculate the new position by summing the current position of the intersection `point` with the initial offset. Every time the `onPointerLeave` or `onPointerUp` events are called, the `downState` is reset, terminating the drag interaction.
 
 [CodeSandbox](https://codesandbox.io/s/xinteraction-drag-7t6wdx?file=/src/app.tsx)
 
