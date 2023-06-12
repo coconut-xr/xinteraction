@@ -24,8 +24,8 @@ export const XSphereCollider = forwardRef<
   InputDeviceFunctions,
   {
     id: number;
-    enterDistance: number;
-    distanceElement?: { id: number; downDistance: number };
+    radius: number;
+    distanceElement?: { id: number; downRadius: number };
     onIntersections?: (intersections: Array<XIntersection>) => void;
     filterIntersections?: (
       intersections: Array<XIntersection>
@@ -33,13 +33,7 @@ export const XSphereCollider = forwardRef<
   }
 >(
   (
-    {
-      id,
-      distanceElement,
-      enterDistance,
-      onIntersections,
-      filterIntersections,
-    },
+    { id, distanceElement, radius, onIntersections, filterIntersections },
     ref
   ) => {
     const objectRef = useRef<Object3D>(null);
@@ -63,7 +57,7 @@ export const XSphereCollider = forwardRef<
             return intersectSphereFromObject(
               worldPositionHelper,
               worldRotationHelper,
-              enterDistance,
+              radius,
               scene,
               dispatcher,
               filterIntersections
@@ -79,7 +73,7 @@ export const XSphereCollider = forwardRef<
           if (distanceElement == null || intersection == null) {
             return pressedElementIds;
           }
-          if (intersection.distance <= distanceElement.downDistance) {
+          if (intersection.distance <= distanceElement.downRadius) {
             pressedElementIds.add(distanceElement.id);
           } else {
             pressedElementIds.delete(distanceElement.id);
@@ -87,7 +81,7 @@ export const XSphereCollider = forwardRef<
           return pressedElementIds;
         }
       );
-    }, [id, filterIntersections, enterDistance, distanceElement, scene]);
+    }, [id, filterIntersections, radius, distanceElement, scene]);
 
     useEffect(
       () => () => {

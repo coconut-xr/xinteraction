@@ -146,7 +146,10 @@ export class EventTranslator<
         this.voidInteractionData.lastPressedElementIds = pressedElementIds;
         //update lastPressedElementTimeMap
         for (const pressedElementId of pressedElementIds) {
-          if (dispatchPressFor.includes(pressedElementId)) {
+          if (
+            dispatchPressFor.includes(pressedElementId) ||
+            this.dispatchPressAlways
+          ) {
             this.voidInteractionData.lastPressedElementEventTimeMap.set(
               pressedElementId,
               currentTime
@@ -184,7 +187,10 @@ export class EventTranslator<
           interactionData.lastPressedElementIds = pressedElementIds;
           //update lastPressedElementTimeMap
           for (const pressedElementId of pressedElementIds) {
-            if (dispatchPressFor.includes(pressedElementId)) {
+            if (
+              dispatchPressFor.includes(pressedElementId) ||
+              this.dispatchPressAlways
+            ) {
               interactionData.lastPressedElementEventTimeMap.set(
                 pressedElementId,
                 currentTime
