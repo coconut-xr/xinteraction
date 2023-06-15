@@ -32,13 +32,16 @@ export type EventDispatcher<E, I extends XIntersection> = {
   hasEventHandlers(object: Object3D): boolean;
 };
 
-type ObjectInteractionData = {
-  lastIntersectedTime?: number;
+type InteractionData = {
   lastLeftTime?: number;
   lastPressedElementIds: Set<number>;
   lastPressedElementEventTimeMap: Map<number, number>;
-  blockFollowingIntersections: boolean;
 };
+
+type ObjectInteractionData = {
+  lastIntersectedTime?: number;
+  blockFollowingIntersections: boolean;
+} & InteractionData;
 
 const traversalIdSymbol = Symbol("traversal-id");
 
@@ -106,58 +109,31 @@ export class EventTranslator<
       }
     }
 
-    //TODO: refactor (the following code is the same for "objects")
-
     //onPressMissed, onReleaseMissed, onSelectMissed
+    const pressedElementIds = new Set(this.getPressedElementIds());
     if (pressChanged) {
-      const pressedElementIds = new Set(this.getPressedElementIds());
-
       //dispatch onPressMissed if intersected with nothing
       if (this.intersections.length === 0) {
-        const lastPressedElementIds = new Set(
-          this.voidInteractionData.lastPressedElementIds
+        this.dispatchPress(pressedElementIds, dispatchPressFor, () =>
+          this.onPressMissed?.(event)
         );
-        for (const pressedElementId of pressedElementIds) {
-          lastPressedElementIds.delete(pressedElementId);
-          if (
-            dispatchPressFor.includes(pressedElementId) ||
-            this.dispatchPressAlways
-          ) {
-            this.onPressMissed?.(event);
-          }
-        }
-        for (const releasedElementId of lastPressedElementIds) {
-          this.onReleaseMissed?.(event);
-          const lastPressedElementEventTime =
-            this.voidInteractionData.lastPressedElementEventTimeMap.get(
-              releasedElementId
-            );
-          if (
-            lastPressedElementEventTime != null &&
-            (this.voidInteractionData.lastLeftTime == null ||
-              this.voidInteractionData.lastLeftTime <
-                lastPressedElementEventTime)
-          ) {
-            this.onSelectMissed?.(event);
-          }
-        }
 
-        //update lastPressedElementIds
-        this.voidInteractionData.lastPressedElementIds = pressedElementIds;
-        //update lastPressedElementTimeMap
-        for (const pressedElementId of pressedElementIds) {
-          if (
-            dispatchPressFor.includes(pressedElementId) ||
-            this.dispatchPressAlways
-          ) {
-            this.voidInteractionData.lastPressedElementEventTimeMap.set(
-              pressedElementId,
-              currentTime
-            );
-          }
-        }
+        this.dispatchRelease(
+          this.voidInteractionData,
+          pressedElementIds,
+          () => this.onReleaseMissed?.(event),
+          () => this.onSelectMissed?.(event)
+        );
+
+        this.updateLastPressElementEventTimeMap(
+          this.voidInteractionData,
+          pressedElementIds,
+          dispatchPressFor,
+          currentTime
+        );
       }
     }
+    this.voidInteractionData.lastPressedElementIds = pressedElementIds;
 
     //enter, move, press, release, click, losteventcapture events
     this.traverseIntersections<Set<number>>(
@@ -176,28 +152,29 @@ export class EventTranslator<
         }
 
         if (pressChanged) {
-          this.dispatchPressAndRelease(
-            eventObject,
-            interactionData,
-            intersection,
+          this.dispatchPress(
             pressedElementIds,
-            dispatchPressFor
+            dispatchPressFor,
+            this.eventDispatcher.press.bind(
+              this.eventDispatcher,
+              eventObject,
+              intersection
+            )
           );
-          //update lastPressedElementIds
-          interactionData.lastPressedElementIds = pressedElementIds;
-          //update lastPressedElementTimeMap
-          for (const pressedElementId of pressedElementIds) {
-            if (
-              dispatchPressFor.includes(pressedElementId) ||
-              this.dispatchPressAlways
-            ) {
-              interactionData.lastPressedElementEventTimeMap.set(
-                pressedElementId,
-                currentTime
-              );
-            }
-          }
+          this.dispatchReleaseObject(
+            eventObject,
+            intersection,
+            interactionData,
+            pressedElementIds
+          );
+          this.updateLastPressElementEventTimeMap(
+            interactionData,
+            pressedElementIds,
+            dispatchPressFor,
+            currentTime
+          );
         }
+        interactionData.lastPressedElementIds = pressedElementIds;
 
         if (interactionData.blockFollowingIntersections) {
           //we remove the intersections that happen after
@@ -210,6 +187,7 @@ export class EventTranslator<
     );
 
     if (positionChanged) {
+      const pressedElementIds = new Set(this.getPressedElementIds());
       //leave events
       this.traverseIntersections(
         prevIntersections,
@@ -218,6 +196,12 @@ export class EventTranslator<
             //object was intersected this time –> therefore also all the ancestors –> can stop bubbeling up here
             return false;
           }
+          this.dispatchReleaseObject(
+            eventObject,
+            intersection,
+            interactionData,
+            pressedElementIds
+          );
           this.eventDispatcher.leave(eventObject, intersection);
           interactionData.lastLeftTime = currentTime;
           interactionData.lastPressedElementIds = emptySet;
@@ -267,36 +251,71 @@ export class EventTranslator<
     this.capturedEvents = undefined;
   }
 
-  private dispatchPressAndRelease(
-    eventObject: Object3D,
-    interactionData: ObjectInteractionData,
-    intersection: I,
+  private updateLastPressElementEventTimeMap(
+    data: InteractionData,
     pressedElementIds: Set<number>,
-    dispatchPressFor: Array<number>
-  ): void {
-    const lastPressedElementIds = new Set(
-      interactionData.lastPressedElementIds
-    );
+    dispatchPressFor: Array<number>,
+    currentTime: number
+  ) {
     for (const pressedElementId of pressedElementIds) {
-      if (lastPressedElementIds.delete(pressedElementId)) {
-        //was pressed last time
-        continue;
+      if (
+        dispatchPressFor.includes(pressedElementId) ||
+        this.dispatchPressAlways
+      ) {
+        data.lastPressedElementEventTimeMap.set(pressedElementId, currentTime);
       }
+    }
+  }
+
+  private dispatchPress(
+    pressedElementIds: Set<number>,
+    dispatchPressFor: Array<number>,
+    press: (id: number) => void
+  ) {
+    for (const pressedElementId of pressedElementIds) {
       //pressedElementId was not pressed last time
       if (
         this.dispatchPressAlways ||
         dispatchPressFor.includes(pressedElementId)
       ) {
-        this.eventDispatcher.press(eventObject, intersection, pressedElementId);
+        press(pressedElementId);
       }
     }
-    for (const releasedElementId of lastPressedElementIds) {
-      //pressedElementId was not pressed this time
-      this.eventDispatcher.release(
+  }
+
+  private dispatchReleaseObject(
+    eventObject: Object3D,
+    intersection: I,
+    interactionData: ObjectInteractionData,
+    pressedElementIds: Set<number>
+  ) {
+    this.dispatchRelease(
+      interactionData,
+      pressedElementIds,
+      (id) => {
+        this.eventDispatcher.release(eventObject, intersection, id);
+        this.removeEventCapture(eventObject);
+      },
+      this.eventDispatcher.select.bind(
+        this.eventDispatcher,
         eventObject,
-        intersection,
-        releasedElementId
-      );
+        intersection
+      )
+    );
+  }
+
+  private dispatchRelease(
+    interactionData: InteractionData,
+    pressedElementIds: Set<number>,
+    release: (elementId: number) => void,
+    select: (elementId: number) => void
+  ) {
+    for (const releasedElementId of interactionData.lastPressedElementIds) {
+      if (pressedElementIds.has(releasedElementId)) {
+        continue;
+      }
+      //pressedElementId was not pressed this time
+      release(releasedElementId);
 
       const lastPressedElementEventTime =
         interactionData.lastPressedElementEventTimeMap.get(releasedElementId);
@@ -306,13 +325,8 @@ export class EventTranslator<
           interactionData.lastLeftTime < lastPressedElementEventTime)
       ) {
         //the object wasn't left since it was pressed last
-        this.eventDispatcher.select(
-          eventObject,
-          intersection,
-          releasedElementId
-        );
+        select(releasedElementId);
       }
-      this.removeEventCapture(eventObject);
     }
   }
 

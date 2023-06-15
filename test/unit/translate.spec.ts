@@ -85,6 +85,38 @@ describe("translate events", () => {
     ] satisfies Array<EventLog>);
   });
 
+  it("should fire release even dough dragged in", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+    const object = new Object3D();
+    object.addEventListener("release", ({ inputDeviceElementId }) => {
+      actualEvents.push({
+        type: "release",
+        objectUUID: object.uuid,
+        inputDeviceElementId,
+      });
+    });
+
+    inputDevice.update([], [101]);
+    inputDevice.update(
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
+      undefined
+    );
+    inputDevice.update(undefined, []);
+
+    expect(actualEvents).to.deep.equal([
+      { type: "release", objectUUID: object.uuid, inputDeviceElementId: 101 },
+    ] satisfies Array<EventLog>);
+  });
+
   it("should capture all events to one object", () => {
     const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];
@@ -235,6 +267,36 @@ describe("translate events", () => {
     );
     //release
     inputDevice.update(undefined, []);
+
+    expect(actualEvents).to.deep.equal([
+      { type: "select", objectUUID: object.uuid },
+    ] satisfies Array<EventLog>);
+  });
+
+  it("should select (click) on leave", () => {
+    const inputDevice = new MockInputDevice(1);
+    const actualEvents: Array<EventLog> = [];
+    const object = new Object3D();
+    object.addEventListener("select", (event) => {
+      actualEvents.push({ type: "select", objectUUID: object.uuid });
+    });
+
+    //enter and press
+    inputDevice.update(
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
+      [1],
+      1
+    );
+    //release
+    inputDevice.update([], []);
 
     expect(actualEvents).to.deep.equal([
       { type: "select", objectUUID: object.uuid },

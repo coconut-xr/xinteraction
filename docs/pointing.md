@@ -1,6 +1,6 @@
 # Pointer
 
-The flexibility of **xinteraction** can be seen when adding more input devices, such as simple pointers. In the following example, we will define a `RotatatingPointer`, which simply rotates around and causes `onPointerEnter` and `onPointerLeave` events on the `Box` using our `XStraightPointer` component. We add two of those `RotatatingPointer` at different positions in the scene. Both pointers need different ids to differentiate them from each other. To differentiate the pointers from touch and mouse events, we encourage negative pointerIds.
+The flexibility of **xinteraction** can be seen when adding more input devices, such as simple pointers. In the following example, we will define a `RotatingPointer`, which simply rotates around and causes `onPointerEnter` and `onPointerLeave` events on the `Box` using our `XStraightPointer` component. We add two of those `RotatingPointer` at different positions in the scene. Both pointers need different ids to differentiate them from each other. To differentiate the pointers from touch and mouse events, we encourage negative pointerIds.
 
 [CodeSandbox](https://codesandbox.io/s/xinteraction-pointer-f7rq5n?file=/src/app.tsx)
 
@@ -23,8 +23,8 @@ export default function App() {
     >
       <Box />
       <XWebPointers />
-      <RotatatingPointer id={-1} position={[-2, 0, 0]} />
-      <RotatatingPointer id={-2} position={[2, 0, 0]} />
+      <RotatingPointer id={-1} position={[-2, 0, 0]} />
+      <RotatingPointer id={-2} position={[2, 0, 0]} />
     </Canvas>
   );
 }
@@ -34,7 +34,7 @@ const lineGeometry = new BufferGeometry().setFromPoints([
   new Vector3(0, 0, 100)
 ]);
 
-function RotatatingPointer({
+function RotatingPointer({
   id,
   ...props
 }: {
@@ -66,7 +66,7 @@ function Box() {
 
 ## Pressing, Releasing, and Clicking Pointer
 
-The `RotatatingPointer` from the previous example only hovers the box. In this example, we will make the `RotatatingPointer` click the box. We can cause `press`, `release`, `wheel`, and `cancel` events by retrieving a reference to the `XStraightPointer`. In this case, we will connect the `press` and `release` events to the key press and release events of the keyboard. Each time a key is pressed down, we call `pointer.press(1, event)`. The first parameter represents the button/input-device-element that is pressed and is any arbitrary number. For instance, by web standards, the button number "0" represents the left mouse button. An input device can have arbitrarily many input-device elements, which can be independently pressed and released. On the `Box` component, we add a `click` listener, which causes the box to scale by factor 1.2.
+The `RotatingPointer` from the previous example only hovers the box. In this example, we will make the `RotatingPointer` click the box. We can cause `press`, `release`, `wheel`, and `cancel` events by retrieving a reference to the `XStraightPointer`. In this case, we will connect the `press` and `release` events to the key press and release events of the keyboard. Each time a key is pressed down, we call `pointer.press(1, event)`. The first parameter represents the button/input-device-element that is pressed and is any arbitrary number. For instance, by web standards, the button number "0" represents the left mouse button. An input device can have arbitrarily many input-device elements, which can be independently pressed and released. On the `Box` component, we add a `click` listener, which causes the box to scale by factor 1.2.
 
 [CodeSandbox](https://codesandbox.io/s/xinteraction-pointer-click-tz3rp9?file=/src/app.tsx)
 
@@ -92,7 +92,7 @@ export default function App() {
     >
       <Box />
       <XWebPointers />
-      <RotatatingPointer id={-1} position={[-3, 0, 0]} />
+      <RotatingPointer id={-1} position={[-3, 0, 0]} />
     </Canvas>
   );
 }
@@ -102,7 +102,7 @@ const lineGeometry = new BufferGeometry().setFromPoints([
   new Vector3(0, 0, 100)
 ]);
 
-function RotatatingPointer({
+function RotatingPointer({
   id,
   ...props
 }: {

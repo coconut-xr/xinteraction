@@ -24,7 +24,7 @@ import {
   Container,
   RootContainer,
   Text,
-  isIntersectionClipped,
+  isIntersectionNotClipped,
 } from "@coconut-xr/koestlich";
 import {
   Select,
@@ -69,7 +69,7 @@ const tableData = [
 ];
 
 const filterClippedIntersections = (intersections: Array<any>) =>
-  intersections.filter(isIntersectionClipped);
+  intersections.filter(isIntersectionNotClipped);
 
 const lineGeometry = new BufferGeometry().setFromPoints([
   new Vector3(),
@@ -103,8 +103,8 @@ export default function App() {
       />
       <XWebPointers filterIntersections={filterClippedIntersections} />
       <ambientLight />
-      <ColliderSelectSphere id={98} />
-      <ColliderSphere id={99} />
+      <ColliderSelectSphere id={99} />
+      <ColliderSphere id={98} />
       <RotateCubePointer id={100} position={[0, 0, 0]} />
       <Ground />
       <RotateCubeCurvedPointer id={101} position={[0, 0, -3]} />
