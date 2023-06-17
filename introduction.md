@@ -12,7 +12,7 @@ In the following tutorials, we will introduce how to add input devices and inter
 
 ## Mouse and Touch Interaction
 
-At first, we will remove the default event handling of @react-three/fiber. This is achieved by providing a function to the `events` property of the `Canvas` that disables the event system. To re-enable interaction via the mouse and touch, we will add corresponding **xinteraction** input devices. We provide the `XWebPointers` component, which automatically creates an input device for the mouse and one for each touch pointer. With these 2 changes, we already enabled the scene to handle multiple input devices and multi-touch. The following code shows a `Box`, which decreases its opacity when more input devices (e.g., fingers on a touch screen) are over it.
+At first, we will remove the default event handling of @react-three/fiber by settings the `event` property of the `<Canvas/>` component to `noEvent` from `xinteraction/react`. To re-enable interaction via the mouse and touch, we will add corresponding **xinteraction** input devices. We provide the `XWebPointers` component, which automatically creates an input device for the mouse and one for each touch pointer. With these 2 changes, we already enabled the scene to handle multiple input devices and multi-touch. Events will be delivered to the objects and can be captured via `onPointerDown`, `onClick`, etc. The following code shows a `Box`, which decreases its opacity when more input devices (e.g., fingers on a touch screen) are over it. 
 
 [CodeSandbox](https://codesandbox.io/s/xinteraction-introduction-6848g2?file=/src/app.tsx)
 
@@ -20,17 +20,12 @@ At first, we will remove the default event handling of @react-three/fiber. This 
 
 ```tsx
 import { Canvas } from "@react-three/fiber";
-import { XWebPointers } from "@coconut-xr/xinteraction/react";
+import { XWebPointers, noEvents } from "@coconut-xr/xinteraction/react";
 import { useState } from "react";
 
 export default function App() {
   return (
-    <Canvas
-      events={() => ({
-        enabled: false,
-        priority: 0,
-      })}
-    >
+    <Canvas events={noEvents}>
       <Box />
       <XWebPointers />
     </Canvas>
@@ -61,6 +56,8 @@ function Box() {
   );
 }
 ```
+
+When developing with multiple `xinteraction` for multiple input devices, ensure that you keep track of what input device or how many input devices hovered your object. A simple boolean state for hover effects is often not enough with more than one input device. It is also important to note that `onPointerEnter` events will always be followed by an `onPointerLeave` eventually. However, not all `onPointerDown` will be followed by an `onPointerUp` and vice versa. For instance, you can drag your mouse into an object while pressing a button. Releasing the button inside the object causes an `onPointerUp` event without ever issuing an `onPointerDown` event. This is not the case for distance-based input devices, which always receive an `onPointerDown` event before the `onPointerUp` event.
 
 Multi-touch support is nice, but that's not what we are here for. In the next section, we introduce how to create **arbitrary pointers** that can, for instance, be attached to XRControllers.
 

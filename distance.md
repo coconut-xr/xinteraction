@@ -11,18 +11,14 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import {
   InputDeviceFunctions,
   XSphereCollider,
+  noEvents,
 } from "@coconut-xr/xinteraction/react";
 import { useEffect, useMemo, useRef } from "react";
 import { Mesh } from "three";
 
 export default function App() {
   return (
-    <Canvas
-      events={() => ({
-        enabled: false,
-        priority: 0,
-      })}
-    >
+    <Canvas events={noEvents}>
       <ColliderSphere id={-1} />
       <Box position={[2, 0, 0]} />
     </Canvas>
@@ -100,19 +96,15 @@ Instead or in addition to using events, such as pressing the enter key, to trigg
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   InputDeviceFunctions,
-  XSphereCollider
+  XSphereCollider,
+  noEvents,
 } from "@coconut-xr/xinteraction/react";
 import { useEffect, useMemo, useRef } from "react";
 import { Mesh } from "three";
 
 export default function App() {
   return (
-    <Canvas
-      events={() => ({
-        enabled: false,
-        priority: 0
-      })}
-    >
+    <Canvas events={noEvents}>
       <ColliderSphere id={-1} />
       <Box position={[2, 0, 0]} />
     </Canvas>
