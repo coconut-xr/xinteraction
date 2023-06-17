@@ -3,6 +3,7 @@ import {
   EventDispatcher,
   EventTranslator,
   XIntersection,
+  voidObject,
 } from "../../src/index.js";
 
 const distanceInWorldThreshold = 50; //only a mock implementation - actual behavior should be in NDC => dragging threshold in relation to the user viewport
@@ -12,16 +13,23 @@ export class MockInputDevice {
   private intersections: Array<XIntersection> = [];
   private pressedElementIds: Map<Object3D, Array<number>> | Array<number> = [];
 
+  public position = new Vector3();
+  public rotation = new Quaternion();
+
   constructor(
     public readonly id: number,
-    protected onPressMissed?: (event: {}) => void,
-    protected onReleaseMissed?: (event: {}) => void,
-    protected onSelectMissed?: (event: {}) => void
+    onPressMissed?: (event: {}) => void,
+    onReleaseMissed?: (event: {}) => void,
+    onSelectMissed?: (event: {}) => void,
+    onIntersections?: (intersections: ReadonlyArray<XIntersection>) => void,
+    filterIntersections?: (
+      intersections: Array<XIntersection>
+    ) => Array<XIntersection>
   ) {
     this.translator = new EventTranslator(
       id,
       false,
-      new MockEventDispatcher(),
+      new MockEventDispatcher(onPressMissed, onReleaseMissed, onSelectMissed),
       (event, objects) =>
         objects == null
           ? this.intersections
@@ -42,10 +50,13 @@ export class MockInputDevice {
           : [],
       (down, current) =>
         down.point.distanceTo(current.point) > distanceInWorldThreshold,
-      onPressMissed,
-      onReleaseMissed,
-      onSelectMissed
+      (position, rotation) => {
+        position.copy(this.position);
+        rotation.copy(this.rotation);
+      }
     );
+    this.translator.onIntersections = onIntersections;
+    this.translator.filterIntersections = filterIntersections;
   }
 
   update(
@@ -79,6 +90,12 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
   private event: any;
   private translator: EventTranslator<any> = null as any;
 
+  constructor(
+    protected onPressMissed?: (event: {}) => void,
+    protected onReleaseMissed?: (event: {}) => void,
+    protected onSelectMissed?: (event: {}) => void
+  ) {}
+
   private createTarget(
     translator: EventTranslator<any>,
     object: Object3D,
@@ -99,11 +116,15 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
   }
 
   press(
-    eventObject: Object3D<Event>,
+    eventObject: Object3D,
     intersection: XIntersection,
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("press")) {
+      return;
+    }
+    if (eventObject === voidObject) {
+      this.onPressMissed?.(intersection);
       return;
     }
     eventObject.dispatchEvent({
@@ -124,6 +145,10 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("release")) {
+      return;
+    }
+    if (eventObject === voidObject) {
+      this.onReleaseMissed?.(intersection);
       return;
     }
     eventObject.dispatchEvent({
@@ -164,6 +189,10 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
     inputDeviceElementId?: number | undefined
   ): void {
     if (this.stoppedEventTypeSet.has("select")) {
+      return;
+    }
+    if (eventObject === voidObject) {
+      this.onSelectMissed?.(intersection);
       return;
     }
     eventObject.dispatchEvent({

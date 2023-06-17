@@ -9,6 +9,8 @@ import {
   Euler,
   Sphere,
   Intersection,
+  MeshBasicMaterial,
+  Plane,
 } from "three";
 import { mockEventDispatcher } from "./ray.spec.js";
 import {
@@ -43,7 +45,8 @@ describe("sphere collider intersections", () => {
       worldRotation,
       0.5,
       group,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([]);
   });
@@ -69,7 +72,8 @@ describe("sphere collider intersections", () => {
       worldRotation,
       0.5,
       group,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([mesh1.uuid]);
   });
@@ -95,7 +99,8 @@ describe("sphere collider intersections", () => {
       worldRotation,
       0.5,
       group,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
       mesh2.uuid,
@@ -125,7 +130,8 @@ describe("sphere collider intersections", () => {
       worldRotation,
       0.5,
       parent,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections[0].distance).be.closeTo(0, 0.0001);
     expect(intersections[1].distance).be.closeTo(0.4, 0.0001);
@@ -134,7 +140,7 @@ describe("sphere collider intersections", () => {
       parent.uuid,
     ]);
   });
-  it("should filter intersections", () => {
+  it("should sort intersections", () => {
     const from = new Object3D();
     from.position.set(1, 1, 1);
     const group = new Group();
@@ -162,14 +168,16 @@ describe("sphere collider intersections", () => {
       0.5,
       group,
       mockEventDispatcher,
-      (is) => is.filter((i) => i.object != mesh2)
+      false
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
+      mesh2.uuid,
       mesh3.uuid,
       mesh1.uuid,
     ]);
-    expect(intersections[0].distance).be.closeTo(0.3, 0.0001);
-    expect(intersections[1].distance).be.closeTo(0.4, 0.0001);
+    expect(intersections[0].distance).be.closeTo(0, 0.0001);
+    expect(intersections[1].distance).be.closeTo(0.3, 0.0001);
+    expect(intersections[2].distance).be.closeTo(0.4, 0.0001);
   });
 
   it("should intersect the face with the correct normal", () => {
@@ -194,7 +202,8 @@ describe("sphere collider intersections", () => {
       worldRotation,
       0.5,
       group,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     const { x, y, z } = intersection.point;
     expect(x).be.closeTo(1.3, 0.0001);
@@ -229,12 +238,55 @@ describe("sphere collider intersections", () => {
       new Quaternion(),
       1.6,
       object,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections[0].point.x).be.closeTo(1.5, 0.0001);
     expect(intersections[0].point.y).be.closeTo(0, 0.0001);
     expect(intersections[0].point.z).be.closeTo(0, 0.0001);
     expect(intersections.map((i) => i.distance)).to.deep.equal([1.5]);
+  });
+
+  it("should filter clipped", () => {
+    const from = new Object3D();
+    from.position.set(1, 1, 1);
+    const group = new Group();
+
+    const mesh1 = new Mesh(new BoxGeometry(1, 1, 1));
+    group.add(mesh1);
+    mesh1.position.set(1.9, 1, 1); //0.4 offset from collider < collider radius (0.5) + mesh bounding box "radius" (0.5)
+    mesh1.updateMatrixWorld();
+
+    const mesh2 = new Mesh(new BoxGeometry(1, 1, 1));
+    group.add(mesh2);
+    mesh2.position.set(1, 0.5, 1); //0 offset
+    mesh2.updateMatrixWorld();
+
+    (mesh2.material as MeshBasicMaterial).clippingPlanes = [
+      new Plane(new Vector3(1, 0, 0), -100),
+    ];
+
+    const mesh3 = new Mesh(new BoxGeometry(1, 1, 1));
+    group.add(mesh3);
+    mesh3.position.set(1, 1, 0.2); //0.3 offset
+    mesh3.updateMatrixWorld();
+
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
+    const intersections = intersectSphereFromObject(
+      worldPosition,
+      worldRotation,
+      0.5,
+      group,
+      mockEventDispatcher,
+      true
+    );
+    expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
+      mesh3.uuid,
+      mesh1.uuid,
+    ]);
+    expect(intersections[0].distance).be.closeTo(0.3, 0.0001);
+    expect(intersections[1].distance).be.closeTo(0.4, 0.0001);
   });
 });
 
@@ -330,5 +382,35 @@ describe("sphere collider intersections for captured events", () => {
     expect(intersections[0].point.x).be.closeTo(2, 0.0001);
     expect(intersections[0].point.y).be.closeTo(0, 0.0001);
     expect(intersections[0].point.z).be.closeTo(0, 0.0001);
+  });
+
+  it("should have correct actualDistance", () => {
+    const object = new Mesh(new BoxGeometry(1, 1, 2));
+    object.rotation.y = Math.PI / 2; //=> size = 2,1,1
+    object.position.x = -2; //at -2,0,0
+    //neatest point to 1,0,0 is at -1, 0, 0
+    //=> actualDistance 2
+
+    object.updateMatrixWorld();
+    const intersections = intersectSphereFromCapturedEvents(
+      new Vector3(1, 0, 0), //move 1 to right
+      new Quaternion().setFromEuler(new Euler(0, Math.PI / 2, 0)), //rotate 90° to right
+      new Map([
+        [
+          object,
+          {
+            distance: 0,
+            inputDevicePosition: new Vector3(0, 0, 0),
+            inputDeviceRotation: new Quaternion(),
+            object: object,
+            point: new Vector3(0, 0, 1),
+          },
+        ],
+      ])
+    );
+    expect(intersections[0].point.x).be.closeTo(2, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(0, 0.0001);
+    expect(intersections[0].actualDistance).be.closeTo(2, 0.0001);
   });
 });

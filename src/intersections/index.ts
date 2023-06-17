@@ -1,4 +1,4 @@
-import { Object3D } from "three";
+import { Intersection, Mesh, Object3D, Plane } from "three";
 
 export function traverseUntilInteractable<T, R>(
   object: Object3D,
@@ -21,4 +21,20 @@ export function traverseUntilInteractable<T, R>(
     );
   }
   return current;
+}
+
+export function isIntersectionNotClipped(intersection: Intersection): boolean {
+  if (
+    !(intersection.object instanceof Mesh) ||
+    intersection.object.material.clippingPlanes == null
+  ) {
+    return true;
+  }
+  const planes = intersection.object.material.clippingPlanes as Array<Plane>;
+  for (const plane of planes) {
+    if (plane.distanceToPoint(intersection.point) < 0) {
+      return false;
+    }
+  }
+  return true;
 }

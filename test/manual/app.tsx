@@ -6,6 +6,7 @@ import {
   XSphereCollider,
   XStraightPointer,
   XWebPointers,
+  noEvents,
 } from "@coconut-xr/xinteraction/react";
 import { Box, OrbitControls } from "@react-three/drei";
 import {
@@ -20,12 +21,7 @@ import {
   Vector3,
   Vector3Tuple,
 } from "three";
-import {
-  Container,
-  RootContainer,
-  Text,
-  isIntersectionNotClipped,
-} from "@coconut-xr/koestlich";
+import { Container, RootContainer, Text } from "@coconut-xr/koestlich";
 import {
   Select,
   Button,
@@ -58,8 +54,7 @@ import {
   MagnifyingGlass,
   Bars3,
 } from "@coconut-xr/kruemel/icons/solid";
-import { XIntersection, isXIntersection } from "../../dist/index.js";
-import DoubleGrabScene from "./double-grab.js";
+import { isXIntersection } from "../../dist/index.js";
 
 const tableData = [
   ["Entry Name", "Entry Number", "Entry Description"],
@@ -67,9 +62,6 @@ const tableData = [
   ["Koestlich", "2", "User Interfaces for Three.js"],
   ["Coconut XR", "3", "Powered by Coconut Capital GmbH"],
 ];
-
-const filterClippedIntersections = (intersections: Array<any>) =>
-  intersections.filter(isIntersectionNotClipped);
 
 const lineGeometry = new BufferGeometry().setFromPoints([
   new Vector3(),
@@ -84,10 +76,7 @@ export default function App() {
       style={{ width: "100wh", height: "100vh", touchAction: "none" }}
       camera={{ position: [0, 0, -5] }}
       gl={{ localClippingEnabled: true }}
-      events={() => ({
-        enabled: false,
-        priority: 0,
-      })}
+      events={noEvents}
     >
       <OrbitControls
         target={[0, 0, 0]}
@@ -101,7 +90,7 @@ export default function App() {
           RIGHT: MOUSE.LEFT,
         }}
       />
-      <XWebPointers filterIntersections={filterClippedIntersections} />
+      <XWebPointers />
       <ambientLight />
       <ColliderSelectSphere id={99} />
       <ColliderSphere id={98} />
@@ -242,7 +231,6 @@ function RotateCubePointer({
         >
           <group position={[0, 0, 0.6]}>
             <XStraightPointer
-              filterIntersections={filterClippedIntersections}
               onIntersections={(intersections) => {
                 if (intersectionRef.current == null) {
                   return;
@@ -332,12 +320,7 @@ function RotateCubeCurvedPointer({
         }}
       >
         <group position={[0, 0, 0.6]}>
-          <XCurvedPointer
-            filterIntersections={filterClippedIntersections}
-            points={curvedLine}
-            ref={pointerRef}
-            id={id}
-          />
+          <XCurvedPointer points={curvedLine} ref={pointerRef} id={id} />
         </group>
       </Box>
       <line position={[0, 0, 0.6]} geometry={geometry}>
@@ -358,7 +341,6 @@ function ColliderSphere({ id }: { id: number }) {
   return (
     <group ref={ref}>
       <XSphereCollider
-        filterIntersections={filterClippedIntersections}
         id={id}
         distanceElement={{ id: 1, downRadius: 0.5 }}
         radius={1}
@@ -419,12 +401,7 @@ function ColliderSelectSphere({ id }: { id: number }) {
   });
   return (
     <group ref={ref} position={[0, 0, 0]}>
-      <XSphereCollider
-        filterIntersections={filterClippedIntersections}
-        ref={sphereRef}
-        id={id}
-        radius={1}
-      />
+      <XSphereCollider ref={sphereRef} id={id} radius={1} />
       <mesh scale={0.5} geometry={sphereGeometry}>
         <meshBasicMaterial color="violet" toneMapped={false} />
       </mesh>

@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { Group, Object3D, Quaternion, Vector3 } from "three";
 import { MockInputDevice } from "./mocks.js";
+import { XIntersection } from "../../src/index.js";
 
 type EventLog = {
   type: string;
@@ -1105,6 +1106,63 @@ describe("translate events", () => {
       { type: "press", objectUUID: root.uuid, inputDeviceElementId: 1 },
     ] satisfies Array<EventLog>);
   });
+
+  it("should call onIntersect", () => {
+    const intersectionsList: Array<ReadonlyArray<XIntersection>> = [];
+    const inputDevice = new MockInputDevice(
+      1,
+      undefined,
+      undefined,
+      undefined,
+      (intersections) => intersectionsList.push(intersections)
+    );
+    const object = new Object3D();
+    const intersections = [
+      {
+        object: object,
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ];
+    inputDevice.update(intersections);
+    inputDevice.update([]);
+
+    expect(intersectionsList).to.deep.equal([intersections, []]);
+  });
+
+  it("should filter intersections", () => {
+    const intersectionsList: Array<ReadonlyArray<XIntersection>> = [];
+    const inputDevice = new MockInputDevice(
+      1,
+      undefined,
+      undefined,
+      undefined,
+      (intersections) => intersectionsList.push(intersections),
+      (is) => is.filter((i) => false)
+    );
+    const intersections = [
+      {
+        object: new Object3D(),
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+      {
+        object: new Object3D(),
+        distance: 0,
+        point: new Vector3(),
+        inputDevicePosition: new Vector3(),
+        inputDeviceRotation: new Quaternion(),
+      },
+    ];
+    inputDevice.update(intersections);
+    inputDevice.update([]);
+
+    expect(intersectionsList).to.deep.equal([[], []]);
+  });
 });
 
 describe("translator's onMissed... events", () => {
@@ -1165,6 +1223,8 @@ describe("translator's onMissed... events", () => {
     );
 
     inputDevice.update([], [1]);
+
+    inputDevice.position.x = 100;
 
     inputDevice.update(undefined, []);
 

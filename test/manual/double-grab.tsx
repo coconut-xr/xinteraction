@@ -1,8 +1,8 @@
 import { Box } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useCallback, useMemo, useRef } from "react";
-import { Matrix4, Mesh, Quaternion, Vector3 } from "three";
-import { XWebPointers } from "@coconut-xr/xinteraction/react";
+import React, { useCallback, useMemo, useRef } from "react";
+import { Mesh, Quaternion, Vector3 } from "three";
+import { XWebPointers, noEvents } from "@coconut-xr/xinteraction/react";
 import { isXIntersection } from "../../dist/index.js";
 
 export default function DoubleGrabScene() {
@@ -11,10 +11,7 @@ export default function DoubleGrabScene() {
       style={{ width: "100wh", height: "100vh", touchAction: "none" }}
       camera={{ position: [0, 0, -5] }}
       gl={{ localClippingEnabled: true }}
-      events={() => ({
-        enabled: false,
-        priority: 0,
-      })}
+      events={noEvents}
     >
       <XWebPointers />
       <DoubleGrabCube />

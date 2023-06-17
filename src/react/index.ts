@@ -1,7 +1,20 @@
 import { Object3D, Event } from "three";
-import { EventDispatcher, EventTranslator, XIntersection } from "../index.js";
+import {
+  EventDispatcher,
+  EventTranslator,
+  XIntersection,
+  voidObject,
+} from "../index.js";
 import { ThreeEvent, LocalState } from "@react-three/fiber";
-import { EventHandlers } from "@react-three/fiber/dist/declarations/src/core/events.js";
+import type {
+  EventHandlers,
+  EventManager,
+} from "@react-three/fiber/dist/declarations/src/core/events.js";
+
+export const noEvents = (): EventManager<HTMLElement> => ({
+  enabled: false,
+  priority: 0,
+});
 
 export class R3FEventDispatcher<I extends XIntersection>
   implements EventDispatcher<Event, I>
@@ -9,6 +22,12 @@ export class R3FEventDispatcher<I extends XIntersection>
   private stoppedEventTypeSet!: Set<string>;
   private event!: Event;
   private translator!: EventTranslator<Event, I>;
+
+  constructor(
+    public onPointerDownMissed?: (event: ThreeEvent<Event>) => void,
+    public onPointerUpMissed?: (event: ThreeEvent<Event>) => void,
+    public onClickMissed?: (event: ThreeEvent<Event>) => void
+  ) {}
 
   press = this.dispatch.bind(this, ["onPointerDown"]);
   release = this.dispatch.bind(this, ["onPointerUp"]);
@@ -30,6 +49,27 @@ export class R3FEventDispatcher<I extends XIntersection>
   ): void {
     for (const name of names) {
       if (this.stoppedEventTypeSet.has(name)) {
+        return;
+      }
+      if (eventObject == voidObject) {
+        switch (name) {
+          case "onClick":
+          case "onPointerDown":
+          case "onPointerUp": {
+            const handler = this[`${name}Missed`];
+            if (handler == null) {
+              return;
+            }
+            handler(
+              this.createEvent(
+                name,
+                eventObject,
+                intersection,
+                inputDeviceElementId
+              ) as any
+            );
+          }
+        }
         return;
       }
       const instance: LocalState = (eventObject as any).__r3f;
@@ -111,6 +151,9 @@ export class R3FEventDispatcher<I extends XIntersection>
   }
 
   hasEventHandlers(object: Object3D<Event>): boolean {
+    if (object === voidObject) {
+      return true;
+    }
     const instance: LocalState = (object as any).__r3f;
     return instance != null && instance.eventCount > 0;
   }

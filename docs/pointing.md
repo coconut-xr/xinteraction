@@ -8,7 +8,7 @@ The flexibility of **xinteraction** can be seen when adding more input devices, 
 
 ```tsx
 import { Canvas, useFrame } from "@react-three/fiber";
-import { XWebPointers, XStraightPointer } from "@coconut-xr/xinteraction/react";
+import { XWebPointers, XStraightPointer, noEvents } from "@coconut-xr/xinteraction/react";
 import { useRef, useState } from "react";
 import { BufferGeometry, Mesh, Vector3, Vector3Tuple } from "three";
 
@@ -16,10 +16,7 @@ export default function App() {
   return (
     <Canvas
       style={{ touchAction: "none" }}
-      events={() => ({
-        enabled: false,
-        priority: 0
-      })}
+      events={noEvents}
     >
       <Box />
       <XWebPointers />
@@ -77,19 +74,15 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import {
   XWebPointers,
   InputDeviceFunctions,
-  XStraightPointer
+  XStraightPointer,
+  noEvents,
 } from "@coconut-xr/xinteraction/react";
 import { useEffect, useRef, useState } from "react";
 import { BufferGeometry, Mesh, Vector3, Vector3Tuple } from "three";
 
 export default function App() {
   return (
-    <Canvas
-      events={() => ({
-        enabled: false,
-        priority: 0
-      })}
-    >
+    <Canvas events={noEvents}>
       <Box />
       <XWebPointers />
       <RotatingPointer id={-1} position={[-3, 0, 0]} />
@@ -99,7 +92,7 @@ export default function App() {
 
 const lineGeometry = new BufferGeometry().setFromPoints([
   new Vector3(),
-  new Vector3(0, 0, 100)
+  new Vector3(0, 0, 100),
 ]);
 
 function RotatingPointer({
@@ -151,10 +144,8 @@ function Box() {
     </mesh>
   );
 }
-
 ```
 
 Sometimes, a straight pointer is insufficient, and a curved pointer is necessary. In the next section, we introduce the **curved pointer**, which can be, for instance, used to create a teleport interaction with the ground.
-
 
 <span style="font-size: 2rem">⤷ [Next Section](curved.md)</span>

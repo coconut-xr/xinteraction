@@ -10,16 +10,26 @@ import {
   Intersection,
 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
-import { traverseUntilInteractable } from "./index.js";
+import {
+  isIntersectionNotClipped,
+  traverseUntilInteractable,
+} from "./index.js";
 
 const oldInputDevicePointOffset = new Vector3();
 const inputDeviceQuaternionOffset = new Quaternion();
 
+export type XSphereIntersection = XIntersection & {
+  /**
+   * set when the event is captured because the "distance" property is only the distance to a "expected intersection"
+   */
+  actualDistance?: number;
+};
+
 export function intersectSphereFromCapturedEvents(
   fromPosition: Vector3,
   fromRotation: Quaternion,
-  capturedEvents: Map<Object3D, XIntersection>
-): Array<XIntersection> {
+  capturedEvents: Map<Object3D, XSphereIntersection>
+): Array<XSphereIntersection> {
   //events are captured
   return Array.from(capturedEvents.entries()).map(
     ([capturedObject, intersection]) => {
@@ -45,9 +55,43 @@ export function intersectSphereFromCapturedEvents(
         point,
         face: intersection.face,
         capturedObject,
+        actualDistance: computeActualDistance(fromPosition, intersection),
       };
     }
   );
+}
+
+function computeActualDistance(
+  fromPosition: Vector3,
+  intersection: Intersection
+): number {
+  const object = intersection.object;
+  if (intersection.instanceId != null && object instanceof InstancedMesh) {
+    if (object.geometry.boundingBox == null) {
+      object.geometry.computeBoundingBox();
+    }
+    object.getMatrixAt(intersection.instanceId, matrixHelper);
+    matrixHelper.premultiply(object.matrixWorld);
+    invertedMatrixHelper.copy(matrixHelper).invert();
+    vectorHelper.copy(fromPosition).applyMatrix4(invertedMatrixHelper);
+    object.geometry.boundingBox!.clampPoint(vectorHelper, vectorHelper);
+    vectorHelper.applyMatrix4(matrixHelper);
+    return vectorHelper.distanceTo(fromPosition);
+  }
+
+  if (object instanceof Mesh) {
+    if (object.geometry.boundingBox == null) {
+      object.geometry.computeBoundingBox();
+    }
+    invertedMatrixHelper.copy(object.matrixWorld).invert();
+    vectorHelper.copy(fromPosition).applyMatrix4(invertedMatrixHelper);
+    object.geometry.boundingBox!.clampPoint(vectorHelper, vectorHelper);
+    vectorHelper.applyMatrix4(object.matrixWorld);
+    return vectorHelper.distanceTo(fromPosition);
+  }
+
+  //not lösung - emergency solution
+  return object.getWorldPosition(vectorHelper).distanceTo(fromPosition);
 }
 
 const collisionSphere = new Sphere();
@@ -57,16 +101,14 @@ export function intersectSphereFromObject(
   fromQuaternion: Quaternion,
   radius: number,
   on: Object3D,
-  dispatcher: EventDispatcher<Event, XIntersection>,
-  filterIntersections?: (
-    intersections: Array<XIntersection>
-  ) => Array<XIntersection>
-): Array<XIntersection> {
+  dispatcher: EventDispatcher<Event, XSphereIntersection>,
+  filterClipped: boolean
+): Array<XSphereIntersection> {
   collisionSphere.center.copy(fromPosition);
   collisionSphere.radius = radius;
   let intersections = traverseUntilInteractable<
-    Array<XIntersection>,
-    Array<XIntersection>
+    Array<XSphereIntersection>,
+    Array<XSphereIntersection>
   >(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
@@ -74,7 +116,9 @@ export function intersectSphereFromObject(
     (prev, cur) => prev.concat(cur),
     []
   );
-  intersections = filterIntersections?.(intersections) ?? intersections;
+  if (filterClipped) {
+    intersections = intersections.filter(isIntersectionNotClipped);
+  }
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }
@@ -82,8 +126,8 @@ export function intersectSphereFromObject(
 function intersectSphereRecursive(
   object: Object3D,
   inputDeviceRotation: Quaternion,
-  target: Array<XIntersection> = []
-): Array<XIntersection> {
+  target: Array<XSphereIntersection> = []
+): Array<XSphereIntersection> {
   const intersections = intersectSphere(object, inputDeviceRotation);
   if (Array.isArray(intersections)) {
     target.push(...intersections);
@@ -108,7 +152,7 @@ function isSpherecastable(obj: Object3D): obj is Object3D & {
 function intersectSphere(
   object: Object3D,
   inputDeviceRotation: Quaternion
-): Array<XIntersection> | XIntersection | undefined {
+): Array<XSphereIntersection> | XSphereIntersection | undefined {
   object.updateWorldMatrix(true, false);
   if (isSpherecastable(object)) {
     const intersections: Array<Intersection> = [];
@@ -126,15 +170,15 @@ function intersectSphere(
     if (object.geometry.boundingBox == null) {
       object.geometry.computeBoundingBox();
     }
-    const intersections: Array<XIntersection> = [];
+    const intersections: Array<XSphereIntersection> = [];
     for (let i = 0; i < object.count; i++) {
       object.getMatrixAt(i, matrixHelper);
-      invertedMatrixHelper.copy(matrixHelper);
-      invertedMatrixHelper.premultiply(object.matrixWorld);
-      if (!intersectSphereSphere(invertedMatrixHelper, object.geometry)) {
+      matrixHelper.premultiply(object.matrixWorld);
+      if (!intersectSphereSphere(matrixHelper, object.geometry)) {
         continue;
       }
-      invertedMatrixHelper.invert();
+
+      invertedMatrixHelper.copy(matrixHelper).invert();
       const intersection = intersectSphereBox(
         object,
         collisionSphere.center,
@@ -195,7 +239,7 @@ function intersectSphereBox(
   invertedMatrixWorld: Matrix4,
   geometry: BufferGeometry,
   instanceId?: number
-): XIntersection | undefined {
+): XSphereIntersection | undefined {
   helperSphere.copy(collisionSphere).applyMatrix4(invertedMatrixWorld);
   geometry.boundingBox!.clampPoint(helperSphere.center, vectorHelper);
 

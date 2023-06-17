@@ -1,6 +1,9 @@
 import { Line3, Object3D, Quaternion, Raycaster, Vector3 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
-import { traverseUntilInteractable } from "./index.js";
+import {
+  isIntersectionNotClipped,
+  traverseUntilInteractable,
+} from "./index.js";
 
 const raycaster = new Raycaster();
 
@@ -46,9 +49,7 @@ export function intersectLinesFromObject(
   linePoints: Array<Vector3>,
   on: Object3D,
   dispatcher: EventDispatcher<Event, XLinesIntersection>,
-  filterIntersections?: (
-    intersections: Array<XLinesIntersection>
-  ) => Array<XLinesIntersection>
+  filterClipped: boolean
 ): Array<XLinesIntersection> {
   let intersections = traverseUntilInteractable<
     Array<XLinesIntersection>,
@@ -100,7 +101,11 @@ export function intersectLinesFromObject(
     (prev, cur) => prev.concat(cur),
     []
   );
-  intersections = filterIntersections?.(intersections) ?? intersections;
+
+  if (filterClipped) {
+    intersections = intersections.filter(isIntersectionNotClipped);
+  }
+
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }

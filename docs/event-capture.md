@@ -12,19 +12,14 @@ Once the mesh in the `DragCube` receives an `onPointerDown` event, we use `setPo
 
 ```tsx
 import { Canvas } from "@react-three/fiber";
-import { XWebPointers } from "@coconut-xr/xinteraction/react";
+import { XWebPointers, noEvents } from "@coconut-xr/xinteraction/react";
 import { useRef } from "react";
 import { Mesh, Quaternion, Vector3 } from "three";
 import { isXIntersection } from "@coconut-xr/xinteraction";
 
 export default function App() {
   return (
-    <Canvas
-      events={() => ({
-        enabled: false,
-        priority: 0
-      })}
-    >
+    <Canvas events={noEvents}>
       <XWebPointers />
       <DragCube />
     </Canvas>
@@ -49,7 +44,7 @@ function DragCube() {
           (e.target as HTMLElement).setPointerCapture(e.pointerId);
           downState.current = {
             pointerId: e.pointerId,
-            pointToObjectOffset: ref.current.position.clone().sub(e.point)
+            pointToObjectOffset: ref.current.position.clone().sub(e.point),
           };
         }
       }}

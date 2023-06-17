@@ -11,18 +11,14 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import {
   InputDeviceFunctions,
   XCurvedPointer,
+  noEvents,
 } from "@coconut-xr/xinteraction/react";
 import { useRef } from "react";
 import { BufferGeometry, Mesh, Vector3, Vector3Tuple } from "three";
 
 export default function App() {
   return (
-    <Canvas
-      events={() => ({
-        enabled: false,
-        priority: 0,
-      })}
-    >
+    <Canvas events={noEvents}>
       <Ground />
       <RotatingCurvedPointer id={-1} />
     </Canvas>

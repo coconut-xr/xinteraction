@@ -10,8 +10,10 @@ import {
   Euler,
   Group,
   Mesh,
+  MeshBasicMaterial,
   Object3D,
   PerspectiveCamera,
+  Plane,
   Quaternion,
   Vector2,
   Vector3,
@@ -49,7 +51,8 @@ describe("ray intersections", () => {
       worldPosition,
       worldRotation,
       group,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([]);
   });
@@ -76,7 +79,8 @@ describe("ray intersections", () => {
       worldPosition,
       worldRotation,
       group,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([mesh1.uuid]);
   });
@@ -109,7 +113,8 @@ describe("ray intersections", () => {
       worldPosition,
       worldRotation,
       group,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
       mesh3.uuid,
@@ -139,7 +144,8 @@ describe("ray intersections", () => {
       worldPosition,
       worldRotation,
       parent,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false
     );
     expect(intersections.map((i) => i.distance)).to.deep.equal([1.5, 4.5]);
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
@@ -147,7 +153,8 @@ describe("ray intersections", () => {
       parent.uuid,
     ]);
   });
-  it("should filter intersections", () => {
+
+  it("should sort intersections", () => {
     const from = new Object3D();
     from.position.set(1, 1, 1);
     from.rotation.y = Math.PI / 2;
@@ -177,10 +184,11 @@ describe("ray intersections", () => {
       worldRotation,
       group,
       mockEventDispatcher,
-      (is) => is.filter((i) => i.object != mesh2)
+      false
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
       mesh3.uuid,
+      mesh2.uuid,
       mesh1.uuid,
     ]);
   });
@@ -207,9 +215,47 @@ describe("ray intersections", () => {
       from,
       new Vector2(-1), //rotate 90° deg to left
       group,
-      mockEventDispatcher
+      mockEventDispatcher,
+      false,
+      new Vector3(),
+      new Quaternion()
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([mesh2.uuid]);
+  });
+
+  it("should filter clipped from camera", () => {
+    const from = new PerspectiveCamera(180);
+
+    const group = new Group();
+
+    const mesh1 = new Mesh(new BoxGeometry());
+    group.add(mesh1);
+    mesh1.position.set(-3, 1, 1);
+    mesh1.updateMatrixWorld();
+
+    const mesh2 = new Mesh(new BoxGeometry());
+    group.add(mesh2);
+    mesh2.position.set(-3, 1, 1);
+    mesh2.updateMatrixWorld();
+
+    (mesh2.material as MeshBasicMaterial).clippingPlanes = [
+      new Plane(new Vector3(1, 0, 0), -100),
+    ];
+
+    from.lookAt(mesh2.position);
+    from.rotateY(-Math.PI / 2); //rotate 90° deg to right
+    from.updateMatrixWorld();
+
+    const intersections = intersectRayFromCamera(
+      from,
+      new Vector2(-1), //rotate 90° deg to left
+      group,
+      mockEventDispatcher,
+      true,
+      new Vector3(),
+      new Quaternion()
+    );
+    expect(intersections.map((i) => i.object.uuid)).to.deep.equal([mesh1.uuid]);
   });
 });
 
@@ -331,7 +377,9 @@ describe("ray intersections for captured events", () => {
             point: new Vector3(0, 0, 1),
           },
         ],
-      ])
+      ]),
+      new Vector3(),
+      new Quaternion()
     );
 
     expect(intersections[0].point.x).be.closeTo(2, 0.0001);

@@ -8,7 +8,10 @@ import {
   Vector3,
 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
-import { traverseUntilInteractable } from "./index.js";
+import {
+  isIntersectionNotClipped,
+  traverseUntilInteractable,
+} from "./index.js";
 
 const raycaster = new Raycaster();
 
@@ -42,10 +45,15 @@ export function intersectRayFromCapturedEvents(
 export function intersectRayFromCameraCapturedEvents(
   camera: Camera,
   coords: Vector2,
-  capturedEvents: Map<Object3D, XCameraRayIntersection>
+  capturedEvents: Map<Object3D, XCameraRayIntersection>,
+  worldPositionTarget: Vector3,
+  worldQuaternionTarget: Quaternion
 ): Array<XCameraRayIntersection> {
   raycaster.setFromCamera(coords, camera);
-  rayQuaternion.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+
+  worldPositionTarget.copy(raycaster.ray.origin);
+  worldQuaternionTarget.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+
   camera.getWorldDirection(directionHelper);
   return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
     //set the plane to the viewPlane + the distance of the prev intersection in the camera distance
@@ -61,8 +69,8 @@ export function intersectRayFromCameraCapturedEvents(
     return {
       ...intersection,
       point,
-      inputDevicePosition: raycaster.ray.origin.clone(),
-      inputDeviceRotation: rayQuaternion.clone(),
+      inputDevicePosition: worldPositionTarget.clone(),
+      inputDeviceRotation: worldQuaternionTarget.clone(),
       capturedObject,
     };
   });
@@ -73,9 +81,7 @@ export function intersectRayFromObject(
   fromRotation: Quaternion,
   on: Object3D,
   dispatcher: EventDispatcher<Event, XIntersection>,
-  filterIntersections?: (
-    intersections: Array<XIntersection>
-  ) => Array<XIntersection>
+  filterClipped: boolean
 ): Array<XIntersection> {
   raycaster.ray.origin.copy(fromPosition);
   raycaster.ray.direction.set(0, 0, 1).applyQuaternion(fromRotation);
@@ -95,12 +101,13 @@ export function intersectRayFromObject(
     (prev, cur) => prev.concat(cur),
     []
   );
-  intersections = filterIntersections?.(intersections) ?? intersections;
+  if (filterClipped) {
+    intersections = intersections.filter(isIntersectionNotClipped);
+  }
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }
 
-const rayQuaternion = new Quaternion();
 const ZAXIS = new Vector3();
 
 export function intersectRayFromCamera(
@@ -108,12 +115,15 @@ export function intersectRayFromCamera(
   coords: Vector2,
   on: Object3D,
   dispatcher: EventDispatcher<Event, XCameraRayIntersection>,
-  filterIntersections?: (
-    intersections: Array<XCameraRayIntersection>
-  ) => Array<XCameraRayIntersection>
+  filterClipped: boolean,
+  worldPositionTarget: Vector3,
+  worldQuaternionTarget: Quaternion
 ): Array<XCameraRayIntersection> {
   raycaster.setFromCamera(coords, from);
-  rayQuaternion.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+
+  worldPositionTarget.copy(raycaster.ray.origin);
+  worldQuaternionTarget.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+
   planeHelper.setFromNormalAndCoplanarPoint(
     from.getWorldDirection(directionHelper),
     raycaster.ray.origin
@@ -128,15 +138,17 @@ export function intersectRayFromCamera(
     (object) =>
       raycaster.intersectObject(object, true).map((intersection) =>
         Object.assign(intersection, {
-          inputDevicePosition: raycaster.ray.origin.clone(),
-          inputDeviceRotation: rayQuaternion.clone(),
+          inputDevicePosition: worldPositionTarget.clone(),
+          inputDeviceRotation: worldQuaternionTarget.clone(),
           distanceViewPlane: planeHelper.distanceToPoint(intersection.point),
         })
       ),
     (prev, cur) => prev.concat(cur),
     []
   );
-  intersections = filterIntersections?.(intersections) ?? intersections;
+  if (filterClipped) {
+    intersections = intersections.filter(isIntersectionNotClipped);
+  }
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }
