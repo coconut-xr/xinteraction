@@ -4,6 +4,7 @@ import {
   isIntersectionNotClipped,
   traverseUntilInteractable,
 } from "./index.js";
+import { ThreeEvent } from "@react-three/fiber";
 
 const raycaster = new Raycaster();
 
@@ -48,7 +49,7 @@ export function intersectLinesFromObject(
   fromRotation: Quaternion,
   linePoints: Array<Vector3>,
   on: Object3D,
-  dispatcher: EventDispatcher<Event, XLinesIntersection>,
+  dispatcher: EventDispatcher<ThreeEvent<Event>, XLinesIntersection>,
   filterClipped: boolean
 ): Array<XLinesIntersection> {
   let intersections = traverseUntilInteractable<

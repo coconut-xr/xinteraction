@@ -17,11 +17,11 @@ export const noEvents = (): EventManager<HTMLElement> => ({
 });
 
 export class R3FEventDispatcher<I extends XIntersection>
-  implements EventDispatcher<Event, I>
+  implements EventDispatcher<ThreeEvent<Event>, I>
 {
   private stoppedEventTypeSet!: Set<string>;
-  private event!: Event;
-  private translator!: EventTranslator<Event, I>;
+  private event!: ThreeEvent<Event>;
+  private translator!: EventTranslator<ThreeEvent<Event>, I>;
 
   constructor(
     public onPointerDownMissed?: (event: ThreeEvent<Event>) => void,
@@ -144,7 +144,10 @@ export class R3FEventDispatcher<I extends XIntersection>
     return data;
   }
 
-  bind(event: Event, eventTranslator: EventTranslator<Event, I>): void {
+  bind(
+    event: ThreeEvent<Event>,
+    eventTranslator: EventTranslator<ThreeEvent<Event>, I>
+  ): void {
     this.stoppedEventTypeSet = new Set();
     this.event = event;
     this.translator = eventTranslator;
@@ -166,6 +169,7 @@ export type InputDeviceFunctions = {
   wheel(event: any): void;
 };
 
+export * from "./forward-events.js";
 export * from "./web-pointers.js";
 export * from "./straight-pointer.js";
 export * from "./sphere-collider.js";

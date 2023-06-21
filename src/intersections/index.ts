@@ -38,3 +38,7 @@ export function isIntersectionNotClipped(intersection: Intersection): boolean {
   }
   return true;
 }
+
+export * from "./lines.js";
+export * from "./ray.js";
+export * from "./sphere.js";

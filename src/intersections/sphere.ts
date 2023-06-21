@@ -14,6 +14,7 @@ import {
   isIntersectionNotClipped,
   traverseUntilInteractable,
 } from "./index.js";
+import { ThreeEvent } from "@react-three/fiber";
 
 const oldInputDevicePointOffset = new Vector3();
 const inputDeviceQuaternionOffset = new Quaternion();
@@ -101,7 +102,7 @@ export function intersectSphereFromObject(
   fromQuaternion: Quaternion,
   radius: number,
   on: Object3D,
-  dispatcher: EventDispatcher<Event, XSphereIntersection>,
+  dispatcher: EventDispatcher<ThreeEvent<Event>, XSphereIntersection>,
   filterClipped: boolean
 ): Array<XSphereIntersection> {
   collisionSphere.center.copy(fromPosition);

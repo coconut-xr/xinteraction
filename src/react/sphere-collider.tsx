@@ -8,7 +8,7 @@ import React, {
   useImperativeHandle,
 } from "react";
 import { Object3D, Event, Quaternion, Vector3 } from "three";
-import { EventTranslator, XIntersection, isDragDefault } from "../index.js";
+import { EventTranslator } from "../index.js";
 import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import {
   XSphereIntersection,
@@ -16,7 +16,7 @@ import {
   intersectSphereFromObject,
 } from "../intersections/sphere.js";
 
-const emptyIntersections: Array<XIntersection> = [];
+const emptyIntersections: Array<XSphereIntersection> = [];
 
 const worldPositionHelper = new Vector3();
 const worldRotationHelper = new Quaternion();
@@ -27,14 +27,15 @@ export const XSphereCollider = forwardRef<
     id: number;
     radius: number;
     distanceElement?: { id: number; downRadius: number };
-    onIntersections?: (intersections: ReadonlyArray<XIntersection>) => void;
+    onIntersections?: (
+      intersections: ReadonlyArray<XSphereIntersection>
+    ) => void;
     filterIntersections?: (
-      intersections: Array<XIntersection>
-    ) => Array<XIntersection>;
+      intersections: Array<XSphereIntersection>
+    ) => Array<XSphereIntersection>;
     onPointerDownMissed?: (event: ThreeEvent<Event>) => void;
     onPointerUpMissed?: (event: ThreeEvent<Event>) => void;
     onClickMissed?: (event: ThreeEvent<Event>) => void;
-    isDrag?: (i1: XIntersection, i2: XIntersection) => boolean;
     filterClipped?: boolean;
   }
 >(
@@ -48,7 +49,6 @@ export const XSphereCollider = forwardRef<
       onClickMissed,
       onPointerDownMissed,
       onPointerUpMissed,
-      isDrag: customIsDrag,
       filterClipped = true,
     },
     ref
@@ -58,7 +58,7 @@ export const XSphereCollider = forwardRef<
     const pressedElementIds = useMemo(() => new Set<number>(), []);
 
     const dispatcher = useMemo(
-      () => new R3FEventDispatcher<XIntersection>(),
+      () => new R3FEventDispatcher<XSphereIntersection>(),
       []
     );
     dispatcher.onPointerDownMissed = onPointerDownMissed;
@@ -66,21 +66,20 @@ export const XSphereCollider = forwardRef<
     dispatcher.onClickMissed = onClickMissed;
 
     const properties = useMemo(
-      () => ({ distanceElement, radius, customIsDrag, filterClipped }),
+      () => ({ distanceElement, radius, filterClipped }),
       []
     );
     properties.distanceElement = distanceElement;
     properties.radius = radius;
-    properties.customIsDrag = customIsDrag;
     properties.filterClipped = filterClipped;
 
     const translator = useMemo(
       () =>
-        new EventTranslator<any, XIntersection>(
+        new EventTranslator<any, XSphereIntersection>(
           id,
           true,
           dispatcher,
-          (_: any, capturedEvents?: Map<Object3D, XIntersection>) => {
+          (_: any, capturedEvents?: Map<Object3D, XSphereIntersection>) => {
             if (objectRef.current == null) {
               return emptyIntersections;
             }
@@ -121,10 +120,6 @@ export const XSphereCollider = forwardRef<
             }
             return pressedElementIds;
           },
-          (i1, i2) =>
-            properties.customIsDrag == null
-              ? isDragDefault(store.getState().camera, i1, i2)
-              : properties.customIsDrag(i1, i2),
           (position, rotation) => {
             if (objectRef.current == null) {
               return;

@@ -274,45 +274,6 @@ describe("translate events", () => {
     ] satisfies Array<EventLog>);
   });
 
-  it("should not select (click) when dragged", () => {
-    const inputDevice = new MockInputDevice(1);
-    const actualEvents: Array<EventLog> = [];
-    const object = new Object3D();
-    object.addEventListener("select", (event) => {
-      actualEvents.push({ type: "select", objectUUID: object.uuid });
-    });
-
-    //enter and press
-    inputDevice.update(
-      [
-        {
-          object: object,
-          distance: 0,
-          point: new Vector3(0, 0, 0),
-          inputDevicePosition: new Vector3(),
-          inputDeviceRotation: new Quaternion(),
-        },
-      ],
-      [1],
-      1
-    );
-    //release
-    inputDevice.update(
-      [
-        {
-          object: object,
-          distance: 0,
-          point: new Vector3(0, 100, 0),
-          inputDevicePosition: new Vector3(),
-          inputDeviceRotation: new Quaternion(),
-        },
-      ],
-      []
-    );
-
-    expect(actualEvents).to.deep.equal([] satisfies Array<EventLog>);
-  });
-
   it("should select (click) on leave", () => {
     const inputDevice = new MockInputDevice(1);
     const actualEvents: Array<EventLog> = [];

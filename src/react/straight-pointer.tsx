@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { Object3D, Quaternion, Vector3, Event } from "three";
-import { EventTranslator, XIntersection, isDragDefault } from "../index.js";
+import { EventTranslator, XIntersection } from "../index.js";
 import {
   intersectRayFromCapturedEvents,
   intersectRayFromObject,
@@ -19,6 +19,8 @@ const emptyIntersections: Array<XIntersection> = [];
 
 const worldPositionHelper = new Vector3();
 const worldRotationHelper = new Quaternion();
+
+const ZAXIS = new Vector3();
 
 export const XStraightPointer = forwardRef<
   InputDeviceFunctions,
@@ -32,6 +34,7 @@ export const XStraightPointer = forwardRef<
     onPointerUpMissed?: (event: ThreeEvent<Event>) => void;
     onClickMissed?: (event: ThreeEvent<Event>) => void;
     isDrag?: (i1: XIntersection, i2: XIntersection) => boolean;
+    direction?: Vector3;
     filterClipped?: boolean;
   }
 >(
@@ -43,8 +46,8 @@ export const XStraightPointer = forwardRef<
       onClickMissed,
       onPointerDownMissed,
       onPointerUpMissed,
-      isDrag: customIsDrag,
       filterClipped = true,
+      direction = ZAXIS,
     },
     ref
   ) => {
@@ -62,9 +65,9 @@ export const XStraightPointer = forwardRef<
 
     const pressedElementIds = useMemo(() => new Set<number>(), []);
 
-    const properties = useMemo(() => ({ customIsDrag, filterClipped }), []);
-    properties.customIsDrag = customIsDrag;
+    const properties = useMemo(() => ({ filterClipped, direction }), []);
     properties.filterClipped = filterClipped;
+    properties.direction = direction;
 
     const translator = useMemo(
       () =>
@@ -86,20 +89,18 @@ export const XStraightPointer = forwardRef<
                   worldRotationHelper,
                   store.getState().scene,
                   dispatcher,
-                  properties.filterClipped
+                  properties.filterClipped,
+                  properties.direction
                 )
               : //events captured
                 intersectRayFromCapturedEvents(
                   worldPositionHelper,
                   worldRotationHelper,
-                  capturedEvents
+                  capturedEvents,
+                  properties.direction
                 );
           },
           () => pressedElementIds,
-          (i1, i2) =>
-            properties.customIsDrag == null
-              ? isDragDefault(store.getState().camera, i1, i2)
-              : properties.customIsDrag(i1, i2),
           (position, rotation) => {
             if (objectRef.current == null) {
               return;

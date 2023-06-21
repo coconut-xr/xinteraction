@@ -19,10 +19,13 @@ import {
   Vector3,
 } from "three";
 import { EventDispatcher } from "../../src/index.js";
+import { ThreeEvent } from "@react-three/fiber";
+
+const ZAXIS = new Vector3(0, 0, 1);
 
 export const mockEventDispatcher = {
   hasEventHandlers: () => true,
-} as any as EventDispatcher<Event, any>;
+} as any as EventDispatcher<ThreeEvent<Event>, any>;
 
 const worldPosition = new Vector3();
 const worldRotation = new Quaternion();
@@ -52,7 +55,8 @@ describe("ray intersections", () => {
       worldRotation,
       group,
       mockEventDispatcher,
-      false
+      false,
+      ZAXIS
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([]);
   });
@@ -80,9 +84,41 @@ describe("ray intersections", () => {
       worldRotation,
       group,
       mockEventDispatcher,
-      false
+      false,
+      ZAXIS
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([mesh1.uuid]);
+  });
+  it("should intersect in -z direction", () => {
+    const from = new Object3D();
+    from.position.set(1, 1, 1);
+    const group = new Group();
+
+    const mesh1 = new Mesh(new BoxGeometry());
+    group.add(mesh1);
+    mesh1.position.set(1, 1, 3);
+    mesh1.updateMatrixWorld();
+
+    const mesh2 = new Mesh(new BoxGeometry());
+    group.add(mesh2);
+    mesh2.position.set(1, 1, -3);
+    mesh2.updateMatrixWorld();
+
+    from.getWorldPosition(worldPosition);
+    from.getWorldQuaternion(worldRotation);
+
+    const intersections = intersectRayFromObject(
+      worldPosition,
+      worldRotation,
+      group,
+      mockEventDispatcher,
+      false,
+      new Vector3(0, 0, -1)
+    );
+    expect(intersections[0].distance).to.be.closeTo(3.5, 0.0001);
+    expect(intersections[0].point.x).to.be.closeTo(1, 0.0001);
+    expect(intersections[0].point.y).to.be.closeTo(1, 0.0001);
+    expect(intersections[0].point.z).to.be.closeTo(-2.5, 0.0001);
   });
   it("should have intersections with all objects sorted by distance", () => {
     const from = new Object3D();
@@ -114,7 +150,8 @@ describe("ray intersections", () => {
       worldRotation,
       group,
       mockEventDispatcher,
-      false
+      false,
+      ZAXIS
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
       mesh3.uuid,
@@ -145,7 +182,8 @@ describe("ray intersections", () => {
       worldRotation,
       parent,
       mockEventDispatcher,
-      false
+      false,
+      ZAXIS
     );
     expect(intersections.map((i) => i.distance)).to.deep.equal([1.5, 4.5]);
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
@@ -184,7 +222,8 @@ describe("ray intersections", () => {
       worldRotation,
       group,
       mockEventDispatcher,
-      false
+      false,
+      ZAXIS
     );
     expect(intersections.map((i) => i.object.uuid)).to.deep.equal([
       mesh3.uuid,
@@ -287,7 +326,8 @@ describe("ray intersections for captured events", () => {
             point: new Vector3(),
           },
         ],
-      ])
+      ]),
+      ZAXIS
     );
     expect(intersections.map((i) => i.object)).to.deep.equal([
       object1,
@@ -323,7 +363,8 @@ describe("ray intersections for captured events", () => {
             point: new Vector3(),
           },
         ],
-      ])
+      ]),
+      ZAXIS
     );
     expect(intersections.map((i) => i.capturedObject)).to.deep.equal([
       object3,
@@ -346,7 +387,8 @@ describe("ray intersections for captured events", () => {
             point: new Vector3(0, 0, 1),
           },
         ],
-      ])
+      ]),
+      ZAXIS
     );
     expect(intersections[0].point.x).be.closeTo(2, 0.0001);
     expect(intersections[0].point.y).be.closeTo(0, 0.0001);

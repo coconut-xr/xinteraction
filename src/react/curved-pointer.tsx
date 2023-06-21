@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { Object3D, Quaternion, Vector3, Event } from "three";
-import { EventTranslator, XIntersection, isDragDefault } from "../index.js";
+import { EventTranslator, XIntersection } from "../index.js";
 import {
   XLinesIntersection,
   intersectLinesFromCapturedEvents,
@@ -35,7 +35,6 @@ export const XCurvedPointer = forwardRef<
     onPointerDownMissed?: (event: ThreeEvent<Event>) => void;
     onPointerUpMissed?: (event: ThreeEvent<Event>) => void;
     onClickMissed?: (event: ThreeEvent<Event>) => void;
-    isDrag?: (i1: XIntersection, i2: XIntersection) => boolean;
     filterClipped?: boolean;
   }
 >(
@@ -48,7 +47,6 @@ export const XCurvedPointer = forwardRef<
       onClickMissed,
       onPointerDownMissed,
       onPointerUpMissed,
-      isDrag: customIsDrag,
       filterClipped = true,
     },
     ref
@@ -66,12 +64,8 @@ export const XCurvedPointer = forwardRef<
 
     const pressedElementIds = useMemo(() => new Set<number>(), []);
 
-    const properties = useMemo(
-      () => ({ points, customIsDrag, filterClipped }),
-      []
-    );
+    const properties = useMemo(() => ({ points, filterClipped }), []);
     properties.points = points;
-    properties.customIsDrag = customIsDrag;
     properties.filterClipped = filterClipped;
 
     const translator = useMemo(
@@ -107,10 +101,6 @@ export const XCurvedPointer = forwardRef<
                 );
           },
           () => pressedElementIds,
-          (i1, i2) =>
-            properties.customIsDrag == null
-              ? isDragDefault(store.getState().camera, i1, i2)
-              : properties.customIsDrag(i1, i2),
           (position, rotation) => {
             if (objectRef.current == null) {
               return;

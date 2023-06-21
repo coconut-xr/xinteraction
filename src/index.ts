@@ -1,4 +1,3 @@
-import { Camera } from "@react-three/fiber";
 import { Intersection, Object3D, Quaternion, Vector3 } from "three";
 
 export type ObjectEventTypes =
@@ -22,41 +21,8 @@ export function isXIntersection(val: Intersection): val is XIntersection {
   return "inputDevicePosition" in val;
 }
 
-const p1Helper = new Vector3();
-const p2Helper = new Vector3();
-
 const inputSourcePositionHelper = new Vector3();
 const inputSourceRotationHelper = new Quaternion();
-
-/**
- *
- * @param p1 point 1 in world coordinates
- * @param p2 point 2 in world coordinates
- * @param camera
- */
-export function getDistanceSquaredInNDC(
-  camera: Camera,
-  p1: Vector3,
-  p2: Vector3
-): number {
-  return p1Helper
-    .copy(p1)
-    .project(camera)
-    .distanceToSquared(p2Helper.copy(p2).project(camera));
-}
-
-const defaultDragDistanceSquared = 0.0001; //0.01
-
-export function isDragDefault(
-  camera: Camera,
-  i1: XIntersection,
-  i2: XIntersection
-) {
-  return (
-    getDistanceSquaredInNDC(camera, i1.point, i2.point) >
-    defaultDragDistanceSquared
-  );
-}
 
 export type EventDispatcher<E, I extends XIntersection> = {
   [Key in ObjectEventTypes]: (
@@ -79,7 +45,6 @@ type ObjectInteractionState<I extends XIntersection> = {
     {
       lastPressEventTime: number;
       lastPressEventIntersection: I;
-      lastDragTime?: number;
     }
   >;
 };
@@ -112,7 +77,6 @@ export class EventTranslator<
       capturedEvents?: Map<Object3D, I>
     ) => Array<I>,
     protected getPressedElementIds: (intersection?: I) => Iterable<number>,
-    protected isDrag: (pressIntersection: I, currentIntersection: I) => boolean,
     protected getInputDeviceTransformation: (
       position: Vector3,
       rotation: Quaternion
@@ -195,8 +159,7 @@ export class EventTranslator<
             eventObject,
             intersection,
             interactionState,
-            pressedElementIds,
-            currentTime
+            pressedElementIds
           );
           this.updateElementStateMap(
             intersection,
@@ -232,8 +195,7 @@ export class EventTranslator<
             eventObject,
             intersection,
             interactionState,
-            pressedElementIds,
-            currentTime
+            pressedElementIds
           );
           this.eventDispatcher.leave(eventObject, intersection);
           interactionState.lastLeftTime = currentTime;
@@ -300,29 +262,7 @@ export class EventTranslator<
           lastPressEventTime: currentTime,
           lastPressEventIntersection: intersection,
         });
-      } else {
-        this.checkDrag(
-          intersection,
-          interactionState,
-          pressedElementId,
-          currentTime
-        );
       }
-    }
-  }
-
-  private checkDrag(
-    intersection: I,
-    interactionState: ObjectInteractionState<I>,
-    pressedElementId: number,
-    currentTime: number
-  ) {
-    const elementState = interactionState.elementStateMap.get(pressedElementId);
-    if (
-      elementState != null &&
-      this.isDrag(elementState.lastPressEventIntersection, intersection)
-    ) {
-      elementState.lastDragTime = currentTime;
     }
   }
 
@@ -346,19 +286,12 @@ export class EventTranslator<
     eventObject: Object3D,
     intersection: I,
     interactionState: ObjectInteractionState<I>,
-    pressedElementIds: Set<number>,
-    currentTime: number
+    pressedElementIds: Set<number>
   ) {
     for (const releasedElementId of interactionState.lastPressedElementIds) {
       if (pressedElementIds.has(releasedElementId)) {
         continue;
       }
-      this.checkDrag(
-        intersection,
-        interactionState,
-        releasedElementId,
-        currentTime
-      );
       //pressedElementId was not pressed this time
       this.eventDispatcher.release(
         eventObject,
@@ -372,11 +305,9 @@ export class EventTranslator<
       if (
         elementState != null &&
         (interactionState.lastLeftTime == null ||
-          interactionState.lastLeftTime < elementState.lastPressEventTime) &&
-        (elementState.lastDragTime == null ||
-          elementState.lastDragTime < elementState.lastPressEventTime)
+          interactionState.lastLeftTime < elementState.lastPressEventTime)
       ) {
-        //=> the object wasn't left and dragged since it was pressed last
+        //=> the object wasn't left since it was pressed last
         this.eventDispatcher.select(
           eventObject,
           intersection,
@@ -509,3 +440,5 @@ function checkUniqueTraversal(value: any, traversalId: number): boolean {
   value[traversalIdSymbol] = traversalId;
   return true;
 }
+
+export * from "./intersections/index.js";

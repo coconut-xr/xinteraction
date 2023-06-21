@@ -1,5 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, GroupProps, MeshProps, useFrame } from "@react-three/fiber";
+/* eslint-disable react/no-unknown-property */
+import React, { RefObject, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Canvas,
+  GroupProps,
+  MeshProps,
+  ThreeEvent,
+  createPortal,
+  useFrame,
+} from "@react-three/fiber";
 import {
   InputDeviceFunctions,
   XCurvedPointer,
@@ -7,19 +15,34 @@ import {
   XStraightPointer,
   XWebPointers,
   noEvents,
+  useForwardEvents,
 } from "@coconut-xr/xinteraction/react";
-import { Box, OrbitControls } from "@react-three/drei";
+import {
+  EventDispatcher,
+  isXIntersection,
+  intersectRayFromCamera,
+  XCameraRayIntersection,
+  intersectRayFromCameraCapturedEvents,
+} from "@coconut-xr/xinteraction";
+import { Box, OrbitControls, useFBO } from "@react-three/drei";
 import {
   BufferGeometry,
+  Camera,
   CircleGeometry,
+  Color,
   Group,
   MOUSE,
   Mesh,
+  Object3D,
+  PerspectiveCamera,
   PlaneGeometry,
   Quaternion,
+  Scene,
   SphereGeometry,
   Vector3,
   Vector3Tuple,
+  Event,
+  Vector2,
 } from "three";
 import { Container, RootContainer, Text } from "@coconut-xr/koestlich";
 import {
@@ -54,7 +77,6 @@ import {
   MagnifyingGlass,
   Bars3,
 } from "@coconut-xr/kruemel/icons/solid";
-import { isXIntersection } from "../../dist/index.js";
 
 const tableData = [
   ["Entry Name", "Entry Number", "Entry Description"],
@@ -90,6 +112,7 @@ export default function App() {
           RIGHT: MOUSE.LEFT,
         }}
       />
+      <Framebuffer />
       <XWebPointers />
       <ambientLight />
       <ColliderSelectSphere id={99} />
@@ -107,6 +130,103 @@ export default function App() {
       <Koestlich position={[0, 5, -6]} />
     </Canvas>
   );
+}
+
+function Framebuffer() {
+  const fbo = useFBO(1024, 1024);
+
+  const scene = React.useMemo(() => {
+    const scene = new Scene();
+    scene.background = new Color("black");
+    return scene;
+  }, []);
+
+  const cam = useMemo(() => new PerspectiveCamera(), []);
+  const planeRef = useRef<Mesh>(null);
+
+  useFrame((state) => {
+    cam.position.z = 5 + Math.sin(state.clock.getElapsedTime() * 1.5) * 2;
+    state.gl.setRenderTarget(fbo);
+    state.gl.render(scene, cam);
+    state.gl.setRenderTarget(null);
+  });
+
+  const eventFunctions = useForwardEvents(
+    useMemo(
+      () => computeIntersections.bind(null, cam, scene, planeRef),
+      [cam, scene]
+    )
+  );
+
+  return (
+    <>
+      {createPortal(
+        <>
+          <ambientLight intensity={1} />
+          <HoverBox></HoverBox>
+        </>,
+        scene
+      )}
+      <mesh
+        ref={planeRef}
+        onPointerDown={(e) => eventFunctions.press(e.pointerId, e, e.button)}
+        onPointerUp={(e) => eventFunctions.release(e.pointerId, e, e.button)}
+        onPointerCancel={(e) => eventFunctions.cancel(e.pointerId, e)}
+        onPointerEnter={(e) => {
+          e.stopPropagation();
+          eventFunctions.enter(e.pointerId, e);
+        }}
+        onPointerLeave={(e) => eventFunctions.leave(e.pointerId, e)}
+        onPointerMove={(e) => eventFunctions.move(e.pointerId, e)}
+        onWheel={eventFunctions.wheel}
+        position={[0, 2, 0]}
+      >
+        <planeGeometry />
+        <meshBasicMaterial map={fbo.texture} />
+      </mesh>
+    </>
+  );
+}
+
+const emptyIntersections: Array<any> = [];
+
+const pointHelper = new Vector3();
+
+function computeIntersections(
+  camera: Camera,
+  scene: Scene,
+  planeRef: RefObject<Mesh>,
+  event: ThreeEvent<Event>,
+  capturedEvents: Map<Object3D, XCameraRayIntersection> | undefined,
+  filterClipped: boolean,
+  dispatcher: EventDispatcher<ThreeEvent<Event>, XCameraRayIntersection>,
+  targetWorldPosition: Vector3,
+  targetWorldQuaternion: Quaternion
+) {
+  if (planeRef.current == null) {
+    return emptyIntersections;
+  }
+  pointHelper.copy(event.point);
+  planeRef.current.worldToLocal(pointHelper);
+  const coords = new Vector2(pointHelper.x, pointHelper.y).multiplyScalar(2);
+
+  return capturedEvents == null
+    ? intersectRayFromCamera(
+        camera,
+        coords,
+        scene,
+        dispatcher,
+        filterClipped,
+        targetWorldPosition,
+        targetWorldQuaternion
+      )
+    : intersectRayFromCameraCapturedEvents(
+        camera,
+        coords,
+        capturedEvents as any as Map<Object3D, XCameraRayIntersection>,
+        targetWorldPosition,
+        targetWorldQuaternion
+      );
 }
 
 const inputDeviceQuaternionOffset = new Quaternion();
@@ -170,7 +290,7 @@ function DragCube({ position }: { position: Vector3Tuple }) {
         inputDeviceQuaternionOffset
           .copy(downState.current.inputDeviceRotation)
           .invert()
-          .multiply(e.inputDeviceRotation);
+          .premultiply(e.inputDeviceRotation);
 
         //calculate new position using the offset from the initial intersection point to the object
         //then rotating this offset by the rotation offset of the input device
@@ -183,7 +303,7 @@ function DragCube({ position }: { position: Vector3Tuple }) {
         //calculating the new rotation by applying the offset rotation of the input device to the original rotation of the box
         ref.current.quaternion
           .copy(downState.current.boxRotation)
-          .multiply(inputDeviceQuaternionOffset);
+          .premultiply(inputDeviceQuaternionOffset);
       }}
       ref={ref}
     >

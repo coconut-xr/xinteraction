@@ -6,8 +6,6 @@ import {
   voidObject,
 } from "../../src/index.js";
 
-const distanceInWorldThreshold = 50; //only a mock implementation - actual behavior should be in NDC => dragging threshold in relation to the user viewport
-
 export class MockInputDevice {
   private translator: EventTranslator<{ inputDeviceId: number }>;
   private intersections: Array<XIntersection> = [];
@@ -48,8 +46,6 @@ export class MockInputDevice {
           : intersection != null
           ? this.pressedElementIds.get(intersection.object) ?? []
           : [],
-      (down, current) =>
-        down.point.distanceTo(current.point) > distanceInWorldThreshold,
       (position, rotation) => {
         position.copy(this.position);
         rotation.copy(this.rotation);

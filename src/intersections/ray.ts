@@ -1,5 +1,6 @@
 import {
   Camera,
+  Euler,
   Object3D,
   Plane,
   Quaternion,
@@ -12,6 +13,7 @@ import {
   isIntersectionNotClipped,
   traverseUntilInteractable,
 } from "./index.js";
+import { ThreeEvent } from "@react-three/fiber";
 
 const raycaster = new Raycaster();
 
@@ -25,9 +27,10 @@ const planeHelper = new Plane();
 export function intersectRayFromCapturedEvents(
   fromPosition: Vector3,
   fromRotation: Quaternion,
-  capturedEvents: Map<Object3D, XIntersection>
+  capturedEvents: Map<Object3D, XIntersection>,
+  direction: Vector3
 ): Array<XIntersection> {
-  directionHelper.set(0, 0, 1).applyQuaternion(fromRotation);
+  directionHelper.copy(direction).applyQuaternion(fromRotation);
   return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
     return {
       ...intersection,
@@ -51,8 +54,8 @@ export function intersectRayFromCameraCapturedEvents(
 ): Array<XCameraRayIntersection> {
   raycaster.setFromCamera(coords, camera);
 
-  worldPositionTarget.copy(raycaster.ray.origin);
-  worldQuaternionTarget.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+  camera.getWorldPosition(worldPositionTarget);
+  camera.getWorldQuaternion(worldQuaternionTarget);
 
   camera.getWorldDirection(directionHelper);
   return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
@@ -80,11 +83,12 @@ export function intersectRayFromObject(
   fromPosition: Vector3,
   fromRotation: Quaternion,
   on: Object3D,
-  dispatcher: EventDispatcher<Event, XIntersection>,
-  filterClipped: boolean
+  dispatcher: EventDispatcher<ThreeEvent<Event>, XIntersection>,
+  filterClipped: boolean,
+  direction: Vector3
 ): Array<XIntersection> {
   raycaster.ray.origin.copy(fromPosition);
-  raycaster.ray.direction.set(0, 0, 1).applyQuaternion(fromRotation);
+  raycaster.ray.direction.copy(direction).applyQuaternion(fromRotation);
   let intersections = traverseUntilInteractable<
     Array<XIntersection>,
     Array<XIntersection>
@@ -108,21 +112,19 @@ export function intersectRayFromObject(
   return intersections.sort((a, b) => a.distance - b.distance);
 }
 
-const ZAXIS = new Vector3();
-
 export function intersectRayFromCamera(
   from: Camera,
   coords: Vector2,
   on: Object3D,
-  dispatcher: EventDispatcher<Event, XCameraRayIntersection>,
+  dispatcher: EventDispatcher<ThreeEvent<Event>, XCameraRayIntersection>,
   filterClipped: boolean,
   worldPositionTarget: Vector3,
   worldQuaternionTarget: Quaternion
 ): Array<XCameraRayIntersection> {
   raycaster.setFromCamera(coords, from);
 
-  worldPositionTarget.copy(raycaster.ray.origin);
-  worldQuaternionTarget.setFromUnitVectors(ZAXIS, raycaster.ray.direction);
+  from.getWorldPosition(worldPositionTarget);
+  from.getWorldQuaternion(worldQuaternionTarget);
 
   planeHelper.setFromNormalAndCoplanarPoint(
     from.getWorldDirection(directionHelper),
