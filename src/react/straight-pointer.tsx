@@ -20,7 +20,7 @@ const emptyIntersections: Array<XIntersection> = [];
 const worldPositionHelper = new Vector3();
 const worldRotationHelper = new Quaternion();
 
-const ZAXIS = new Vector3();
+const ZAXIS = new Vector3(0, 0, 1);
 
 export const XStraightPointer = forwardRef<
   InputDeviceFunctions,
