@@ -12,9 +12,9 @@ _**interaction** on the 3D web for any (**x**) input device_
 **xinteraction** translates events from input devices (e.g., Mouse, 6DOF Controller, Hand) into events on 3D Objects in a Three.js Scene.
 
 
-**xinteraction** can be combined with "TBD" for **WebXR** use cases.
+**xinteraction** can be combined with **[natuerlich](https://github.com/coconut-xr/natuerlich)** for **WebXR** use cases.
 
-[<span style="font-size: 2rem">⤷ Getting start with **xinteraction** + **TBD**</span>]()
+<span style="font-size: 2rem">⤷ [Getting start with **xinteraction** + **natuerlich**](https://coconut-xr.github.io/natuerlich/#/./custom-input)</span>
 
 ---
 
@@ -25,3 +25,4 @@ _**interaction** on the 3D web for any (**x**) input device_
 * [Curved Pointing Input Devices](https://coconut-xr.github.io/xinteraction/#/curved.md) Explains interactions using a curved line
 * [Distance Based Input Device](https://coconut-xr.github.io/xinteraction/#/distance.md) Explains interactions like touching or grabbing
 * [Event Capture](https://coconut-xr.github.io/xinteraction/#/event-capture.md) Explains event capture for dragging
+* [Event Forwarding](https://coconut-xr.github.io/xinteraction/#/forwarding.md) Explains event forwarding for portals

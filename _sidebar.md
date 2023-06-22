@@ -4,6 +4,7 @@
 - [Curved Pointing Input Devices](curved.md)
 - [Distance Based Input Device](distance.md)
 - [Event Capture](event-capture.md)
+- [Event Forwarding](forwarding.md)
 
 - [<br>Glossary](glossary.md)
 

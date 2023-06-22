@@ -80,3 +80,7 @@ function DragCube() {
   );
 }
 ```
+
+In the next section, we explain how to forward events from one to another scene to implement effects, such as portals.
+
+<span style="font-size: 2rem">⤷ [Next Section](forwarding.md)</span>
