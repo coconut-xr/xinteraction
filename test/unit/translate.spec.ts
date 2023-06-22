@@ -1124,6 +1124,63 @@ describe("translate events", () => {
 
     expect(intersectionsList).to.deep.equal([[], []]);
   });
+
+  it("should not select (click) when dragged", () => {
+    const inputDevice = new MockInputDevice(
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      (id) => id === 1
+    );
+    const actualEvents: Array<EventLog> = [];
+    const object = new Object3D();
+    object.addEventListener("select", (event) => {
+      actualEvents.push({
+        type: "select",
+        objectUUID: object.uuid,
+        inputDeviceElementId: (event as any).inputDeviceElementId,
+      });
+    });
+
+    //enter and press
+    inputDevice.update(
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(0, 0, 0),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
+      [1, 2],
+      1, 2
+    );
+    //release
+    inputDevice.update(
+      [
+        {
+          object: object,
+          distance: 0,
+          point: new Vector3(0, 100, 0),
+          inputDevicePosition: new Vector3(),
+          inputDeviceRotation: new Quaternion(),
+        },
+      ],
+      []
+    );
+
+    expect(actualEvents).to.deep.equal([
+      {
+        type: "select",
+        objectUUID: object.uuid,
+        inputDeviceElementId: 2,
+      },
+    ] satisfies Array<EventLog>);
+  });
 });
 
 describe("translator's onMissed... events", () => {

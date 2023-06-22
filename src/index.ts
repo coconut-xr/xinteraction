@@ -56,7 +56,7 @@ const emptySet = new Set<number>();
 export const voidObject = new Object3D();
 
 export class EventTranslator<
-  E = Event,
+  ReceivedEvent = Event,
   I extends XIntersection = XIntersection
 > {
   //state
@@ -71,9 +71,9 @@ export class EventTranslator<
   constructor(
     public readonly inputDeviceId: number,
     private readonly dispatchPressAlways: boolean,
-    protected eventDispatcher: EventDispatcher<E, I>,
+    protected eventDispatcher: EventDispatcher<any, I>, //SendEvent
     protected computeIntersections: (
-      event: E,
+      event: ReceivedEvent,
       capturedEvents?: Map<Object3D, I>
     ) => Array<I>,
     protected getPressedElementIds: (intersection?: I) => Iterable<number>,
@@ -81,6 +81,7 @@ export class EventTranslator<
       position: Vector3,
       rotation: Quaternion
     ) => void,
+    protected wasDragged?: (inputDeviceElementId: number) => boolean,
     public onIntersections?: (intersections: ReadonlyArray<I>) => void,
     public filterIntersections?: (intersections: Array<I>) => Array<I>
   ) {}
@@ -92,7 +93,7 @@ export class EventTranslator<
    * @param dispatchPressFor list of ids of elements that were pressed after the last update
    */
   update(
-    event: E,
+    event: ReceivedEvent,
     positionChanged: boolean,
     pressChanged: boolean,
     ...dispatchPressFor: Array<number>
@@ -208,7 +209,7 @@ export class EventTranslator<
     }
   }
 
-  cancel(event: E): void {
+  cancel(event: ReceivedEvent): void {
     this.eventDispatcher.bind(event, this);
     this.traverseIntersections(
       this.intersections,
@@ -219,7 +220,7 @@ export class EventTranslator<
     );
   }
 
-  wheel(event: E): void {
+  wheel(event: ReceivedEvent): void {
     this.eventDispatcher.bind(event, this);
     this.traverseIntersections(
       this.intersections,
@@ -230,7 +231,7 @@ export class EventTranslator<
     );
   }
 
-  leave(event: E): void {
+  leave(event: ReceivedEvent): void {
     this.eventDispatcher.bind(event, this);
     this.traverseIntersections(
       this.intersections,
@@ -305,9 +306,10 @@ export class EventTranslator<
       if (
         elementState != null &&
         (interactionState.lastLeftTime == null ||
-          interactionState.lastLeftTime < elementState.lastPressEventTime)
+          interactionState.lastLeftTime < elementState.lastPressEventTime) &&
+        (this.wasDragged == null || !this.wasDragged(releasedElementId))
       ) {
-        //=> the object wasn't left since it was pressed last
+        //=> the object wasn't left and dragged since it was pressed last
         this.eventDispatcher.select(
           eventObject,
           intersection,

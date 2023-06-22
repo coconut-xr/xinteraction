@@ -16,6 +16,7 @@ import {
   XWebPointers,
   noEvents,
   useForwardEvents,
+  useMeshForwardEvents,
 } from "@coconut-xr/xinteraction/react";
 import {
   EventDispatcher,
@@ -142,91 +143,32 @@ function Framebuffer() {
   }, []);
 
   const cam = useMemo(() => new PerspectiveCamera(), []);
-  const planeRef = useRef<Mesh>(null);
 
   useFrame((state) => {
-    cam.position.z = 5 + Math.sin(state.clock.getElapsedTime() * 1.5) * 2;
+    cam.position.z = 5;
+    cam.position.x = 0;
     state.gl.setRenderTarget(fbo);
     state.gl.render(scene, cam);
     state.gl.setRenderTarget(null);
   });
 
-  const eventFunctions = useForwardEvents(
-    useMemo(
-      () => computeIntersections.bind(null, cam, scene, planeRef),
-      [cam, scene]
-    )
-  );
+  const props = useMeshForwardEvents(cam, scene, 0.05);
 
   return (
     <>
       {createPortal(
         <>
           <ambientLight intensity={1} />
-          <HoverBox></HoverBox>
+          <HoverBox onClick={() => window.alert("click")}></HoverBox>
         </>,
         scene
       )}
-      <mesh
-        ref={planeRef}
-        onPointerDown={(e) => eventFunctions.press(e.pointerId, e, e.button)}
-        onPointerUp={(e) => eventFunctions.release(e.pointerId, e, e.button)}
-        onPointerCancel={(e) => eventFunctions.cancel(e.pointerId, e)}
-        onPointerEnter={(e) => {
-          e.stopPropagation();
-          eventFunctions.enter(e.pointerId, e);
-        }}
-        onPointerLeave={(e) => eventFunctions.leave(e.pointerId, e)}
-        onPointerMove={(e) => eventFunctions.move(e.pointerId, e)}
-        onWheel={eventFunctions.wheel}
-        position={[0, 2, 0]}
-      >
+      <mesh {...props} position={[0, 2, 0]}>
         <planeGeometry />
         <meshBasicMaterial map={fbo.texture} />
       </mesh>
     </>
   );
-}
-
-const emptyIntersections: Array<any> = [];
-
-const pointHelper = new Vector3();
-
-function computeIntersections(
-  camera: Camera,
-  scene: Scene,
-  planeRef: RefObject<Mesh>,
-  event: ThreeEvent<Event>,
-  capturedEvents: Map<Object3D, XCameraRayIntersection> | undefined,
-  filterClipped: boolean,
-  dispatcher: EventDispatcher<ThreeEvent<Event>, XCameraRayIntersection>,
-  targetWorldPosition: Vector3,
-  targetWorldQuaternion: Quaternion
-) {
-  if (planeRef.current == null) {
-    return emptyIntersections;
-  }
-  pointHelper.copy(event.point);
-  planeRef.current.worldToLocal(pointHelper);
-  const coords = new Vector2(pointHelper.x, pointHelper.y).multiplyScalar(2);
-
-  return capturedEvents == null
-    ? intersectRayFromCamera(
-        camera,
-        coords,
-        scene,
-        dispatcher,
-        filterClipped,
-        targetWorldPosition,
-        targetWorldQuaternion
-      )
-    : intersectRayFromCameraCapturedEvents(
-        camera,
-        coords,
-        capturedEvents as any as Map<Object3D, XCameraRayIntersection>,
-        targetWorldPosition,
-        targetWorldQuaternion
-      );
 }
 
 const inputDeviceQuaternionOffset = new Quaternion();

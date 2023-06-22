@@ -8,9 +8,23 @@ import {
 } from "../intersections/ray.js";
 import { EventDispatcher } from "../index.js";
 import { useForwardEvents } from "./forward-events.js";
-import { useEffect, useMemo } from "react";
+import { MutableRefObject, useEffect, useMemo, useRef } from "react";
 
 const emptyIntersection: Array<XCameraRayIntersection> = [];
+
+function isDrag(
+  distanceRef: MutableRefObject<number | undefined>,
+  downEvent: PointerEvent,
+  currentEvent: PointerEvent
+): boolean {
+  if (distanceRef.current == null) {
+    return false;
+  }
+  const distanceSquared = distanceRef.current * distanceRef.current;
+  const distanceX = downEvent.offsetX - currentEvent.offsetX;
+  const distanceY = downEvent.offsetY - currentEvent.offsetY;
+  return distanceX * distanceX + distanceY * distanceY > distanceSquared;
+}
 
 export function XWebPointers({
   filterClipped,
@@ -19,6 +33,7 @@ export function XWebPointers({
   onIntersections,
   onPointerDownMissed,
   onPointerUpMissed,
+  dragDistance,
 }: {
   onIntersections?: (
     id: number,
@@ -32,6 +47,7 @@ export function XWebPointers({
   onPointerUpMissed?: (event: ThreeEvent<Event>) => void;
   onClickMissed?: (event: ThreeEvent<Event>) => void;
   filterClipped?: boolean;
+  dragDistance?: number;
 }) {
   const store = useStore();
   const canvas = useThree(({ gl }) => gl.domElement);
@@ -39,8 +55,11 @@ export function XWebPointers({
     () => computeIntersections.bind(null, store),
     [store]
   );
-  const eventFunctions = useForwardEvents(
+  const ref = useRef(dragDistance);
+  ref.current = dragDistance;
+  const eventFunctions = useForwardEvents<PointerEvent, XCameraRayIntersection>(
     intersections,
+    useMemo(() => isDrag.bind(null, ref), []),
     onIntersections,
     filterIntersections,
     onPointerDownMissed,
@@ -68,8 +87,8 @@ export function XWebPointers({
     canvas.addEventListener("pointerover", pointerOver);
     canvas.addEventListener("pointerout", pointerOut);
     canvas.addEventListener("pointermove", pointerMove);
-    canvas.addEventListener("wheel", eventFunctions.wheel);
-    canvas.addEventListener("blur", eventFunctions.blur);
+    canvas.addEventListener("wheel", eventFunctions.wheel as any);
+    canvas.addEventListener("blur", eventFunctions.blur as any);
 
     return () => {
       canvas.removeEventListener("pointercancel", pointerCancel);
@@ -78,8 +97,8 @@ export function XWebPointers({
       canvas.removeEventListener("pointerover", pointerOver);
       canvas.removeEventListener("pointerout", pointerOut);
       canvas.removeEventListener("pointermove", pointerMove);
-      canvas.removeEventListener("wheel", eventFunctions.wheel);
-      canvas.removeEventListener("blur", eventFunctions.blur);
+      canvas.removeEventListener("wheel", eventFunctions.wheel as any);
+      canvas.removeEventListener("blur", eventFunctions.blur as any);
     };
   }, [canvas, eventFunctions]);
   return null;
@@ -87,7 +106,7 @@ export function XWebPointers({
 
 function computeIntersections(
   store: StoreApi<RootState>,
-  event: ThreeEvent<Event>,
+  event: PointerEvent,
   capturedEvents: Map<Object3D, XCameraRayIntersection> | undefined,
   filterClipped: boolean,
   dispatcher: EventDispatcher<ThreeEvent<Event>, XCameraRayIntersection>,

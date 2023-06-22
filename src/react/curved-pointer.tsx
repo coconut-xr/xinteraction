@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { Object3D, Quaternion, Vector3, Event } from "three";
-import { EventTranslator, XIntersection } from "../index.js";
+import { EventTranslator } from "../index.js";
 import {
   XLinesIntersection,
   intersectLinesFromCapturedEvents,

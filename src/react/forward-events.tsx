@@ -1,36 +1,51 @@
 /* eslint-disable react/display-name */
-import { ThreeEvent } from "@react-three/fiber";
-import { useMemo } from "react";
-import { EventDispatcher, EventTranslator, XIntersection } from "../index.js";
+import { MutableRefObject, RefObject, useEffect, useMemo, useRef } from "react";
+import {
+  EventDispatcher,
+  EventTranslator,
+  XCameraRayIntersection,
+  XIntersection,
+  intersectRayFromCamera,
+  intersectRayFromCameraCapturedEvents,
+} from "../index.js";
 import { R3FEventDispatcher } from "./index.js";
-import { Event, Vector3, Quaternion, Object3D } from "three";
+import {
+  Event,
+  Vector3,
+  Quaternion,
+  Object3D,
+  Camera,
+  Scene,
+  Mesh,
+  Vector2,
+} from "three";
+import { ThreeEvent } from "@react-three/fiber";
+import { EventHandlers } from "@react-three/fiber/dist/declarations/src/core/events.js";
 
-type PointerMapEntry<I extends XIntersection> = {
-  translator: EventTranslator<ThreeEvent<Event>, I>;
-  pressedInputDeviceElements: Set<number>;
+type PointerMapEntry<E, I extends XIntersection> = {
+  translator: EventTranslator<E, I>;
+  inputDeviceElementPressSet: Set<number>;
+  inputDeviceElementPressMap: Map<number, E>;
+  inputDeviceElementDragSet: Set<number>;
 };
 
-export type ForwardEventsFunctions = {
-  press(
-    pointerId: number,
-    event: any,
-    ...pressedElementIds: Array<number>
-  ): void;
+export type ForwardEventsFunctions<E> = {
+  press(pointerId: number, event: E, ...pressedElementIds: Array<number>): void;
   release(
     pointerId: number,
-    event: any,
-    ...pressedElementIds: Array<number>
+    event: E,
+    ...releasedElementIds: Array<number>
   ): void;
-  cancel(pointerId: number, event: any): void;
-  enter(pointerId: number, event: any): void;
-  leave(pointerId: number, event: any): void;
-  move(pointerId: number, event: any): void;
-  wheel(event: any): void;
-  blur(event: any): void;
+  cancel(pointerId: number, event: E): void;
+  enter(pointerId: number, event: E): void;
+  leave(pointerId: number, event: E): void;
+  move(pointerId: number, event: E): void;
+  wheel(event: E): void;
+  blur(event: E): void;
 };
 
-export type ComputeIntersections<I extends XIntersection> = (
-  event: ThreeEvent<Event>,
+export type ComputeIntersections<E, I extends XIntersection> = (
+  event: E,
   capturedEvents: Map<Object3D, I> | undefined,
   filterClipped: boolean,
   dispatcher: EventDispatcher<ThreeEvent<Event>, I>,
@@ -38,16 +53,20 @@ export type ComputeIntersections<I extends XIntersection> = (
   targetWorldQuaternion: Quaternion
 ) => Array<I>;
 
-export function useForwardEvents<I extends XIntersection>(
-  computeIntersections: ComputeIntersections<I>,
+export function useForwardEvents<ReceivedEvent, I extends XIntersection>(
+  computeIntersections: ComputeIntersections<ReceivedEvent, I>,
+  isDrag: (down: ReceivedEvent, current: ReceivedEvent) => boolean,
   onIntersections?: (id: number, intersections: ReadonlyArray<I>) => void,
   filterIntersections?: (id: number, intersections: Array<I>) => Array<I>,
   onPointerDownMissed?: (event: ThreeEvent<Event>) => void,
   onPointerUpMissed?: (event: ThreeEvent<Event>) => void,
   onClickMissed?: (event: ThreeEvent<Event>) => void,
   filterClipped?: boolean
-): ForwardEventsFunctions {
-  const pointerMap = useMemo(() => new Map<number, PointerMapEntry<I>>(), []);
+): ForwardEventsFunctions<ReceivedEvent> {
+  const pointerMap = useMemo(
+    () => new Map<number, PointerMapEntry<ReceivedEvent, I>>(),
+    []
+  );
 
   const dispatcher = useMemo(() => new R3FEventDispatcher<I>(), []);
   dispatcher.onPointerDownMissed = onPointerDownMissed;
@@ -73,49 +92,83 @@ export function useForwardEvents<I extends XIntersection>(
     );
   }
 
+  useEffect(
+    () => () => {
+      //cleanup
+      for (const { translator } of pointerMap.values()) {
+        translator.leave({} as any);
+      }
+      pointerMap.clear();
+    },
+    []
+  );
+
   return useMemo(() => {
     const getOrCreate = (id: number) =>
       getOrCreatePointerMapEntry(pointerMap, dispatcher, properties, id);
     return {
-      cancel: (pointerId: number, event: any) => {
+      cancel: (pointerId: number, event: ReceivedEvent) => {
         const { translator } = getOrCreate(pointerId);
         translator.cancel(event);
       },
-      enter: (pointerId: number, event: any) => {
+      enter: (pointerId: number, event: ReceivedEvent) => {
         const { translator } = getOrCreate(pointerId);
         translator.update(event, true, true);
       },
-      leave: (pointerId: number, event: any) => {
+      leave: (pointerId: number, event: ReceivedEvent) => {
         const { translator } = getOrCreate(pointerId);
         translator.leave(event);
         pointerMap.delete(pointerId);
       },
       press: (
         pointerId: number,
-        event: any,
+        event: ReceivedEvent,
         ...pressedElementIds: Array<number>
       ) => {
-        const { pressedInputDeviceElements, translator } =
-          getOrCreate(pointerId);
+        const {
+          inputDeviceElementPressMap,
+          inputDeviceElementPressSet,
+          translator,
+        } = getOrCreate(pointerId);
         for (const pressedElementId of pressedElementIds) {
-          pressedInputDeviceElements.add(pressedElementId);
+          inputDeviceElementPressSet.add(pressedElementId);
+          inputDeviceElementPressMap.set(pressedElementId, event);
         }
         translator.update(event, false, true, ...pressedElementIds);
       },
       release: (
         pointerId: number,
-        event: any,
-        ...pressedElementIds: Array<number>
+        event: ReceivedEvent,
+        ...releasedElementIds: Array<number>
       ) => {
-        const { pressedInputDeviceElements, translator } =
-          getOrCreate(pointerId);
-        for (const pressedElementId of pressedElementIds) {
-          pressedInputDeviceElements.delete(pressedElementId);
+        const {
+          inputDeviceElementPressMap,
+          inputDeviceElementPressSet,
+          inputDeviceElementDragSet,
+          translator,
+        } = getOrCreate(pointerId);
+        for (const releasedElementId of releasedElementIds) {
+          inputDeviceElementPressSet.delete(releasedElementId);
+          inputDeviceElementPressMap.delete(releasedElementId);
         }
         translator.update(event, false, true);
+        for (const releasedElementId of releasedElementIds) {
+          inputDeviceElementDragSet.delete(releasedElementId);
+        }
       },
-      move: (pointerId: number, event: any) => {
-        const { translator } = getOrCreate(pointerId);
+      move: (pointerId: number, event: ReceivedEvent) => {
+        const {
+          translator,
+          inputDeviceElementPressMap,
+          inputDeviceElementDragSet,
+        } = getOrCreate(pointerId);
+
+        for (const [elementId, downEvent] of inputDeviceElementPressMap) {
+          if (isDrag(downEvent, event)) {
+            inputDeviceElementDragSet.add(elementId);
+          }
+        }
+
         translator.update(event, true, false);
       },
       wheel: (event: any) => {
@@ -133,23 +186,24 @@ export function useForwardEvents<I extends XIntersection>(
   }, []);
 }
 
-function getOrCreatePointerMapEntry<I extends XIntersection>(
-  pointerMap: Map<number, PointerMapEntry<I>>,
+function getOrCreatePointerMapEntry<E, I extends XIntersection>(
+  pointerMap: Map<number, PointerMapEntry<E, I>>,
   dispatcher: R3FEventDispatcher<I>,
   properties: {
     filterClipped: boolean;
-    computeIntersections: ComputeIntersections<I>;
+    computeIntersections: ComputeIntersections<E, I>;
   },
   pointerId: number
-): PointerMapEntry<I> {
+): PointerMapEntry<E, I> {
   let entry = pointerMap.get(pointerId);
   if (entry == null) {
     const lastWorldPosition = new Vector3();
     const lastWorldRotation = new Quaternion();
 
-    const newEntry: PointerMapEntry<I> = {
-      pressedInputDeviceElements: new Set<number>(),
-      translator: new EventTranslator<ThreeEvent<Event>, I>(
+    const newEntry: PointerMapEntry<E, I> = {
+      inputDeviceElementPressSet: new Set<number>(),
+      inputDeviceElementPressMap: new Map(),
+      translator: new EventTranslator<E, I>(
         pointerId,
         false,
         dispatcher,
@@ -162,15 +216,104 @@ function getOrCreatePointerMapEntry<I extends XIntersection>(
             lastWorldPosition,
             lastWorldRotation
           ),
-        () => newEntry.pressedInputDeviceElements,
+        () => newEntry.inputDeviceElementPressSet,
         (position, rotation) => {
           position.copy(lastWorldPosition);
           rotation.copy(lastWorldRotation);
-        }
+        },
+        (inputDeviceElementId) =>
+          newEntry.inputDeviceElementDragSet.has(inputDeviceElementId)
       ),
+      inputDeviceElementDragSet: new Set(),
     };
 
     pointerMap.set(pointerId, (entry = newEntry));
   }
   return entry;
+}
+
+export function useMeshForwardEvents(
+  camera: Camera,
+  scene: Scene,
+  dragDistance?: number
+): EventHandlers & { ref: RefObject<Mesh> } {
+  const ref = useRef<Mesh>(null);
+  const properties = useMemo(() => ({ camera, scene, dragDistance }), []);
+  properties.camera = camera;
+  properties.scene = scene;
+  properties.dragDistance = dragDistance;
+  const eventFunctions = useForwardEvents(
+    useMemo(() => computeIntersections.bind(null, properties, ref), []),
+    useMemo(() => isDrag.bind(null, properties), [])
+  );
+  return useMemo(
+    () => ({
+      ref,
+      onPointerDown: (e) => eventFunctions.press(e.pointerId, e, e.button),
+      onPointerUp: (e) => eventFunctions.release(e.pointerId, e, e.button),
+      onPointerCancel: (e) => eventFunctions.cancel(e.pointerId, e),
+      onPointerEnter: (e) => {
+        e.stopPropagation();
+        eventFunctions.enter(e.pointerId, e);
+      },
+      onPointerLeave: (e) => eventFunctions.leave(e.pointerId, e),
+      onPointerMove: (e) => eventFunctions.move(e.pointerId, e),
+      onWheel: eventFunctions.wheel,
+    }),
+    []
+  );
+}
+
+function isDrag(
+  properties: { dragDistance?: number },
+  downEvent: ThreeEvent<Event>,
+  currentEvent: ThreeEvent<Event>
+): boolean {
+  if (properties.dragDistance == null) {
+    return false;
+  }
+  const distanceSquared = properties.dragDistance * properties.dragDistance;
+  return (
+    downEvent.point.distanceToSquared(currentEvent.point) > distanceSquared
+  );
+}
+
+const emptyIntersections: Array<any> = [];
+
+const pointHelper = new Vector3();
+
+function computeIntersections(
+  properties: { camera: Camera; scene: Scene },
+  planeRef: RefObject<Mesh>,
+  event: ThreeEvent<Event>,
+  capturedEvents: Map<Object3D, XCameraRayIntersection> | undefined,
+  filterClipped: boolean,
+  dispatcher: EventDispatcher<ThreeEvent<Event>, XCameraRayIntersection>,
+  targetWorldPosition: Vector3,
+  targetWorldQuaternion: Quaternion
+) {
+  if (planeRef.current == null) {
+    return emptyIntersections;
+  }
+  pointHelper.copy(event.point);
+  planeRef.current.worldToLocal(pointHelper);
+  const coords = new Vector2(pointHelper.x, pointHelper.y).multiplyScalar(2);
+
+  return capturedEvents == null
+    ? intersectRayFromCamera(
+        properties.camera,
+        coords,
+        properties.scene,
+        dispatcher,
+        filterClipped,
+        targetWorldPosition,
+        targetWorldQuaternion
+      )
+    : intersectRayFromCameraCapturedEvents(
+        properties.camera,
+        coords,
+        capturedEvents as any as Map<Object3D, XCameraRayIntersection>,
+        targetWorldPosition,
+        targetWorldQuaternion
+      );
 }

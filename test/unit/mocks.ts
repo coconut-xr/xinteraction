@@ -22,7 +22,8 @@ export class MockInputDevice {
     onIntersections?: (intersections: ReadonlyArray<XIntersection>) => void,
     filterIntersections?: (
       intersections: Array<XIntersection>
-    ) => Array<XIntersection>
+    ) => Array<XIntersection>,
+    isDragged?: (inputDeviceElementId: number) => boolean
   ) {
     this.translator = new EventTranslator(
       id,
@@ -49,7 +50,8 @@ export class MockInputDevice {
       (position, rotation) => {
         position.copy(this.position);
         rotation.copy(this.rotation);
-      }
+      },
+      isDragged
     );
     this.translator.onIntersections = onIntersections;
     this.translator.filterIntersections = filterIntersections;
