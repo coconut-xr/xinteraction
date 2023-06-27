@@ -25,7 +25,7 @@ const deltaRotation = new Quaternion();
 const initialInputDeviceOffset = new Vector3();
 const currentInputDeviceOffset = new Vector3();
 
-function DoubleGrabCube() {
+export function DoubleGrabCube() {
   const ref = useRef<Mesh>(null);
 
   const state = useMemo<{
@@ -56,7 +56,7 @@ function DoubleGrabCube() {
       return;
     }
     switch (state.intersections.size) {
-      case 1:
+      case 1: {
         const [
           { currentPosition, currentRotation, startPosition, startRotation },
         ] = state.intersections.values();
@@ -80,7 +80,8 @@ function DoubleGrabCube() {
 
         ref.current.scale.copy(state.objectScale);
         break;
-      case 2:
+      }
+      case 2: {
         const [i1, i2] = state.intersections.values();
 
         //initial and current input device offset from 1 to 2
@@ -117,6 +118,7 @@ function DoubleGrabCube() {
 
         ref.current.scale.copy(state.objectScale).multiplyScalar(deltaScale);
         break;
+      }
     }
   });
 

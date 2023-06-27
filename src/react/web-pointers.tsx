@@ -59,12 +59,14 @@ export function XWebPointers({
   ref.current = dragDistance;
   const eventFunctions = useForwardEvents<PointerEvent, XCameraRayIntersection>(
     intersections,
-    useMemo(() => isDrag.bind(null, ref), []),
+    isDrag.bind(null, ref),
     onIntersections,
     filterIntersections,
     onPointerDownMissed,
     onPointerUpMissed,
     onClickMissed,
+    startCaptureEvents,
+    endCaptureEvents,
     filterClipped
   );
   useEffect(() => {
@@ -138,4 +140,18 @@ function computeIntersections(
         targetWorldPosition,
         targetWorldQuaternion
       );
+}
+
+function startCaptureEvents(pointerId: number, event: PointerEvent) {
+  if (!(event.target instanceof HTMLCanvasElement)) {
+    return;
+  }
+  event.target.setPointerCapture(pointerId);
+}
+
+function endCaptureEvents(pointerId: number, event: PointerEvent) {
+  if (!(event.target instanceof HTMLCanvasElement)) {
+    return;
+  }
+  event.target.releasePointerCapture(pointerId);
 }

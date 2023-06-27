@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import { MutableRefObject, RefObject, useEffect, useMemo, useRef } from "react";
+import { RefObject, useEffect, useMemo, useRef } from "react";
 import {
   EventDispatcher,
   EventTranslator,
@@ -61,6 +61,8 @@ export function useForwardEvents<ReceivedEvent, I extends XIntersection>(
   onPointerDownMissed?: (event: ThreeEvent<Event>) => void,
   onPointerUpMissed?: (event: ThreeEvent<Event>) => void,
   onClickMissed?: (event: ThreeEvent<Event>) => void,
+  onStartEventCaptures?: (id: number, event: ReceivedEvent) => void,
+  onEndEventCaptures?: (id: number, event: ReceivedEvent) => void,
   filterClipped?: boolean
 ): ForwardEventsFunctions<ReceivedEvent> {
   const pointerMap = useMemo(
@@ -77,19 +79,25 @@ export function useForwardEvents<ReceivedEvent, I extends XIntersection>(
     () => ({
       filterClipped: filterClipped ?? true,
       computeIntersections,
+      isDrag,
+      onIntersections,
+      filterIntersections,
+      onStartEventCaptures,
+      onEndEventCaptures,
     }),
     []
   );
   properties.filterClipped = filterClipped ?? true;
   properties.computeIntersections = computeIntersections;
+  properties.isDrag = isDrag;
+  properties.onIntersections = onIntersections;
+  properties.filterIntersections = filterIntersections;
+  properties.onStartEventCaptures = onStartEventCaptures;
+  properties.onEndEventCaptures = onEndEventCaptures;
 
   //update properties for all pointers
   for (const [pointerId, entry] of pointerMap) {
-    entry.translator.onIntersections = onIntersections?.bind(null, pointerId);
-    entry.translator.filterIntersections = filterIntersections?.bind(
-      null,
-      pointerId
-    );
+    setTranslatorProperties(entry.translator, pointerId, properties);
   }
 
   useEffect(
@@ -164,7 +172,7 @@ export function useForwardEvents<ReceivedEvent, I extends XIntersection>(
         } = getOrCreate(pointerId);
 
         for (const [elementId, downEvent] of inputDeviceElementPressMap) {
-          if (isDrag(downEvent, event)) {
+          if (properties.isDrag(downEvent, event)) {
             inputDeviceElementDragSet.add(elementId);
           }
         }
@@ -186,12 +194,45 @@ export function useForwardEvents<ReceivedEvent, I extends XIntersection>(
   }, []);
 }
 
+function setTranslatorProperties<E, I extends XIntersection>(
+  translator: EventTranslator<E, I>,
+  pointerId: number,
+  {
+    filterIntersections,
+    onEndEventCaptures,
+    onIntersections,
+    onStartEventCaptures,
+  }: {
+    onIntersections:
+      | ((id: number, intersections: ReadonlyArray<I>) => void)
+      | undefined;
+    filterIntersections:
+      | ((id: number, intersections: Array<I>) => Array<I>)
+      | undefined;
+    onStartEventCaptures: ((id: number, event: E) => void) | undefined;
+    onEndEventCaptures: ((id: number, event: E) => void) | undefined;
+  }
+) {
+  translator.onIntersections = onIntersections?.bind(null, pointerId);
+  translator.filterIntersections = filterIntersections?.bind(null, pointerId);
+  translator.onStartEventCaptures = onStartEventCaptures?.bind(null, pointerId);
+  translator.onEndEventCaptures = onEndEventCaptures?.bind(null, pointerId);
+}
+
 function getOrCreatePointerMapEntry<E, I extends XIntersection>(
   pointerMap: Map<number, PointerMapEntry<E, I>>,
   dispatcher: R3FEventDispatcher<I>,
   properties: {
     filterClipped: boolean;
     computeIntersections: ComputeIntersections<E, I>;
+    onIntersections:
+      | ((id: number, intersections: ReadonlyArray<I>) => void)
+      | undefined;
+    filterIntersections:
+      | ((id: number, intersections: Array<I>) => Array<I>)
+      | undefined;
+    onStartEventCaptures: ((id: number, event: E) => void) | undefined;
+    onEndEventCaptures: ((id: number, event: E) => void) | undefined;
   },
   pointerId: number
 ): PointerMapEntry<E, I> {
@@ -227,24 +268,73 @@ function getOrCreatePointerMapEntry<E, I extends XIntersection>(
       inputDeviceElementDragSet: new Set(),
     };
 
+    setTranslatorProperties(newEntry.translator, pointerId, properties);
+
     pointerMap.set(pointerId, (entry = newEntry));
   }
   return entry;
 }
 
 export function useMeshForwardEvents(
-  camera: Camera,
-  scene: Scene,
-  dragDistance?: number
-): EventHandlers & { ref: RefObject<Mesh> } {
-  const ref = useRef<Mesh>(null);
+  camera?: Camera,
+  scene?: Scene,
+  dragDistance?: number,
+  onIntersections?: (
+    id: number,
+    intersections: ReadonlyArray<XCameraRayIntersection>
+  ) => void,
+  filterIntersections?: (
+    id: number,
+    intersections: Array<XCameraRayIntersection>
+  ) => Array<XCameraRayIntersection>,
+  onPointerDownMissed?: (event: ThreeEvent<Event>) => void,
+  onPointerUpMissed?: (event: ThreeEvent<Event>) => void,
+  onClickMissed?: (event: ThreeEvent<Event>) => void
+) {
   const properties = useMemo(() => ({ camera, scene, dragDistance }), []);
   properties.camera = camera;
   properties.scene = scene;
   properties.dragDistance = dragDistance;
+
+  return useMeshForwardEventsFromProps(
+    properties,
+    onIntersections,
+    filterIntersections,
+    onPointerDownMissed,
+    onPointerUpMissed,
+    onClickMissed
+  );
+}
+
+export function useMeshForwardEventsFromProps(
+  properties: {
+    camera?: Camera;
+    scene?: Scene;
+    dragDistance?: number;
+  },
+  onIntersections?: (
+    id: number,
+    intersections: ReadonlyArray<XCameraRayIntersection>
+  ) => void,
+  filterIntersections?: (
+    id: number,
+    intersections: Array<XCameraRayIntersection>
+  ) => Array<XCameraRayIntersection>,
+  onPointerDownMissed?: (event: ThreeEvent<Event>) => void,
+  onPointerUpMissed?: (event: ThreeEvent<Event>) => void,
+  onClickMissed?: (event: ThreeEvent<Event>) => void
+): EventHandlers & { ref: RefObject<Mesh> } {
+  const ref = useRef<Mesh>(null);
   const eventFunctions = useForwardEvents(
-    useMemo(() => computeIntersections.bind(null, properties, ref), []),
-    useMemo(() => isDrag.bind(null, properties), [])
+    computeIntersections.bind(null, properties, ref),
+    isDrag.bind(null, properties),
+    onIntersections,
+    filterIntersections,
+    onPointerDownMissed,
+    onPointerUpMissed,
+    onClickMissed,
+    startCaptureMeshEvents,
+    endCaptureMeshEvents
   );
   return useMemo(
     () => ({
@@ -262,6 +352,13 @@ export function useMeshForwardEvents(
     }),
     []
   );
+}
+
+function startCaptureMeshEvents(id: number, event: ThreeEvent<Event>) {
+  (event.target as HTMLCanvasElement).setPointerCapture(id);
+}
+function endCaptureMeshEvents(id: number, event: ThreeEvent<Event>) {
+  (event.target as HTMLCanvasElement).releasePointerCapture(id);
 }
 
 function isDrag(
@@ -283,7 +380,7 @@ const emptyIntersections: Array<any> = [];
 const pointHelper = new Vector3();
 
 function computeIntersections(
-  properties: { camera: Camera; scene: Scene },
+  properties: { camera?: Camera; scene?: Scene },
   planeRef: RefObject<Mesh>,
   event: ThreeEvent<Event>,
   capturedEvents: Map<Object3D, XCameraRayIntersection> | undefined,
@@ -292,7 +389,11 @@ function computeIntersections(
   targetWorldPosition: Vector3,
   targetWorldQuaternion: Quaternion
 ) {
-  if (planeRef.current == null) {
+  if (
+    planeRef.current == null ||
+    properties.camera == null ||
+    properties.scene == null
+  ) {
     return emptyIntersections;
   }
   pointHelper.copy(event.point);

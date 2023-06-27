@@ -95,11 +95,13 @@ export class R3FEventDispatcher<I extends XIntersection>
     const target = {
       setPointerCapture: this.translator.addEventCapture.bind(
         this.translator,
+        this.event,
         eventObject,
         intersection
       ),
       releasePointerCapture: this.translator.removeEventCapture.bind(
         this.translator,
+        this.event,
         eventObject
       ),
       hasPointerCapture: this.translator.hasEventCapture.bind(

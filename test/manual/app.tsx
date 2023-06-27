@@ -1,10 +1,9 @@
 /* eslint-disable react/no-unknown-property */
-import React, { RefObject, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Canvas,
   GroupProps,
   MeshProps,
-  ThreeEvent,
   createPortal,
   useFrame,
 } from "@react-three/fiber";
@@ -15,26 +14,17 @@ import {
   XStraightPointer,
   XWebPointers,
   noEvents,
-  useForwardEvents,
   useMeshForwardEvents,
 } from "@coconut-xr/xinteraction/react";
-import {
-  EventDispatcher,
-  isXIntersection,
-  intersectRayFromCamera,
-  XCameraRayIntersection,
-  intersectRayFromCameraCapturedEvents,
-} from "@coconut-xr/xinteraction";
+import { isXIntersection } from "@coconut-xr/xinteraction";
 import { Box, OrbitControls, useFBO } from "@react-three/drei";
 import {
   BufferGeometry,
-  Camera,
   CircleGeometry,
   Color,
   Group,
   MOUSE,
   Mesh,
-  Object3D,
   PerspectiveCamera,
   PlaneGeometry,
   Quaternion,
@@ -42,8 +32,6 @@ import {
   SphereGeometry,
   Vector3,
   Vector3Tuple,
-  Event,
-  Vector2,
 } from "three";
 import { Container, RootContainer, Text } from "@coconut-xr/koestlich";
 import {
@@ -78,6 +66,7 @@ import {
   MagnifyingGlass,
   Bars3,
 } from "@coconut-xr/kruemel/icons/solid";
+import { DoubleGrabCube } from "./double-grab.js";
 
 const tableData = [
   ["Entry Name", "Entry Number", "Entry Description"],
@@ -159,7 +148,8 @@ function Framebuffer() {
       {createPortal(
         <>
           <ambientLight intensity={1} />
-          <HoverBox onClick={() => window.alert("click")}></HoverBox>
+          {/*<HoverBox onClick={() => window.alert("click")}></HoverBox>*/}
+          <DoubleGrabCube />
         </>,
         scene
       )}

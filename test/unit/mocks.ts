@@ -103,10 +103,12 @@ class MockEventDispatcher implements EventDispatcher<{}, any> {
       hasPointerCapture: translator.hasEventCapture.bind(translator, object),
       releasePointerCapture: translator.removeEventCapture.bind(
         translator,
+        {},
         object
       ),
       setPointerCapture: translator.addEventCapture.bind(
         translator,
+        {},
         object,
         intersection
       ),

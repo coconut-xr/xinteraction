@@ -55,6 +55,9 @@ const emptySet = new Set<number>();
 
 export const voidObject = new Object3D();
 
+/**
+ * translates the events from one input device to a 3D Scene
+ */
 export class EventTranslator<
   ReceivedEvent = Event,
   I extends XIntersection = XIntersection
@@ -83,7 +86,9 @@ export class EventTranslator<
     ) => void,
     protected wasDragged?: (inputDeviceElementId: number) => boolean,
     public onIntersections?: (intersections: ReadonlyArray<I>) => void,
-    public filterIntersections?: (intersections: Array<I>) => Array<I>
+    public filterIntersections?: (intersections: Array<I>) => Array<I>,
+    public onStartEventCaptures?: (event: ReceivedEvent) => void,
+    public onEndEventCaptures?: (event: ReceivedEvent) => void
   ) {}
 
   /**
@@ -157,6 +162,7 @@ export class EventTranslator<
             dispatchPressFor
           );
           this.dispatchRelease(
+            event,
             eventObject,
             intersection,
             interactionState,
@@ -193,6 +199,7 @@ export class EventTranslator<
             return false;
           }
           this.dispatchRelease(
+            event,
             eventObject,
             intersection,
             interactionState,
@@ -241,6 +248,10 @@ export class EventTranslator<
       }
     );
 
+    if (this.capturedEvents != null) {
+      this.onEndEventCaptures?.(event);
+    }
+
     //reset state
     this.lastPositionChangeTime = undefined;
     this.intersections.length = 0;
@@ -284,6 +295,7 @@ export class EventTranslator<
   }
 
   private dispatchRelease(
+    fromEvent: ReceivedEvent,
     eventObject: Object3D,
     intersection: I,
     interactionState: ObjectInteractionState<I>,
@@ -299,7 +311,7 @@ export class EventTranslator<
         intersection,
         releasedElementId
       );
-      this.removeEventCapture(eventObject);
+      this.removeEventCapture(fromEvent, eventObject);
 
       const elementState =
         interactionState.elementStateMap.get(releasedElementId);
@@ -341,14 +353,22 @@ export class EventTranslator<
     }
   }
 
-  public addEventCapture(eventObject: Object3D, intersection: I): void {
+  public addEventCapture(
+    fromEvent: ReceivedEvent,
+    eventObject: Object3D,
+    intersection: I
+  ): void {
     if (this.capturedEvents == null) {
       this.capturedEvents = new Map();
+      this.onStartEventCaptures?.(fromEvent);
     }
     this.capturedEvents.set(eventObject, intersection);
   }
 
-  public removeEventCapture(eventObject: Object3D): void {
+  public removeEventCapture(
+    fromEvent: ReceivedEvent,
+    eventObject: Object3D
+  ): void {
     if (this.capturedEvents == null) {
       return;
     }
@@ -358,6 +378,7 @@ export class EventTranslator<
     }
     if (this.capturedEvents.size === 0) {
       this.capturedEvents = undefined;
+      this.onEndEventCaptures?.(fromEvent);
     }
   }
 
