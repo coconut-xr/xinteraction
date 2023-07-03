@@ -14,12 +14,13 @@ import {
   Vector3,
   Quaternion,
   Object3D,
-  Camera,
   Scene,
   Mesh,
   Vector2,
+  PerspectiveCamera,
+  OrthographicCamera,
 } from "three";
-import { ThreeEvent } from "@react-three/fiber";
+import { RootState, ThreeEvent } from "@react-three/fiber";
 import { EventHandlers } from "@react-three/fiber/dist/declarations/src/core/events.js";
 
 type PointerMapEntry<E, I extends XIntersection> = {
@@ -276,7 +277,7 @@ function getOrCreatePointerMapEntry<E, I extends XIntersection>(
 }
 
 export function useMeshForwardEvents(
-  camera?: Camera,
+  camera?: PerspectiveCamera | OrthographicCamera,
   scene?: Scene,
   dragDistance?: number,
   onIntersections?: (
@@ -291,13 +292,13 @@ export function useMeshForwardEvents(
   onPointerUpMissed?: (event: ThreeEvent<Event>) => void,
   onClickMissed?: (event: ThreeEvent<Event>) => void
 ) {
-  const properties = useMemo(() => ({ camera, scene, dragDistance }), []);
+  const properties = useMemo<Partial<RootState>>(() => ({ camera, scene }), []);
   properties.camera = camera;
   properties.scene = scene;
-  properties.dragDistance = dragDistance;
 
-  return useMeshForwardEventsFromProps(
+  return useMeshForwardEventsFromStore(
     properties,
+    dragDistance,
     onIntersections,
     filterIntersections,
     onPointerDownMissed,
@@ -306,12 +307,9 @@ export function useMeshForwardEvents(
   );
 }
 
-export function useMeshForwardEventsFromProps(
-  properties: {
-    camera?: Camera;
-    scene?: Scene;
-    dragDistance?: number;
-  },
+export function useMeshForwardEventsFromStore(
+  store: Partial<RootState> | (() => Partial<RootState>),
+  dragDistance?: number,
   onIntersections?: (
     id: number,
     intersections: ReadonlyArray<XCameraRayIntersection>
@@ -326,8 +324,11 @@ export function useMeshForwardEventsFromProps(
 ): EventHandlers & { ref: RefObject<Mesh> } {
   const ref = useRef<Mesh>(null);
   const eventFunctions = useForwardEvents(
-    computeIntersections.bind(null, properties, ref),
-    isDrag.bind(null, properties),
+    computeIntersections.bind(null, store, ref),
+    isDrag.bind(
+      null,
+      dragDistance == null ? undefined : dragDistance * dragDistance
+    ),
     onIntersections,
     filterIntersections,
     onPointerDownMissed,
@@ -362,16 +363,15 @@ function endCaptureMeshEvents(id: number, event: ThreeEvent<Event>) {
 }
 
 function isDrag(
-  properties: { dragDistance?: number },
+  dragDistanceSquared: number | undefined,
   downEvent: ThreeEvent<Event>,
   currentEvent: ThreeEvent<Event>
 ): boolean {
-  if (properties.dragDistance == null) {
+  if (dragDistanceSquared == null) {
     return false;
   }
-  const distanceSquared = properties.dragDistance * properties.dragDistance;
   return (
-    downEvent.point.distanceToSquared(currentEvent.point) > distanceSquared
+    downEvent.point.distanceToSquared(currentEvent.point) > dragDistanceSquared
   );
 }
 
@@ -380,7 +380,7 @@ const emptyIntersections: Array<any> = [];
 const pointHelper = new Vector3();
 
 function computeIntersections(
-  properties: { camera?: Camera; scene?: Scene },
+  properties: Partial<RootState> | (() => Partial<RootState>),
   planeRef: RefObject<Mesh>,
   event: ThreeEvent<Event>,
   capturedEvents: Map<Object3D, XCameraRayIntersection> | undefined,
@@ -389,11 +389,9 @@ function computeIntersections(
   targetWorldPosition: Vector3,
   targetWorldQuaternion: Quaternion
 ) {
-  if (
-    planeRef.current == null ||
-    properties.camera == null ||
-    properties.scene == null
-  ) {
+  const { camera, scene } =
+    typeof properties === "function" ? properties() : properties;
+  if (planeRef.current == null || camera == null || scene == null) {
     return emptyIntersections;
   }
   pointHelper.copy(event.point);
@@ -402,16 +400,16 @@ function computeIntersections(
 
   return capturedEvents == null
     ? intersectRayFromCamera(
-        properties.camera,
+        camera,
         coords,
-        properties.scene,
+        scene,
         dispatcher,
         filterClipped,
         targetWorldPosition,
         targetWorldQuaternion
       )
     : intersectRayFromCameraCapturedEvents(
-        properties.camera,
+        camera,
         coords,
         capturedEvents as any as Map<Object3D, XCameraRayIntersection>,
         targetWorldPosition,
