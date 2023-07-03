@@ -233,6 +233,7 @@ function intersectSphereSphere(
 
 const vectorHelper = new Vector3();
 const matrix3Helper = new Matrix3();
+const boxSizeHelper = new Vector3();
 
 function intersectSphereBox(
   object: Object3D,
@@ -245,8 +246,13 @@ function intersectSphereBox(
 ): XSphereIntersection | undefined {
   helperSphere.copy(collisionSphere).applyMatrix4(invertedMatrixWorld);
   geometry.boundingBox!.clampPoint(helperSphere.center, vectorHelper);
+  geometry.boundingBox!.getSize(boxSizeHelper);
 
   const normal = vectorHelper.clone();
+  normal.divide(boxSizeHelper);
+  normal.x = isNaN(normal.x) ? 0.0 : normal.x;
+  normal.y = isNaN(normal.y) ? 0.0 : normal.y;
+  normal.z = isNaN(normal.z) ? 0.0 : normal.z;
   maximizeAxisVector(normal);
   matrix3Helper.setFromMatrix4(matrixWorld); //only get scale, rotate, and mirroring
 
