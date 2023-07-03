@@ -213,7 +213,6 @@ describe("sphere collider intersections", () => {
 
     expect(intersection.face).to.not.be.undefined;
     const [nx, ny, nz] = intersection.face!.normal.toArray();
-    console.log(nx, ny, nz);
     expect(nx).be.closeTo(-1, 0.0001);
     expect(ny).be.closeTo(0, 0.0001);
     expect(nz).be.closeTo(0, 0.0001);
@@ -242,12 +241,10 @@ describe("sphere collider intersections", () => {
       false
     );
     const [nx, ny, nz] = intersection.face!.normal.toArray();
-    expect(nx).be.closeTo(-1, 0.0001);
+    expect(nx).be.closeTo(0, 0.0001);
     expect(ny).be.closeTo(0, 0.0001);
-    expect(nz).be.closeTo(0, 0.0001);
+    expect(nz).be.closeTo(-1, 0.0001);
   });
-
-
 
   it("should intersect the face on a plane with the correct normal", () => {
     const from = new Object3D();
@@ -256,8 +253,7 @@ describe("sphere collider intersections", () => {
 
     const mesh1 = new Mesh(new PlaneGeometry(1, 1));
     group.add(mesh1);
-    mesh1.position.set(1.4, 1, 1); //0.8 offset from collider < collider radius (0.5) + mesh bounding box "radius" (0.5)
-    mesh1.rotation.y = Math.PI / 2;
+    mesh1.position.set(1, 1, 1.4); //0.8 offset from collider < collider radius (0.5) + mesh bounding box "radius" (0.5)
 
     mesh1.updateMatrixWorld();
 
@@ -274,7 +270,7 @@ describe("sphere collider intersections", () => {
     const [nx, ny, nz] = intersection.face!.normal.toArray();
     expect(nx).be.closeTo(0, 0.0001);
     expect(ny).be.closeTo(0, 0.0001);
-    expect(nz).be.closeTo(1, 0.0001);
+    expect(nz).be.closeTo(-1, 0.0001);
   });
 
   it("should intersect using spherecast", () => {

@@ -9,6 +9,7 @@ import {
   Quaternion,
   Intersection,
   Matrix3,
+  Box3,
 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
 import {
@@ -232,8 +233,13 @@ function intersectSphereSphere(
 }
 
 const vectorHelper = new Vector3();
-const matrix3Helper = new Matrix3();
+
 const boxSizeHelper = new Vector3();
+const boxCenterHelper = new Vector3();
+
+const vec0_0001 = new Vector3(0.0001, 0.0001, 0.0001);
+
+const normalHelperBox = new Box3();
 
 function intersectSphereBox(
   object: Object3D,
@@ -245,19 +251,11 @@ function intersectSphereBox(
   instanceId?: number
 ): XSphereIntersection | undefined {
   helperSphere.copy(collisionSphere).applyMatrix4(invertedMatrixWorld);
-  geometry.boundingBox!.clampPoint(helperSphere.center, vectorHelper);
+
   geometry.boundingBox!.getSize(boxSizeHelper);
+  geometry.boundingBox!.getCenter(boxCenterHelper);
 
-  const normal = vectorHelper.clone();
-  normal.divide(boxSizeHelper);
-  normal.x = isNaN(normal.x) ? 0.0 : normal.x;
-  normal.y = isNaN(normal.y) ? 0.0 : normal.y;
-  normal.z = isNaN(normal.z) ? 0.0 : normal.z;
-  maximizeAxisVector(normal);
-  matrix3Helper.setFromMatrix4(matrixWorld); //only get scale, rotate, and mirroring
-
-  normal.applyMatrix3(matrix3Helper); //world coordinate normal
-  normal.normalize();
+  geometry.boundingBox!.clampPoint(helperSphere.center, vectorHelper);
 
   vectorHelper.applyMatrix4(matrixWorld); //world coordinates
   const distanceToSphereCenterSquared = vectorHelper.distanceToSquared(
@@ -269,6 +267,14 @@ function intersectSphereBox(
   ) {
     return undefined;
   }
+
+  boxSizeHelper.max(vec0_0001);
+  normalHelperBox.setFromCenterAndSize(boxCenterHelper, boxSizeHelper);
+  const normal = normalHelperBox.clampPoint(helperSphere.center, new Vector3());
+
+  normal.divide(boxSizeHelper);
+  maximizeAxisVector(normal);
+
   return {
     distance: Math.sqrt(distanceToSphereCenterSquared),
     object,
@@ -304,4 +310,8 @@ function maximizeAxisVector(vec: Vector3): void {
 
   //z biggest
   vec.set(0, 0, vec.z < 0 ? -1 : 1);
+}
+
+function replaceZero(value: number, newValue: number): number {
+  return value === 0 ? newValue : 0;
 }
