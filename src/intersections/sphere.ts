@@ -8,6 +8,7 @@ import {
   Sphere,
   Quaternion,
   Intersection,
+  Matrix3,
 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
 import {
@@ -231,6 +232,7 @@ function intersectSphereSphere(
 }
 
 const vectorHelper = new Vector3();
+const matrix3Helper = new Matrix3();
 
 function intersectSphereBox(
   object: Object3D,
@@ -246,6 +248,10 @@ function intersectSphereBox(
 
   const normal = vectorHelper.clone();
   maximizeAxisVector(normal);
+  matrix3Helper.setFromMatrix4(matrixWorld); //only get scale, rotate, and mirroring
+
+  normal.applyMatrix3(matrix3Helper); //world coordinate normal
+  normal.normalize();
 
   vectorHelper.applyMatrix4(matrixWorld); //world coordinates
   const distanceToSphereCenterSquared = vectorHelper.distanceToSquared(
@@ -257,7 +263,6 @@ function intersectSphereBox(
   ) {
     return undefined;
   }
-  const point = vectorHelper.clone();
   return {
     distance: Math.sqrt(distanceToSphereCenterSquared),
     object,
@@ -268,7 +273,7 @@ function intersectSphereBox(
       materialIndex: 0,
       normal,
     },
-    point,
+    point: vectorHelper.clone(),
     instanceId,
     inputDevicePosition: inputDevicePosition.clone(),
     inputDeviceRotation: inputDeviceRotation.clone(),
@@ -291,9 +296,6 @@ function maximizeAxisVector(vec: Vector3): void {
     return;
   }
 
-  if (absZ >= absY && absZ >= absX) {
-    //z biggest
-    vec.set(0, 0, vec.z < 0 ? -1 : 1);
-    return;
-  }
+  //z biggest
+  vec.set(0, 0, vec.z < 0 ? -1 : 1);
 }
