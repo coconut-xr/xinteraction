@@ -314,6 +314,8 @@ describe("ray intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object1,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
         [
@@ -324,6 +326,8 @@ describe("ray intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object2,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ]),
@@ -351,6 +355,8 @@ describe("ray intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object1,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
         [
@@ -361,6 +367,8 @@ describe("ray intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object2,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ]),
@@ -385,6 +393,8 @@ describe("ray intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object,
             point: new Vector3(0, 0, 1),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ]),
@@ -417,6 +427,8 @@ describe("ray intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object,
             point: new Vector3(0, 0, 1),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ]),
@@ -427,5 +439,77 @@ describe("ray intersections for captured events", () => {
     expect(intersections[0].point.x).be.closeTo(2, 0.0001);
     expect(intersections[0].point.y).be.closeTo(0, 0.0001);
     expect(intersections[0].point.z).be.closeTo(1, 0.0001);
+  });
+
+  it("should have correct pointOnFace for ray movement", () => {
+    const object = new Object3D();
+    const intersections = intersectRayFromCapturedEvents(
+      new Vector3(0, 0, 1), //move 1 forward
+      new Quaternion(),
+      new Map([
+        [
+          object,
+          {
+            distance: 1,
+            inputDevicePosition: new Vector3(0, 0, 0),
+            inputDeviceRotation: new Quaternion(),
+            object: object,
+            point: new Vector3(0, 0, 1),
+            face: {
+              normal: new Vector3(0, 0, 1),
+            } as any,
+            localPoint: new Vector3(0, 0, 1),
+            pointOnFace: new Vector3(),
+          },
+        ],
+      ]),
+      ZAXIS
+    );
+    expect(intersections[0].point.x).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(2, 0.0001);
+    expect(intersections[0].localPoint.x).be.closeTo(0, 0.0001);
+    expect(intersections[0].localPoint.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].localPoint.z).be.closeTo(1, 0.0001);
+  });
+
+  it("should have correct pointOnFace for camera movement", () => {
+    const from = new PerspectiveCamera(90);
+    from.rotation.y = Math.PI
+
+    from.position.z = 1; //move 1 to forward
+    from.updateMatrixWorld();
+
+    const object = new Object3D();
+
+    const intersections = intersectRayFromCameraCapturedEvents(
+      from,
+      new Vector2(0, 0),
+      new Map([
+        [
+          object,
+          {
+            distance: 1,
+            distanceViewPlane: 1,
+            inputDevicePosition: new Vector3(0, 0, 0),
+            inputDeviceRotation: new Quaternion(),
+            object: object,
+            point: new Vector3(0, 0, 1),
+            localPoint: new Vector3(0, 0, 1),
+            pointOnFace: new Vector3(),
+          },
+        ],
+      ]),
+      new Vector3(),
+      new Quaternion()
+    );
+
+    expect(intersections[0].point.x).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(2, 0.0001);
+
+    expect(intersections[0].localPoint.x).be.closeTo(0, 0.0001);
+    expect(intersections[0].localPoint.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].localPoint.z).be.closeTo(1, 0.0001);
   });
 });

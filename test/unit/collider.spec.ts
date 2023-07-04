@@ -362,6 +362,8 @@ describe("sphere collider intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object1,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
         [
@@ -372,6 +374,8 @@ describe("sphere collider intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object2,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ])
@@ -398,6 +402,8 @@ describe("sphere collider intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object1,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
         [
@@ -408,6 +414,8 @@ describe("sphere collider intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object2,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ])
@@ -431,6 +439,8 @@ describe("sphere collider intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object,
             point: new Vector3(0, 0, 1),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ])
@@ -440,12 +450,12 @@ describe("sphere collider intersections for captured events", () => {
     expect(intersections[0].point.z).be.closeTo(0, 0.0001);
   });
 
-  it("should have correct actualDistance", () => {
+  it("should have correct distanceToFace", () => {
     const object = new Mesh(new BoxGeometry(1, 1, 2));
     object.rotation.y = Math.PI / 2; //=> size = 2,1,1
     object.position.x = -2; //at -2,0,0
     //neatest point to 1,0,0 is at -1, 0, 0
-    //=> actualDistance 2
+    //=> distanceToFace = 2
 
     object.updateMatrixWorld();
     const intersections = intersectSphereFromCapturedEvents(
@@ -459,7 +469,12 @@ describe("sphere collider intersections for captured events", () => {
             inputDevicePosition: new Vector3(0, 0, 0),
             inputDeviceRotation: new Quaternion(),
             object: object,
+            face: {
+              normal: new Vector3(0, 0, 1),
+            } as any,
             point: new Vector3(0, 0, 1),
+            localPoint: new Vector3(0, 0, 1),
+            pointOnFace: new Vector3(),
           },
         ],
       ])
@@ -467,6 +482,39 @@ describe("sphere collider intersections for captured events", () => {
     expect(intersections[0].point.x).be.closeTo(2, 0.0001);
     expect(intersections[0].point.y).be.closeTo(0, 0.0001);
     expect(intersections[0].point.z).be.closeTo(0, 0.0001);
-    expect(intersections[0].actualDistance).be.closeTo(2, 0.0001);
+    expect(intersections[0].distanceToFace).be.closeTo(2, 0.0001);
+  });
+
+  it("should have correct pointOnFace", () => {
+    const object = new Mesh(new BoxGeometry(1, 1, 1));
+
+    object.updateMatrixWorld();
+    const intersections = intersectSphereFromCapturedEvents(
+      new Vector3(0, 0, 1), //move 1 to forward
+      new Quaternion(),
+      new Map([
+        [
+          object,
+          {
+            distance: 0,
+            inputDevicePosition: new Vector3(0, 0, 0),
+            inputDeviceRotation: new Quaternion(),
+            object: object,
+            face: {
+              normal: new Vector3(0, 0, 1),
+            } as any,
+            point: new Vector3(0, 0, 0.5),
+            localPoint: new Vector3(0, 0, 0.5),
+            pointOnFace: new Vector3(),
+          },
+        ],
+      ])
+    );
+    expect(intersections[0].point.x).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(1.5, 0.0001);
+    expect(intersections[0].pointOnFace.x).be.closeTo(0, 0.0001);
+    expect(intersections[0].pointOnFace.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].pointOnFace.z).be.closeTo(0.5, 0.0001);
   });
 });

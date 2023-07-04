@@ -295,6 +295,8 @@ describe("lines intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object1,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
         [
@@ -307,6 +309,8 @@ describe("lines intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object2,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ])
@@ -338,6 +342,8 @@ describe("lines intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object1,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
         [
@@ -350,6 +356,8 @@ describe("lines intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object2,
             point: new Vector3(),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ])
@@ -380,6 +388,8 @@ describe("lines intersections for captured events", () => {
             inputDeviceRotation: new Quaternion(),
             object: object,
             point: new Vector3(0, 0, 1),
+            localPoint: new Vector3(),
+            pointOnFace: new Vector3(),
           },
         ],
       ])
@@ -387,5 +397,42 @@ describe("lines intersections for captured events", () => {
     expect(intersections[0].point.x).be.closeTo(2, 0.0001);
     expect(intersections[0].point.y).be.closeTo(0, 0.0001);
     expect(intersections[0].point.z).be.closeTo(0, 0.0001);
+  });
+
+  it("should have correct pointOnFace", () => {
+    const object = new Object3D();
+    const from = new Object3D();
+    from.position.x = 1; //move 1 to right
+    const intersections = intersectLinesFromCapturedEvents(
+      from,
+      from.getWorldPosition(new Vector3()),
+      from.getWorldQuaternion(new Quaternion()),
+      [new Vector3(0, 0, 0), new Vector3(1, 0, 0)],
+      new Map([
+        [
+          object,
+          {
+            distance: 0,
+            distanceOnLine: 1,
+            lineIndex: 0,
+            inputDevicePosition: new Vector3(0, 0, 0),
+            inputDeviceRotation: new Quaternion(),
+            object: object,
+            point: new Vector3(1, 0, 0),
+            face: {
+              normal: new Vector3(1, 0, 0),
+            } as any,
+            localPoint: new Vector3(1, 0, 0),
+            pointOnFace: new Vector3(),
+          },
+        ],
+      ])
+    );
+    expect(intersections[0].point.x).be.closeTo(2, 0.0001);
+    expect(intersections[0].point.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].point.z).be.closeTo(0, 0.0001);
+    expect(intersections[0].localPoint.x).be.closeTo(1, 0.0001);
+    expect(intersections[0].localPoint.y).be.closeTo(0, 0.0001);
+    expect(intersections[0].localPoint.z).be.closeTo(0, 0.0001);
   });
 });

@@ -1,15 +1,18 @@
 import {
   Camera,
   Euler,
+  Matrix4,
   Object3D,
   Plane,
   Quaternion,
+  Ray,
   Raycaster,
   Vector2,
   Vector3,
 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
 import {
+  computeIntersectionWorldPlane,
   isIntersectionNotClipped,
   traverseUntilInteractable,
 } from "./index.js";
@@ -23,6 +26,7 @@ export type XCameraRayIntersection = XIntersection & {
 
 const directionHelper = new Vector3();
 const planeHelper = new Plane();
+const rayHelper = new Ray();
 
 export function intersectRayFromCapturedEvents(
   fromPosition: Vector3,
@@ -32,8 +36,14 @@ export function intersectRayFromCapturedEvents(
 ): Array<XIntersection> {
   directionHelper.copy(direction).applyQuaternion(fromRotation);
   return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
+    rayHelper.set(fromPosition, directionHelper);
+    computeIntersectionWorldPlane(planeHelper, intersection, capturedObject);
+    const pointOnFace =
+      rayHelper.intersectPlane(planeHelper, new Vector3()) ??
+      intersection.point;
     return {
       ...intersection,
+      pointOnFace,
       point: directionHelper
         .clone()
         .multiplyScalar(intersection.distance)
@@ -67,17 +77,23 @@ export function intersectRayFromCameraCapturedEvents(
     planeHelper.constant -= intersection.distanceViewPlane;
 
     //find captured intersection point by intersecting the ray to the plane of the camera
-    const point = new Vector3();
-    raycaster.ray.intersectPlane(planeHelper, point);
+    const point = raycaster.ray.intersectPlane(planeHelper, new Vector3())!;
+
+    computeIntersectionWorldPlane(planeHelper, intersection, capturedObject);
+    const pointOnFace =
+      raycaster.ray.intersectPlane(planeHelper, new Vector3()) ?? point;
     return {
       ...intersection,
       point,
+      pointOnFace,
       inputDevicePosition: worldPositionTarget.clone(),
       inputDeviceRotation: worldQuaternionTarget.clone(),
       capturedObject,
     };
   });
 }
+
+const invertedMatrixHelper = new Matrix4();
 
 export function intersectRayFromObject(
   fromPosition: Vector3,
@@ -96,12 +112,17 @@ export function intersectRayFromObject(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
     (object) =>
-      raycaster.intersectObject(object, true).map((intersection) =>
-        Object.assign(intersection, {
+      raycaster.intersectObject(object, true).map((intersection) => {
+        invertedMatrixHelper.copy(object.matrixWorld).invert();
+        return Object.assign(intersection, {
           inputDevicePosition: fromPosition.clone(),
           inputDeviceRotation: fromRotation.clone(),
-        })
-      ),
+          pointOnFace: intersection.point,
+          localPoint: intersection.point
+            .clone()
+            .applyMatrix4(invertedMatrixHelper),
+        });
+      }),
     (prev, cur) => prev.concat(cur),
     []
   );
@@ -138,13 +159,18 @@ export function intersectRayFromCamera(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
     (object) =>
-      raycaster.intersectObject(object, true).map((intersection) =>
-        Object.assign(intersection, {
+      raycaster.intersectObject(object, true).map((intersection) => {
+        invertedMatrixHelper.copy(object.matrixWorld).invert();
+        return Object.assign(intersection, {
+          pointOnFace: intersection.point,
           inputDevicePosition: worldPositionTarget.clone(),
           inputDeviceRotation: worldQuaternionTarget.clone(),
           distanceViewPlane: planeHelper.distanceToPoint(intersection.point),
-        })
-      ),
+          localPoint: intersection.point
+            .clone()
+            .applyMatrix4(invertedMatrixHelper),
+        });
+      }),
     (prev, cur) => prev.concat(cur),
     []
   );

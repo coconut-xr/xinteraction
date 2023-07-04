@@ -15,6 +15,8 @@ export type XIntersection = Intersection & {
   inputDevicePosition: Vector3;
   inputDeviceRotation: Quaternion;
   capturedObject?: Object3D;
+  pointOnFace: Vector3;
+  localPoint: Vector3;
 };
 
 export function isXIntersection(val: Intersection): val is XIntersection {

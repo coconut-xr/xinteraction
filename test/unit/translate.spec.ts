@@ -30,6 +30,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update([]);
@@ -72,6 +74,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update(undefined, new Map([[object, [101]]]), 101);
@@ -107,6 +111,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       undefined
@@ -167,6 +173,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -182,6 +190,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1]
@@ -226,6 +236,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -261,6 +273,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -291,6 +305,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -321,6 +337,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -337,6 +355,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1]
@@ -372,6 +392,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice2.update([
@@ -381,6 +403,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice1.update([]);
@@ -445,6 +469,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1, 2],
@@ -488,6 +514,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
         {
           object: object2,
@@ -495,6 +523,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -537,6 +567,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
         {
           object: object2,
@@ -544,6 +576,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       new Map([[object1, [1]]]),
@@ -584,6 +618,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
         {
           object: object2,
@@ -591,6 +627,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -630,6 +668,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
       {
         object: child1,
@@ -637,6 +677,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     //move
@@ -647,6 +689,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
       {
         object: child2,
@@ -654,6 +698,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     //move
@@ -664,6 +710,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     //leave
@@ -711,6 +759,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     //leave child1 but enter child2
@@ -721,6 +771,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     //leave child2
@@ -768,6 +820,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update([]);
@@ -799,6 +853,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
       {
         object: parent,
@@ -806,6 +862,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update([
@@ -815,6 +873,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
       {
         object: parent,
@@ -822,6 +882,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
 
@@ -853,6 +915,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update([
@@ -862,6 +926,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
       {
         object: object2,
@@ -869,6 +935,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
 
@@ -906,6 +974,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update([
@@ -915,6 +985,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
       {
         object: object2,
@@ -922,6 +994,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update([
@@ -931,6 +1005,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update([]);
@@ -967,6 +1043,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1]
@@ -997,6 +1075,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -1056,6 +1136,8 @@ describe("translate events", () => {
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1],
@@ -1085,6 +1167,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ];
     inputDevice.update(intersections);
@@ -1110,6 +1194,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
       {
         object: new Object3D(),
@@ -1117,6 +1203,8 @@ describe("translate events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ];
     inputDevice.update(intersections);
@@ -1154,10 +1242,13 @@ describe("translate events", () => {
           point: new Vector3(0, 0, 0),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       [1, 2],
-      1, 2
+      1,
+      2
     );
     //release
     inputDevice.update(
@@ -1168,6 +1259,8 @@ describe("translate events", () => {
           point: new Vector3(0, 100, 0),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
+          localPoint: new Vector3(),
+          pointOnFace: new Vector3(),
         },
       ],
       []
@@ -1201,6 +1294,8 @@ describe("translator's onMissed... events", () => {
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
+        localPoint: new Vector3(),
+        pointOnFace: new Vector3(),
       },
     ]);
     inputDevice.update(undefined, new Map([[object, [101]]]), 101);

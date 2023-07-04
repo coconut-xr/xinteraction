@@ -1,7 +1,17 @@
-import { Line3, Object3D, Quaternion, Raycaster, Vector3 } from "three";
+import {
+  Line3,
+  Matrix4,
+  Object3D,
+  Plane,
+  Quaternion,
+  Ray,
+  Raycaster,
+  Vector3,
+} from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
 import {
   isIntersectionNotClipped,
+  computeIntersectionWorldPlane,
   traverseUntilInteractable,
 } from "./index.js";
 import { ThreeEvent } from "@react-three/fiber";
@@ -15,6 +25,7 @@ export type XLinesIntersection = XIntersection & {
 
 const directionHelper = new Vector3();
 const lineHelper = new Line3();
+const planeHelper = new Plane();
 
 export function intersectLinesFromCapturedEvents(
   from: Object3D,
@@ -33,8 +44,14 @@ export function intersectLinesFromCapturedEvents(
       .applyMatrix4(from.matrixWorld);
 
     const point = lineHelper.at(intersection.distanceOnLine, new Vector3());
+    computeIntersectionWorldPlane(planeHelper, intersection, capturedObject);
+    const pointOnFace =
+      backwardsIntersectionLinesWithPlane(from, linePoints, planeHelper) ??
+      point;
+
     return {
       ...intersection,
+      pointOnFace,
       point,
       inputDevicePosition: fromPosition.clone(),
       inputDeviceRotation: fromRotation.clone(),
@@ -42,6 +59,33 @@ export function intersectLinesFromCapturedEvents(
     };
   });
 }
+
+const vectorHelper = new Vector3();
+const rayHelper = new Ray();
+
+function backwardsIntersectionLinesWithPlane(
+  from: Object3D,
+  linePoints: Array<Vector3>,
+  plane: Plane
+): Vector3 | undefined {
+  for (let i = linePoints.length - 1; i > 0; i--) {
+    const start = linePoints[i - 1];
+    const end = linePoints[i];
+    rayHelper.origin.copy(start).applyMatrix4(from.matrixWorld);
+    rayHelper.direction
+      .copy(end)
+      .applyMatrix4(from.matrixWorld)
+      .sub(raycaster.ray.origin)
+      .normalize();
+    const point = rayHelper.intersectPlane(plane, vectorHelper);
+    if (point != null) {
+      return vectorHelper.clone();
+    }
+  }
+  return undefined;
+}
+
+const invertedMatrixHelper = new Matrix4();
 
 export function intersectLinesFromObject(
   from: Object3D,
@@ -92,6 +136,14 @@ export function intersectLinesFromObject(
               inputDeviceRotation: fromRotation.clone(),
               lineIndex: i - 1,
               distanceOnLine,
+              pointOnFace: newIntersection.point,
+              localPoint: newIntersection.point
+                .clone()
+                .applyMatrix4(
+                  invertedMatrixHelper
+                    .copy(newIntersection.object.matrixWorld)
+                    .invert()
+                ),
             })
           );
         }

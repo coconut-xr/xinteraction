@@ -8,11 +8,12 @@ import {
   Sphere,
   Quaternion,
   Intersection,
-  Matrix3,
   Box3,
+  Plane,
 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";
 import {
+  computeIntersectionWorldPlane,
   isIntersectionNotClipped,
   traverseUntilInteractable,
 } from "./index.js";
@@ -20,12 +21,13 @@ import { ThreeEvent } from "@react-three/fiber";
 
 const oldInputDevicePointOffset = new Vector3();
 const inputDeviceQuaternionOffset = new Quaternion();
+const planeHelper = new Plane();
 
 export type XSphereIntersection = XIntersection & {
   /**
    * set when the event is captured because the "distance" property is only the distance to a "expected intersection"
    */
-  actualDistance?: number;
+  distanceToFace?: number;
 };
 
 export function intersectSphereFromCapturedEvents(
@@ -50,51 +52,25 @@ export function intersectSphereFromCapturedEvents(
         .clone()
         .applyQuaternion(inputDeviceQuaternionOffset)
         .add(fromPosition);
+
+      computeIntersectionWorldPlane(planeHelper, intersection, capturedObject);
+
+      const pointOnFace = planeHelper.projectPoint(fromPosition, new Vector3());
+
       return {
         distance: intersection.distance,
         inputDevicePosition: fromPosition.clone(),
         inputDeviceRotation: fromRotation.clone(),
         object: intersection.object,
         point,
+        pointOnFace,
         face: intersection.face,
         capturedObject,
-        actualDistance: computeActualDistance(fromPosition, intersection),
+        distanceToFace: pointOnFace.distanceTo(fromPosition),
+        localPoint: intersection.localPoint,
       };
     }
   );
-}
-
-function computeActualDistance(
-  fromPosition: Vector3,
-  intersection: Intersection
-): number {
-  const object = intersection.object;
-  if (intersection.instanceId != null && object instanceof InstancedMesh) {
-    if (object.geometry.boundingBox == null) {
-      object.geometry.computeBoundingBox();
-    }
-    object.getMatrixAt(intersection.instanceId, matrixHelper);
-    matrixHelper.premultiply(object.matrixWorld);
-    invertedMatrixHelper.copy(matrixHelper).invert();
-    vectorHelper.copy(fromPosition).applyMatrix4(invertedMatrixHelper);
-    object.geometry.boundingBox!.clampPoint(vectorHelper, vectorHelper);
-    vectorHelper.applyMatrix4(matrixHelper);
-    return vectorHelper.distanceTo(fromPosition);
-  }
-
-  if (object instanceof Mesh) {
-    if (object.geometry.boundingBox == null) {
-      object.geometry.computeBoundingBox();
-    }
-    invertedMatrixHelper.copy(object.matrixWorld).invert();
-    vectorHelper.copy(fromPosition).applyMatrix4(invertedMatrixHelper);
-    object.geometry.boundingBox!.clampPoint(vectorHelper, vectorHelper);
-    vectorHelper.applyMatrix4(object.matrixWorld);
-    return vectorHelper.distanceTo(fromPosition);
-  }
-
-  //not lösung - emergency solution
-  return object.getWorldPosition(vectorHelper).distanceTo(fromPosition);
 }
 
 const collisionSphere = new Sphere();
@@ -162,8 +138,14 @@ function intersectSphere(
     object.spherecast(collisionSphere, intersections);
     return intersections.map((intersection) => ({
       ...intersection,
+      pointOnFace: intersection.point,
       inputDevicePosition: collisionSphere.center.clone(),
       inputDeviceRotation: inputDeviceRotation.clone(),
+      localPoint: intersection.point
+        .clone()
+        .applyMatrix4(
+          invertedMatrixHelper.copy(intersection.object.matrixWorld).invert()
+        ),
     }));
   }
   if (object instanceof InstancedMesh) {
@@ -275,6 +257,8 @@ function intersectSphereBox(
   normal.divide(boxSizeHelper);
   maximizeAxisVector(normal);
 
+  const point = vectorHelper.clone();
+
   return {
     distance: Math.sqrt(distanceToSphereCenterSquared),
     object,
@@ -285,10 +269,12 @@ function intersectSphereBox(
       materialIndex: 0,
       normal,
     },
-    point: vectorHelper.clone(),
+    pointOnFace: point,
+    point,
     instanceId,
     inputDevicePosition: inputDevicePosition.clone(),
     inputDeviceRotation: inputDeviceRotation.clone(),
+    localPoint: point.clone().applyMatrix4(invertedMatrixWorld),
   };
 }
 
@@ -310,8 +296,4 @@ function maximizeAxisVector(vec: Vector3): void {
 
   //z biggest
   vec.set(0, 0, vec.z < 0 ? -1 : 1);
-}
-
-function replaceZero(value: number, newValue: number): number {
-  return value === 0 ? newValue : 0;
 }

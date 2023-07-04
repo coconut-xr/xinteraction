@@ -1,4 +1,5 @@
 import { Intersection, Mesh, Object3D, Plane } from "three";
+import { XIntersection } from "../index.js";
 
 export function traverseUntilInteractable<T, R>(
   object: Object3D,
@@ -36,6 +37,22 @@ export function isIntersectionNotClipped(intersection: Intersection): boolean {
       return false;
     }
   }
+  return true;
+}
+
+export function computeIntersectionWorldPlane(
+  plane: Plane,
+  intersection: XIntersection,
+  object: Object3D
+): boolean {
+  if (intersection.face == null) {
+    return false;
+  }
+  plane.setFromNormalAndCoplanarPoint(
+    intersection.face.normal,
+    intersection.localPoint
+  );
+  plane.applyMatrix4(object.matrixWorld);
   return true;
 }
 

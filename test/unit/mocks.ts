@@ -39,6 +39,8 @@ export class MockInputDevice {
               inputDevicePosition: new Vector3(),
               inputDeviceRotation: new Quaternion(),
               capturedObject: object,
+              localPoint: new Vector3(),
+              pointOnFace: new Vector3(),
             })),
 
       (intersection) =>

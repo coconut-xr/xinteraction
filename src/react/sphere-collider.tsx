@@ -109,9 +109,9 @@ export const XSphereCollider = forwardRef<
             }
             if (
               intersection.distance <= properties.distanceElement.downRadius &&
-              // either the intersection is not captured (=> actualDistance == null) OR the actual distance to the object is smaller then 2x downRadius => if not we release the capture
-              (intersection.actualDistance == null ||
-                intersection.actualDistance <
+              // either the intersection is not captured (=> distanceToFace == null) OR the distanceToFace is smaller then 2x downRadius => if not we release the capture
+              (intersection.distanceToFace == null ||
+                intersection.distanceToFace <
                   2 * properties.distanceElement.downRadius * 2)
             ) {
               pressedElementIds.add(properties.distanceElement.id);
