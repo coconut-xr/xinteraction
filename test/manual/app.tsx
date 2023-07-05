@@ -22,6 +22,7 @@ import {
   BufferGeometry,
   CircleGeometry,
   Color,
+  DoubleSide,
   Group,
   MOUSE,
   Mesh,
@@ -118,6 +119,7 @@ export default function App() {
       <HoverBox position={[-4, 0, 0]} />
       <DragCube position={[-4, 0, -4]} />
       <Koestlich position={[0, 5, -6]} />
+      <ScaledHoverPlane position={[0, 0, 2]} rotation-y={Math.PI / 2} />
     </Canvas>
   );
 }
@@ -407,6 +409,7 @@ function ColliderSphere({ id }: { id: number }) {
 function ColliderSelectSphere({ id }: { id: number }) {
   const ref = useRef<Group>(null);
   const sphereRef = useRef<InputDeviceFunctions>(null);
+  const intersectionRef = useRef<Mesh>(null);
   const keyPressMap = useMemo(() => new Set<string>(), []);
   useEffect(() => {
     const keyDown = (e: KeyboardEvent) => {
@@ -452,12 +455,45 @@ function ColliderSelectSphere({ id }: { id: number }) {
     }
   });
   return (
-    <group ref={ref} position={[0, 0, 0]}>
-      <XSphereCollider ref={sphereRef} id={id} radius={1} />
-      <mesh scale={0.5} geometry={sphereGeometry}>
-        <meshBasicMaterial color="violet" toneMapped={false} />
+    <>
+      <group ref={ref} position={[0, 0, 0]}>
+        <XSphereCollider
+          onIntersections={(intersections) => {
+            if (intersectionRef.current == null) {
+              return;
+            }
+            if (intersections.length === 0) {
+              intersectionRef.current.visible = false;
+              return;
+            }
+
+            intersectionRef.current.visible = true;
+            const intersection = intersections[0];
+
+            intersectionRef.current.position.copy(intersection.point);
+            if (intersection.face != null) {
+              quaternionHelper.setFromUnitVectors(new Vector3(0,0,1), intersection.face.normal);
+              intersection.object.getWorldQuaternion(
+                intersectionRef.current.quaternion
+              );
+              intersectionRef.current.quaternion.multiply(quaternionHelper);
+              offsetHelper.set(0, 0, 0.01);
+              offsetHelper.applyQuaternion(intersectionRef.current.quaternion);
+              intersectionRef.current.position.add(offsetHelper);
+            }
+          }}
+          ref={sphereRef}
+          id={id}
+          radius={0.5}
+        />
+        <mesh scale={0.5} geometry={sphereGeometry}>
+          <meshBasicMaterial color="violet" toneMapped={false} />
+        </mesh>
+      </group>
+      <mesh ref={intersectionRef} geometry={circle2}>
+        <meshBasicMaterial color="purple" />
       </mesh>
-    </group>
+    </>
   );
 }
 
@@ -493,6 +529,45 @@ function HoverBox(props: MeshProps) {
         toneMapped={false}
       />
     </mesh>
+  );
+}
+
+function ScaledHoverPlane(props: GroupProps) {
+  const [hovered, setHovered] = useState<Array<number>>([]);
+  const [pressed, setPressed] = useState<Array<number>>([]);
+  return (
+    <group
+      onPointerEnter={(e) => {
+        e.stopPropagation();
+        setHovered((c) => [...c, e.pointerId]);
+      }}
+      onPointerLeave={(e) => {
+        e.stopPropagation();
+        setHovered((c) => c.filter((id) => id != e.pointerId));
+        setPressed((c) => c.filter((id) => id != e.pointerId));
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        setPressed((c) => [...c, e.pointerId]);
+      }}
+      onPointerUp={(e) => {
+        e.stopPropagation();
+        setPressed((c) => c.filter((id) => id != e.pointerId));
+      }}
+      {...props}
+      scale={1 / 1000}
+    >
+      <mesh>
+        <planeGeometry args={[1000, 1000]} />
+        <meshPhongMaterial
+          side={DoubleSide}
+          color={
+            pressed.length > 0 ? "green" : hovered.length > 0 ? "white" : "blue"
+          }
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
   );
 }
 
@@ -712,6 +787,9 @@ plane.rotateX(-Math.PI / 2);
 
 const circle = new CircleGeometry(0.3);
 circle.rotateX(-Math.PI / 2);
+
+
+const circle2 = new CircleGeometry(0.3);
 
 const UP = new Vector3(0, 1, 0);
 const quaternionHelper = new Quaternion();

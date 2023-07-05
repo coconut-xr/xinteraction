@@ -245,7 +245,7 @@ function intersectSphereBox(
   );
   if (
     distanceToSphereCenterSquared >
-    helperSphere.radius * helperSphere.radius
+    collisionSphere.radius * collisionSphere.radius
   ) {
     return undefined;
   }
