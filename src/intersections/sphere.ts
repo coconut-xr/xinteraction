@@ -221,8 +221,6 @@ const boxCenterHelper = new Vector3();
 
 const vec0_0001 = new Vector3(0.0001, 0.0001, 0.0001);
 
-const normalHelperBox = new Box3();
-
 function intersectSphereBox(
   object: Object3D,
   inputDevicePosition: Vector3,
@@ -251,8 +249,7 @@ function intersectSphereBox(
   }
 
   boxSizeHelper.max(vec0_0001);
-  normalHelperBox.setFromCenterAndSize(boxCenterHelper, boxSizeHelper);
-  const normal = normalHelperBox.clampPoint(helperSphere.center, new Vector3());
+  const normal = helperSphere.center.clone().sub(boxCenterHelper);
 
   normal.divide(boxSizeHelper);
   maximizeAxisVector(normal);
