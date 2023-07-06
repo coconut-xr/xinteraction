@@ -23,7 +23,6 @@ export type XLinesIntersection = XIntersection & {
   distanceOnLine: number;
 };
 
-const directionHelper = new Vector3();
 const lineHelper = new Line3();
 const planeHelper = new Plane();
 
@@ -35,7 +34,6 @@ export function intersectLinesFromCapturedEvents(
   capturedEvents: Map<Object3D, XLinesIntersection>
 ): Array<XLinesIntersection> {
   return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
-    directionHelper.set(0, 0, 1).applyQuaternion(fromRotation);
     lineHelper
       .set(
         linePoints[intersection.lineIndex],
@@ -43,7 +41,10 @@ export function intersectLinesFromCapturedEvents(
       )
       .applyMatrix4(from.matrixWorld);
 
-    const point = lineHelper.at(intersection.distanceOnLine, new Vector3());
+    const point = lineHelper.at(
+      intersection.distanceOnLine / lineHelper.distance(),
+      new Vector3()
+    );
     computeIntersectionWorldPlane(planeHelper, intersection, capturedObject);
     const pointOnFace =
       backwardsIntersectionLinesWithPlane(from, linePoints, planeHelper) ??
