@@ -12,7 +12,14 @@ In the following tutorials, we will introduce how to add input devices and inter
 
 ## Mouse and Touch Interaction
 
-At first, we will remove the default event handling of @react-three/fiber by settings the `event` property of the `<Canvas/>` component to `noEvent` from `xinteraction/react`. To re-enable interaction via the mouse and touch, we will add corresponding **xinteraction** input devices. We provide the `XWebPointers` component, which automatically creates an input device for the mouse and one for each touch pointer. With these 2 changes, we already enabled the scene to handle multiple input devices and multi-touch. Events will be delivered to the objects and can be captured via `onPointerDown`, `onClick`, etc. The following code shows a `Box`, which decreases its opacity when more input devices (e.g., fingers on a touch screen) are over it. 
+At first, we will remove the default event handling of @react-three/fiber by settings the `event` property of the `<Canvas/>` component to `noEvent` from `xinteraction/react`. To re-enable interaction via the mouse and touch, we will add corresponding **xinteraction** input devices. We provide the `XWebPointers` component, which automatically creates an input device for the mouse and one for each touch pointer. With these 2 changes, we already enabled the scene to handle multiple input devices and multi-touch. Events will be delivered to the objects and can be captured via `onPointerDown`, `onClick`, etc.
+
+The following code shows a `Box`, which decreases its opacity when more input devices (e.g., fingers on a touch screen) are over it.
+
+
+#### Important:
+
+For correct touch handling, the css property `touch-action: none` must be set on the canvas or on any parent element.
 
 [CodeSandbox](https://codesandbox.io/s/xinteraction-introduction-6848g2?file=/src/app.tsx)
 
@@ -25,7 +32,7 @@ import { useState } from "react";
 
 export default function App() {
   return (
-    <Canvas events={noEvents}>
+    <Canvas style={{ touchAction: "none" }} events={noEvents}>
       <Box />
       <XWebPointers />
     </Canvas>
