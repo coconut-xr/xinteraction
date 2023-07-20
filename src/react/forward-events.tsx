@@ -258,7 +258,7 @@ function getOrCreatePointerMapEntry<E, I extends XIntersection>(
             lastWorldPosition,
             lastWorldRotation
           ),
-        () => newEntry.inputDeviceElementPressSet,
+        () => [...newEntry.inputDeviceElementPressSet],
         (position, rotation) => {
           position.copy(lastWorldPosition);
           rotation.copy(lastWorldRotation);

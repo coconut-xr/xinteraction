@@ -1,6 +1,6 @@
 {
   "name": "@coconut-xr/xinteraction",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "homepage": "https://coconut-xr.github.io/xinteraction",
   "license": "SEE LICENSE IN LICENSE",
   "description": "interactions for three.js",

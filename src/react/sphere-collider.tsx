@@ -66,7 +66,11 @@ export const XSphereCollider = forwardRef<
     dispatcher.onClickMissed = onClickMissed;
 
     const properties = useMemo(
-      () => ({ distanceElement, radius, filterClipped }),
+      () => ({
+        distanceElement,
+        radius,
+        filterClipped,
+      }),
       []
     );
     properties.distanceElement = distanceElement;
@@ -104,21 +108,18 @@ export const XSphereCollider = forwardRef<
                 );
           },
           (intersection?: XSphereIntersection) => {
-            if (properties.distanceElement == null || intersection == null) {
-              return pressedElementIds;
-            }
             if (
+              intersection != null &&
+              properties.distanceElement != null &&
               intersection.distance <= properties.distanceElement.downRadius &&
               // either the intersection is not captured (=> distanceToFace == null) OR the distanceToFace is smaller then 2x downRadius => if not we release the capture
               (intersection.distanceToFace == null ||
                 intersection.distanceToFace <
                   2 * properties.distanceElement.downRadius * 2)
             ) {
-              pressedElementIds.add(properties.distanceElement.id);
-            } else {
-              pressedElementIds.delete(properties.distanceElement.id);
+              return [...pressedElementIds, properties.distanceElement.id];
             }
-            return pressedElementIds;
+            return [...pressedElementIds];
           },
           (position, rotation) => {
             if (objectRef.current == null) {
@@ -133,16 +134,6 @@ export const XSphereCollider = forwardRef<
 
     translator.onIntersections = onIntersections;
     translator.filterIntersections = filterIntersections;
-
-    useEffect(
-      () => () => {
-        if (distanceElement == null) {
-          return;
-        }
-        pressedElementIds.delete(distanceElement.id);
-      },
-      [distanceElement]
-    );
 
     useImperativeHandle(
       ref,

@@ -100,7 +100,7 @@ export const XCurvedPointer = forwardRef<
                   capturedEvents
                 );
           },
-          () => pressedElementIds,
+          () => [...pressedElementIds],
           (position, rotation) => {
             if (objectRef.current == null) {
               return;

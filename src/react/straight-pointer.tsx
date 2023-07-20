@@ -100,7 +100,7 @@ export const XStraightPointer = forwardRef<
                   properties.direction
                 );
           },
-          () => pressedElementIds,
+          () => [...pressedElementIds],
           (position, rotation) => {
             if (objectRef.current == null) {
               return;
