@@ -121,7 +121,6 @@ export class R3FEventDispatcher<I extends XIntersection>
     Object.assign(data, intersection, {
       eventObject,
       pointer: null as any,
-      intersections: null as any,
       stopped: null as any,
       delta: 0,
       unprojectedPoint: null as any,

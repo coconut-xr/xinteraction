@@ -35,6 +35,7 @@ export class MockInputDevice {
           : Array.from(objects.keys()).map((object) => ({
               distance: 0,
               object,
+              intersections: [],
               point: new Vector3(),
               inputDevicePosition: new Vector3(),
               inputDeviceRotation: new Quaternion(),

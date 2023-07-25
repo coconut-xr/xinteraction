@@ -358,6 +358,7 @@ describe("sphere collider intersections for captured events", () => {
           object1,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(),
             inputDeviceRotation: new Quaternion(),
             object: object1,
@@ -370,6 +371,7 @@ describe("sphere collider intersections for captured events", () => {
           object2,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(),
             inputDeviceRotation: new Quaternion(),
             object: object2,
@@ -398,6 +400,7 @@ describe("sphere collider intersections for captured events", () => {
           object3,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(),
             inputDeviceRotation: new Quaternion(),
             object: object1,
@@ -410,6 +413,7 @@ describe("sphere collider intersections for captured events", () => {
           object4,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(),
             inputDeviceRotation: new Quaternion(),
             object: object2,
@@ -435,6 +439,7 @@ describe("sphere collider intersections for captured events", () => {
           object,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(0, 0, 0),
             inputDeviceRotation: new Quaternion(),
             object: object,
@@ -466,6 +471,7 @@ describe("sphere collider intersections for captured events", () => {
           object,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(0, 0, 0),
             inputDeviceRotation: new Quaternion(),
             object: object,
@@ -497,6 +503,7 @@ describe("sphere collider intersections for captured events", () => {
           object,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(0, 0, 0),
             inputDeviceRotation: new Quaternion(),
             object: object,

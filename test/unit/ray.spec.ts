@@ -310,6 +310,7 @@ describe("ray intersections for captured events", () => {
           object1,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(),
             inputDeviceRotation: new Quaternion(),
             object: object1,
@@ -322,6 +323,7 @@ describe("ray intersections for captured events", () => {
           object2,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(),
             inputDeviceRotation: new Quaternion(),
             object: object2,
@@ -351,6 +353,7 @@ describe("ray intersections for captured events", () => {
           object3,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(),
             inputDeviceRotation: new Quaternion(),
             object: object1,
@@ -363,6 +366,7 @@ describe("ray intersections for captured events", () => {
           object4,
           {
             distance: 0,
+            intersections: [],
             inputDevicePosition: new Vector3(),
             inputDeviceRotation: new Quaternion(),
             object: object2,
@@ -389,6 +393,7 @@ describe("ray intersections for captured events", () => {
           object,
           {
             distance: 1,
+            intersections: [],
             inputDevicePosition: new Vector3(0, 0, 0),
             inputDeviceRotation: new Quaternion(),
             object: object,
@@ -422,6 +427,7 @@ describe("ray intersections for captured events", () => {
           object,
           {
             distance: 1,
+            intersections: [],
             distanceViewPlane: 1,
             inputDevicePosition: new Vector3(0, 0, 0),
             inputDeviceRotation: new Quaternion(),
@@ -451,6 +457,7 @@ describe("ray intersections for captured events", () => {
           object,
           {
             distance: 1,
+            intersections: [],
             inputDevicePosition: new Vector3(0, 0, 0),
             inputDeviceRotation: new Quaternion(),
             object: object,
@@ -475,7 +482,7 @@ describe("ray intersections for captured events", () => {
 
   it("should have correct pointOnFace for camera movement", () => {
     const from = new PerspectiveCamera(90);
-    from.rotation.y = Math.PI
+    from.rotation.y = Math.PI;
 
     from.position.z = 1; //move 1 to forward
     from.updateMatrixWorld();
@@ -490,6 +497,7 @@ describe("ray intersections for captured events", () => {
           object,
           {
             distance: 1,
+            intersections: [],
             distanceViewPlane: 1,
             inputDevicePosition: new Vector3(0, 0, 0),
             inputDeviceRotation: new Quaternion(),

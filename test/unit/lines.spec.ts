@@ -289,6 +289,7 @@ describe("lines intersections for captured events", () => {
           object1,
           {
             distance: 0,
+            intersections: [],
             distanceOnLine: 1,
             lineIndex: 0,
             inputDevicePosition: new Vector3(),
@@ -303,6 +304,7 @@ describe("lines intersections for captured events", () => {
           object2,
           {
             distance: 0,
+            intersections: [],
             distanceOnLine: 1,
             lineIndex: 0,
             inputDevicePosition: new Vector3(),
@@ -336,6 +338,7 @@ describe("lines intersections for captured events", () => {
           object3,
           {
             distance: 0,
+            intersections: [],
             distanceOnLine: 1,
             lineIndex: 0,
             inputDevicePosition: new Vector3(),
@@ -350,6 +353,7 @@ describe("lines intersections for captured events", () => {
           object4,
           {
             distance: 0,
+            intersections: [],
             distanceOnLine: 1,
             lineIndex: 0,
             inputDevicePosition: new Vector3(),
@@ -382,6 +386,7 @@ describe("lines intersections for captured events", () => {
           object,
           {
             distance: 0,
+            intersections: [],
             distanceOnLine: 1,
             lineIndex: 0,
             inputDevicePosition: new Vector3(0, 0, 0),
@@ -413,6 +418,7 @@ describe("lines intersections for captured events", () => {
           object,
           {
             distance: 0,
+            intersections: [],
             distanceOnLine: 1,
             lineIndex: 0,
             inputDevicePosition: new Vector3(0, 0, 0),

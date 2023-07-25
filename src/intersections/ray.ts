@@ -1,6 +1,5 @@
 import {
   Camera,
-  Euler,
   Matrix4,
   Object3D,
   Plane,
@@ -35,14 +34,16 @@ export function intersectRayFromCapturedEvents(
   direction: Vector3
 ): Array<XIntersection> {
   directionHelper.copy(direction).applyQuaternion(fromRotation);
-  return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
+  const intersections: Array<XIntersection> = [];
+  for (const [capturedObject, intersection] of capturedEvents) {
     rayHelper.set(fromPosition, directionHelper);
     computeIntersectionWorldPlane(planeHelper, intersection, capturedObject);
     const pointOnFace =
       rayHelper.intersectPlane(planeHelper, new Vector3()) ??
       intersection.point;
-    return {
+    intersections.push({
       ...intersection,
+      intersections,
       pointOnFace,
       point: directionHelper
         .clone()
@@ -51,8 +52,9 @@ export function intersectRayFromCapturedEvents(
       inputDevicePosition: fromPosition.clone(),
       inputDeviceRotation: fromRotation.clone(),
       capturedObject,
-    };
-  });
+    });
+  }
+  return intersections;
 }
 
 export function intersectRayFromCameraCapturedEvents(
@@ -68,7 +70,8 @@ export function intersectRayFromCameraCapturedEvents(
   camera.getWorldQuaternion(worldQuaternionTarget);
 
   camera.getWorldDirection(directionHelper);
-  return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
+  const intersections: Array<XCameraRayIntersection> = [];
+  for (const [capturedObject, intersection] of capturedEvents) {
     //set the plane to the viewPlane + the distance of the prev intersection in the camera distance
     planeHelper.setFromNormalAndCoplanarPoint(
       directionHelper,
@@ -77,20 +80,26 @@ export function intersectRayFromCameraCapturedEvents(
     planeHelper.constant -= intersection.distanceViewPlane;
 
     //find captured intersection point by intersecting the ray to the plane of the camera
-    const point = raycaster.ray.intersectPlane(planeHelper, new Vector3())!;
+    const point = raycaster.ray.intersectPlane(planeHelper, new Vector3());
+
+    if (point == null) {
+      continue;
+    }
 
     computeIntersectionWorldPlane(planeHelper, intersection, capturedObject);
     const pointOnFace =
       raycaster.ray.intersectPlane(planeHelper, new Vector3()) ?? point;
-    return {
+    intersections.push({
       ...intersection,
+      intersections,
       point,
       pointOnFace,
       inputDevicePosition: worldPositionTarget.clone(),
       inputDeviceRotation: worldQuaternionTarget.clone(),
       capturedObject,
-    };
-  });
+    });
+  }
+  return intersections;
 }
 
 const invertedMatrixHelper = new Matrix4();
@@ -105,30 +114,31 @@ export function intersectRayFromObject(
 ): Array<XIntersection> {
   raycaster.ray.origin.copy(fromPosition);
   raycaster.ray.direction.copy(direction).applyQuaternion(fromRotation);
-  let intersections = traverseUntilInteractable<
-    Array<XIntersection>,
-    Array<XIntersection>
-  >(
+  const intersections: Array<XIntersection> = [];
+  traverseUntilInteractable(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
-    (object) =>
-      raycaster.intersectObject(object, true).map((intersection) => {
+    (object) => {
+      const newIntersections = raycaster.intersectObject(object, true);
+      for (const newIntersection of newIntersections) {
+        if (filterClipped && !isIntersectionNotClipped(newIntersection)) {
+          continue;
+        }
         invertedMatrixHelper.copy(object.matrixWorld).invert();
-        return Object.assign(intersection, {
-          inputDevicePosition: fromPosition.clone(),
-          inputDeviceRotation: fromRotation.clone(),
-          pointOnFace: intersection.point,
-          localPoint: intersection.point
-            .clone()
-            .applyMatrix4(invertedMatrixHelper),
-        });
-      }),
-    (prev, cur) => prev.concat(cur),
-    []
+        intersections.push(
+          Object.assign(newIntersection, {
+            intersections,
+            inputDevicePosition: fromPosition.clone(),
+            inputDeviceRotation: fromRotation.clone(),
+            pointOnFace: newIntersection.point,
+            localPoint: newIntersection.point
+              .clone()
+              .applyMatrix4(invertedMatrixHelper),
+          })
+        );
+      }
+    }
   );
-  if (filterClipped) {
-    intersections = intersections.filter(isIntersectionNotClipped);
-  }
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }
@@ -152,31 +162,35 @@ export function intersectRayFromCamera(
     raycaster.ray.origin
   );
 
-  let intersections = traverseUntilInteractable<
-    Array<XCameraRayIntersection>,
-    Array<XCameraRayIntersection>
-  >(
+  const intersections: Array<XCameraRayIntersection> = [];
+  traverseUntilInteractable(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
-    (object) =>
-      raycaster.intersectObject(object, true).map((intersection) => {
+    (object) => {
+      const newIntersections = raycaster.intersectObject(object, true);
+
+      for (const newIntersection of newIntersections) {
+        if (filterClipped && !isIntersectionNotClipped(newIntersection)) {
+          continue;
+        }
         invertedMatrixHelper.copy(object.matrixWorld).invert();
-        return Object.assign(intersection, {
-          pointOnFace: intersection.point,
-          inputDevicePosition: worldPositionTarget.clone(),
-          inputDeviceRotation: worldQuaternionTarget.clone(),
-          distanceViewPlane: planeHelper.distanceToPoint(intersection.point),
-          localPoint: intersection.point
-            .clone()
-            .applyMatrix4(invertedMatrixHelper),
-        });
-      }),
-    (prev, cur) => prev.concat(cur),
-    []
+        intersections.push(
+          Object.assign(newIntersection, {
+            intersections,
+            pointOnFace: newIntersection.point,
+            inputDevicePosition: worldPositionTarget.clone(),
+            inputDeviceRotation: worldQuaternionTarget.clone(),
+            distanceViewPlane: planeHelper.distanceToPoint(
+              newIntersection.point
+            ),
+            localPoint: newIntersection.point
+              .clone()
+              .applyMatrix4(invertedMatrixHelper),
+          })
+        );
+      }
+    }
   );
-  if (filterClipped) {
-    intersections = intersections.filter(isIntersectionNotClipped);
-  }
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);
 }

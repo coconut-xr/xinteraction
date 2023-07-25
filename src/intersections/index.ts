@@ -1,27 +1,17 @@
-import { Intersection, Mesh, Object3D, Plane } from "three";
+import { Intersection, Mesh, Object3D, Plane, Vector3 } from "three";
 import { XIntersection } from "../index.js";
 
-export function traverseUntilInteractable<T, R>(
+export function traverseUntilInteractable(
   object: Object3D,
   isInteractable: (object: Object3D) => boolean,
-  callback: (object: Object3D) => T,
-  reduce: (prev: R, value: T) => R,
-  initial: R
-): R {
+  callback: (object: Object3D) => void
+): void {
   if (isInteractable(object)) {
-    return reduce(initial, callback(object));
+    return callback(object);
   }
-  let current = initial;
   for (const child of object.children) {
-    current = traverseUntilInteractable(
-      child,
-      isInteractable,
-      callback,
-      reduce,
-      current
-    );
+    traverseUntilInteractable(child, isInteractable, callback);
   }
-  return current;
 }
 
 export function isIntersectionNotClipped(intersection: Intersection): boolean {
@@ -34,6 +24,19 @@ export function isIntersectionNotClipped(intersection: Intersection): boolean {
   const planes = intersection.object.material.clippingPlanes as Array<Plane>;
   for (const plane of planes) {
     if (plane.distanceToPoint(intersection.point) < 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function isPointNotClipped(object: Object3D, point: Vector3): boolean {
+  if (!(object instanceof Mesh) || object.material.clippingPlanes == null) {
+    return true;
+  }
+  const planes = object.material.clippingPlanes as Array<Plane>;
+  for (const plane of planes) {
+    if (plane.distanceToPoint(point) < 0) {
       return false;
     }
   }

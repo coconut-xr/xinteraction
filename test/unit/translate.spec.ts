@@ -32,6 +32,7 @@ describe("translate events", () => {
         inputDeviceRotation: new Quaternion(),
         localPoint: new Vector3(),
         pointOnFace: new Vector3(),
+        intersections: []
       },
     ]);
     inputDevice.update([]);
@@ -76,6 +77,7 @@ describe("translate events", () => {
         inputDeviceRotation: new Quaternion(),
         localPoint: new Vector3(),
         pointOnFace: new Vector3(),
+        intersections: []
       },
     ]);
     inputDevice.update(undefined, new Map([[object, [101]]]), 101);
@@ -113,6 +115,7 @@ describe("translate events", () => {
           inputDeviceRotation: new Quaternion(),
           localPoint: new Vector3(),
           pointOnFace: new Vector3(),
+          intersections: []
         },
       ],
       undefined
@@ -175,6 +178,7 @@ describe("translate events", () => {
           inputDeviceRotation: new Quaternion(),
           localPoint: new Vector3(),
           pointOnFace: new Vector3(),
+          intersections: []
         },
       ],
       [1],
@@ -192,6 +196,7 @@ describe("translate events", () => {
           inputDeviceRotation: new Quaternion(),
           localPoint: new Vector3(),
           pointOnFace: new Vector3(),
+          intersections: []
         },
       ],
       [1]
@@ -238,6 +243,7 @@ describe("translate events", () => {
           inputDeviceRotation: new Quaternion(),
           localPoint: new Vector3(),
           pointOnFace: new Vector3(),
+          intersections: []
         },
       ],
       [1],
@@ -275,6 +281,7 @@ describe("translate events", () => {
           inputDeviceRotation: new Quaternion(),
           localPoint: new Vector3(),
           pointOnFace: new Vector3(),
+          intersections: []
         },
       ],
       [1],
@@ -302,6 +309,7 @@ describe("translate events", () => {
         {
           object: object,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -334,6 +342,7 @@ describe("translate events", () => {
         {
           object: object,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -352,6 +361,7 @@ describe("translate events", () => {
         {
           object: object,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -389,6 +399,7 @@ describe("translate events", () => {
       {
         object: object,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -400,6 +411,7 @@ describe("translate events", () => {
       {
         object: object,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -466,6 +478,7 @@ describe("translate events", () => {
         {
           object,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -511,6 +524,7 @@ describe("translate events", () => {
         {
           object: object1,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -520,6 +534,7 @@ describe("translate events", () => {
         {
           object: object2,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -564,6 +579,7 @@ describe("translate events", () => {
         {
           object: object1,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -573,6 +589,7 @@ describe("translate events", () => {
         {
           object: object2,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -615,6 +632,7 @@ describe("translate events", () => {
         {
           object: object1,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -624,6 +642,7 @@ describe("translate events", () => {
         {
           object: object2,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -665,6 +684,7 @@ describe("translate events", () => {
       {
         object: child1,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -674,6 +694,7 @@ describe("translate events", () => {
       {
         object: child1,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -686,6 +707,7 @@ describe("translate events", () => {
       {
         object: child2,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -695,6 +717,7 @@ describe("translate events", () => {
       {
         object: child2,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -707,6 +730,7 @@ describe("translate events", () => {
       {
         object: child2,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -756,6 +780,7 @@ describe("translate events", () => {
       {
         object: child1,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -768,6 +793,7 @@ describe("translate events", () => {
       {
         object: child2,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -817,6 +843,7 @@ describe("translate events", () => {
       {
         object: child,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -850,6 +877,7 @@ describe("translate events", () => {
       {
         object: child,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -859,6 +887,7 @@ describe("translate events", () => {
       {
         object: parent,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -870,6 +899,7 @@ describe("translate events", () => {
       {
         object: child,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -879,6 +909,7 @@ describe("translate events", () => {
       {
         object: parent,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -912,6 +943,7 @@ describe("translate events", () => {
       {
         object: object1,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -923,6 +955,7 @@ describe("translate events", () => {
       {
         object: object1,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -932,6 +965,7 @@ describe("translate events", () => {
       {
         object: object2,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -971,6 +1005,7 @@ describe("translate events", () => {
       {
         object: object1,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -982,6 +1017,7 @@ describe("translate events", () => {
       {
         object: object1,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -991,6 +1027,7 @@ describe("translate events", () => {
       {
         object: object2,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -1002,6 +1039,7 @@ describe("translate events", () => {
       {
         object: object2,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -1040,6 +1078,7 @@ describe("translate events", () => {
         {
           object: object,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -1072,6 +1111,7 @@ describe("translate events", () => {
         {
           object: object,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -1133,6 +1173,7 @@ describe("translate events", () => {
           object: child,
           capturedObject: parent,
           distance: 0,
+          intersections: [],
           point: new Vector3(),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -1164,6 +1205,7 @@ describe("translate events", () => {
       {
         object: object,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -1192,6 +1234,7 @@ describe("translate events", () => {
         object: new Object3D(),
         distance: 0,
         point: new Vector3(),
+        intersections: [],
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
         localPoint: new Vector3(),
@@ -1200,6 +1243,7 @@ describe("translate events", () => {
       {
         object: new Object3D(),
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),
@@ -1239,6 +1283,7 @@ describe("translate events", () => {
         {
           object: object,
           distance: 0,
+          intersections: [],
           point: new Vector3(0, 0, 0),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -1256,6 +1301,7 @@ describe("translate events", () => {
         {
           object: object,
           distance: 0,
+          intersections: [],
           point: new Vector3(0, 100, 0),
           inputDevicePosition: new Vector3(),
           inputDeviceRotation: new Quaternion(),
@@ -1291,6 +1337,7 @@ describe("translator's onMissed... events", () => {
       {
         object,
         distance: 0,
+        intersections: [],
         point: new Vector3(),
         inputDevicePosition: new Vector3(),
         inputDeviceRotation: new Quaternion(),

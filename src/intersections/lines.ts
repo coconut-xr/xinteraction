@@ -33,7 +33,8 @@ export function intersectLinesFromCapturedEvents(
   linePoints: Array<Vector3>,
   capturedEvents: Map<Object3D, XLinesIntersection>
 ): Array<XLinesIntersection> {
-  return Array.from(capturedEvents).map(([capturedObject, intersection]) => {
+  const intersections: Array<XLinesIntersection> = [];
+  for (const [capturedObject, intersection] of capturedEvents) {
     lineHelper
       .set(
         linePoints[intersection.lineIndex],
@@ -50,15 +51,17 @@ export function intersectLinesFromCapturedEvents(
       backwardsIntersectionLinesWithPlane(from, linePoints, planeHelper) ??
       point;
 
-    return {
+    intersections.push({
       ...intersection,
+      intersections,
       pointOnFace,
       point,
       inputDevicePosition: fromPosition.clone(),
       inputDeviceRotation: fromRotation.clone(),
       capturedObject,
-    };
-  });
+    });
+  }
+  return intersections;
 }
 
 const vectorHelper = new Vector3();
@@ -97,14 +100,12 @@ export function intersectLinesFromObject(
   dispatcher: EventDispatcher<ThreeEvent<Event>, XLinesIntersection>,
   filterClipped: boolean
 ): Array<XLinesIntersection> {
-  let intersections = traverseUntilInteractable<
-    Array<XLinesIntersection>,
-    Array<XLinesIntersection>
-  >(
+  const intersections: Array<XLinesIntersection> = [];
+
+  traverseUntilInteractable(
     on,
     dispatcher.hasEventHandlers.bind(dispatcher),
     (object) => {
-      const intersections: Array<XLinesIntersection> = [];
       let prevAccLineLength = 0;
       for (let i = 1; i < linePoints.length; i++) {
         const start = linePoints[i - 1];
@@ -120,8 +121,14 @@ export function intersectLinesFromObject(
         raycaster.ray.direction.divideScalar(lineLength);
 
         raycaster.far = lineLength;
-        const newIntersections = raycaster.intersectObject(object, true);
-        for (const newIntersection of newIntersections) {
+        const newIntersectionsFromObject = raycaster.intersectObject(
+          object,
+          true
+        );
+        for (const newIntersection of newIntersectionsFromObject) {
+          if (filterClipped && !isIntersectionNotClipped(newIntersection)) {
+            continue;
+          }
           const duplicateIntersectionIndex = intersections.findIndex(
             ({ object }) => object === newIntersection.object
           );
@@ -133,6 +140,7 @@ export function intersectLinesFromObject(
           newIntersection.distance += prevAccLineLength;
           intersections.push(
             Object.assign(newIntersection, {
+              intersections,
               inputDevicePosition: fromPosition.clone(),
               inputDeviceRotation: fromRotation.clone(),
               lineIndex: i - 1,
@@ -150,15 +158,8 @@ export function intersectLinesFromObject(
         }
         prevAccLineLength += lineLength;
       }
-      return intersections;
-    },
-    (prev, cur) => prev.concat(cur),
-    []
+    }
   );
-
-  if (filterClipped) {
-    intersections = intersections.filter(isIntersectionNotClipped);
-  }
 
   //sort smallest distance first
   return intersections.sort((a, b) => a.distance - b.distance);

@@ -17,6 +17,7 @@ export type XIntersection = Intersection & {
   capturedObject?: Object3D;
   pointOnFace: Vector3;
   localPoint: Vector3;
+  intersections: Array<Intersection>;
 };
 
 export function isXIntersection(val: Intersection): val is XIntersection {
