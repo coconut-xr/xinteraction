@@ -1,7 +1,6 @@
 /* eslint-disable react/display-name */
 import { useFrame, ThreeEvent, useStore } from "@react-three/fiber";
 import React, {
-  useRef,
   useMemo,
   useEffect,
   forwardRef,
@@ -20,7 +19,6 @@ import {
   intersectSphereFromObject,
 } from "../intersections/sphere.js";
 
-const emptyIntersections: Array<XSphereIntersection> = [];
 const noPressedElementIds: Array<number> = [];
 
 const worldPositionHelper = new Vector3();
@@ -60,7 +58,7 @@ export const XSphereCollider = forwardRef<
     },
     ref
   ) => {
-    const objectRef = useRef<Object3D>(null);
+    const object = useMemo(() => new Object3D(), []);
     const store = useStore();
     const pressedElementIds = useMemo(() => new Set<number>(), []);
 
@@ -100,11 +98,8 @@ export const XSphereCollider = forwardRef<
           true,
           dispatcher,
           (_: any, capturedEvents?: Map<Object3D, XSphereIntersection>) => {
-            if (objectRef.current == null) {
-              return emptyIntersections;
-            }
-            objectRef.current.getWorldPosition(worldPositionHelper);
-            objectRef.current.getWorldQuaternion(worldRotationHelper);
+            object.getWorldPosition(worldPositionHelper);
+            object.getWorldQuaternion(worldRotationHelper);
 
             return capturedEvents == null
               ? //events not captured -> compute intersections normally
@@ -145,11 +140,8 @@ export const XSphereCollider = forwardRef<
             ];
           },
           (position, rotation) => {
-            if (objectRef.current == null) {
-              return;
-            }
-            objectRef.current.getWorldPosition(position);
-            objectRef.current.getWorldQuaternion(rotation);
+            object.getWorldPosition(position);
+            object.getWorldQuaternion(rotation);
           }
         ),
       [id, store]
@@ -188,6 +180,7 @@ export const XSphereCollider = forwardRef<
       );
       customPressedElementsChanged = false;
     });
-    return <object3D ref={objectRef} />;
+    // eslint-disable-next-line react/no-unknown-property
+    return <primitive object={object} />;
   }
 );

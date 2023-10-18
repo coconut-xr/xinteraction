@@ -4,7 +4,6 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
 } from "react";
 import { Object3D, Quaternion, Vector3, Event } from "three";
 import { EventTranslator, XIntersection } from "../index.js";
@@ -19,7 +18,6 @@ import {
 } from "./index.js";
 import { ThreeEvent, useFrame, useStore } from "@react-three/fiber";
 
-const emptyIntersections: Array<XIntersection> = [];
 const noPressedElementIds: Array<number> = [];
 
 const worldPositionHelper = new Vector3();
@@ -60,7 +58,7 @@ export const XStraightPointer = forwardRef<
   ) => {
     const store = useStore();
 
-    const objectRef = useRef<Object3D>(null);
+    const object = useMemo(() => new Object3D(), []);
 
     const dispatcher = useMemo(
       () => new R3FEventDispatcher<XIntersection>(),
@@ -98,11 +96,8 @@ export const XStraightPointer = forwardRef<
           false,
           dispatcher,
           (events: any, capturedEvents?: Map<Object3D, XIntersection>) => {
-            if (objectRef.current == null) {
-              return emptyIntersections;
-            }
-            objectRef.current.getWorldPosition(worldPositionHelper);
-            objectRef.current.getWorldQuaternion(worldRotationHelper);
+            object.getWorldPosition(worldPositionHelper);
+            object.getWorldQuaternion(worldRotationHelper);
 
             return capturedEvents == null
               ? //no events captured -> compute intersections normally
@@ -124,11 +119,8 @@ export const XStraightPointer = forwardRef<
           },
           () => [...pressedElementIds, ...properties.customPressedElementIds],
           (position, rotation) => {
-            if (objectRef.current == null) {
-              return;
-            }
-            objectRef.current.getWorldPosition(position);
-            objectRef.current.getWorldQuaternion(rotation);
+            object.getWorldPosition(position);
+            object.getWorldQuaternion(rotation);
           }
         ),
       [id, store]
@@ -167,6 +159,7 @@ export const XStraightPointer = forwardRef<
       );
       customPressedElementsChanged = false;
     });
-    return <object3D ref={objectRef} />;
+    // eslint-disable-next-line react/no-unknown-property
+    return <primitive object={object} />;
   }
 );

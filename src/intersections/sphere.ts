@@ -8,7 +8,6 @@ import {
   Sphere,
   Quaternion,
   Intersection,
-  Box3,
   Plane,
 } from "three";
 import { EventDispatcher, XIntersection } from "../index.js";

@@ -4,7 +4,6 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
 } from "react";
 import { Object3D, Quaternion, Vector3, Event } from "three";
 import { EventTranslator } from "../index.js";
@@ -20,7 +19,6 @@ import {
 } from "./index.js";
 import { ThreeEvent, useFrame, useStore } from "@react-three/fiber";
 
-const emptyIntersections: Array<XLinesIntersection> = [];
 const noPressedElementIds: Array<number> = [];
 
 const worldPositionHelper = new Vector3();
@@ -58,7 +56,7 @@ export const XCurvedPointer = forwardRef<
     },
     ref
   ) => {
-    const objectRef = useRef<Object3D>(null);
+    const object = useMemo(() => new Object3D(), []);
     const store = useStore();
 
     const dispatcher = useMemo(
@@ -97,16 +95,13 @@ export const XCurvedPointer = forwardRef<
           false,
           dispatcher,
           (_: any, capturedEvents?: Map<Object3D, XLinesIntersection>) => {
-            if (objectRef.current == null) {
-              return emptyIntersections;
-            }
-            objectRef.current.getWorldPosition(worldPositionHelper);
-            objectRef.current.getWorldQuaternion(worldRotationHelper);
+            object.getWorldPosition(worldPositionHelper);
+            object.getWorldQuaternion(worldRotationHelper);
 
             return capturedEvents == null
               ? //events not captured -> compute normally
                 intersectLinesFromObject(
-                  objectRef.current,
+                  object,
                   worldPositionHelper,
                   worldRotationHelper,
                   properties.points,
@@ -115,7 +110,7 @@ export const XCurvedPointer = forwardRef<
                   properties.filterClipped
                 )
               : intersectLinesFromCapturedEvents(
-                  objectRef.current,
+                  object,
                   worldPositionHelper,
                   worldRotationHelper,
                   properties.points,
@@ -124,11 +119,8 @@ export const XCurvedPointer = forwardRef<
           },
           () => [...pressedElementIds, ...properties.customPressedElementIds],
           (position, rotation) => {
-            if (objectRef.current == null) {
-              return;
-            }
-            objectRef.current.getWorldPosition(position);
-            objectRef.current.getWorldQuaternion(rotation);
+            object.getWorldPosition(position);
+            object.getWorldQuaternion(rotation);
           }
         ),
       [id, store]
@@ -168,6 +160,7 @@ export const XCurvedPointer = forwardRef<
       );
       customPressedElementsChanged = false;
     });
-    return <object3D ref={objectRef} />;
+    // eslint-disable-next-line react/no-unknown-property
+    return <primitive object={object} />;
   }
 );
