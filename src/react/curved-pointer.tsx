@@ -13,10 +13,15 @@ import {
   intersectLinesFromCapturedEvents,
   intersectLinesFromObject,
 } from "../intersections/lines.js";
-import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
+import {
+  InputDeviceFunctions,
+  R3FEventDispatcher,
+  filterNewEntries,
+} from "./index.js";
 import { ThreeEvent, useFrame, useStore } from "@react-three/fiber";
 
 const emptyIntersections: Array<XLinesIntersection> = [];
+const noPressedElementIds: Array<number> = [];
 
 const worldPositionHelper = new Vector3();
 const worldRotationHelper = new Quaternion();
@@ -36,6 +41,7 @@ export const XCurvedPointer = forwardRef<
     onPointerUpMissed?: (event: ThreeEvent<Event>) => void;
     onClickMissed?: (event: ThreeEvent<Event>) => void;
     filterClipped?: boolean;
+    pressedElementIds?: Array<number>;
   }
 >(
   (
@@ -48,6 +54,7 @@ export const XCurvedPointer = forwardRef<
       onPointerDownMissed,
       onPointerUpMissed,
       filterClipped = true,
+      pressedElementIds: customPressedElementIds = noPressedElementIds,
     },
     ref
   ) => {
@@ -64,9 +71,24 @@ export const XCurvedPointer = forwardRef<
 
     const pressedElementIds = useMemo(() => new Set<number>(), []);
 
-    const properties = useMemo(() => ({ points, filterClipped }), []);
+    const properties = useMemo(
+      () => ({
+        points,
+        filterClipped,
+        customPressedElementIds: noPressedElementIds,
+      }),
+      []
+    );
     properties.points = points;
     properties.filterClipped = filterClipped;
+    const newCustomPressedElementIds = filterNewEntries(
+      properties.customPressedElementIds,
+      customPressedElementIds
+    );
+    let customPressedElementsChanged =
+      properties.customPressedElementIds.length !=
+        customPressedElementIds.length || newCustomPressedElementIds.length > 0;
+    properties.customPressedElementIds = customPressedElementIds;
 
     const translator = useMemo(
       () =>
@@ -100,7 +122,7 @@ export const XCurvedPointer = forwardRef<
                   capturedEvents
                 );
           },
-          () => [...pressedElementIds],
+          () => [...pressedElementIds, ...properties.customPressedElementIds],
           (position, rotation) => {
             if (objectRef.current == null) {
               return;
@@ -138,7 +160,13 @@ export const XCurvedPointer = forwardRef<
     useEffect(() => translator.leave.bind(translator, {} as any), [translator]);
     //update translator every frame
     useFrame(() => {
-      translator.update({}, true, false);
+      translator.update(
+        {},
+        true,
+        customPressedElementsChanged,
+        ...newCustomPressedElementIds
+      );
+      customPressedElementsChanged = false;
     });
     return <object3D ref={objectRef} />;
   }

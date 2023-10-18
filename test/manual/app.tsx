@@ -257,7 +257,7 @@ function RotateCubePointer({
 }) {
   const ref = useRef<Group>(null);
   const intersectionRef = useRef<Mesh>(null);
-  const pointerRef = useRef<InputDeviceFunctions>(null);
+  const [enabled, setEnabled] = useState(false);
   useFrame((_, delta) => {
     if (ref.current == null) {
       return;
@@ -273,14 +273,14 @@ function RotateCubePointer({
               return;
             }
             e.stopPropagation();
-            pointerRef.current?.press(e.pointerId, e);
+            setEnabled(true);
           }}
           onPointerUp={(e) => {
             if ((e as any).inputDeviceId === 98) {
               return;
             }
             e.stopPropagation();
-            pointerRef.current?.release(e.pointerId, e);
+            setEnabled(false);
           }}
         >
           <group position={[0, 0, 0.6]}>
@@ -314,7 +314,7 @@ function RotateCubePointer({
                   intersectionRef.current.position.add(offsetHelper);
                 }
               }}
-              ref={pointerRef}
+              pressedElementIds={enabled ? [0] : undefined}
               id={id}
             />
           </group>
@@ -472,7 +472,10 @@ function ColliderSelectSphere({ id }: { id: number }) {
 
             intersectionRef.current.position.copy(intersection.point);
             if (intersection.face != null) {
-              quaternionHelper.setFromUnitVectors(new Vector3(0,0,1), intersection.face.normal);
+              quaternionHelper.setFromUnitVectors(
+                new Vector3(0, 0, 1),
+                intersection.face.normal
+              );
               intersection.object.getWorldQuaternion(
                 intersectionRef.current.quaternion
               );
@@ -787,7 +790,6 @@ plane.rotateX(-Math.PI / 2);
 
 const circle = new CircleGeometry(0.3);
 circle.rotateX(-Math.PI / 2);
-
 
 const circle2 = new CircleGeometry(0.3);
 

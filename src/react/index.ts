@@ -16,6 +16,13 @@ export const noEvents = (): EventManager<HTMLElement> => ({
   priority: 0,
 });
 
+export function filterNewEntries<T>(
+  oldArray: Array<T>,
+  newArray: Array<T>
+): Array<T> {
+  return newArray.filter((entry) => !oldArray.includes(entry));
+}
+
 export class R3FEventDispatcher<I extends XIntersection>
   implements EventDispatcher<ThreeEvent<Event>, I>
 {

@@ -5,7 +5,7 @@
     "strict": true,
     "lib": ["DOM", "ESNext"],
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "NodeNext",
     "jsx": "react",
     "moduleResolution": "NodeNext",
     "experimentalDecorators": true,

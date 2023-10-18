@@ -12,10 +12,15 @@ import {
   intersectRayFromCapturedEvents,
   intersectRayFromObject,
 } from "../intersections/ray.js";
-import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
+import {
+  InputDeviceFunctions,
+  R3FEventDispatcher,
+  filterNewEntries,
+} from "./index.js";
 import { ThreeEvent, useFrame, useStore } from "@react-three/fiber";
 
 const emptyIntersections: Array<XIntersection> = [];
+const noPressedElementIds: Array<number> = [];
 
 const worldPositionHelper = new Vector3();
 const worldRotationHelper = new Quaternion();
@@ -36,6 +41,7 @@ export const XStraightPointer = forwardRef<
     isDrag?: (i1: XIntersection, i2: XIntersection) => boolean;
     direction?: Vector3;
     filterClipped?: boolean;
+    pressedElementIds?: Array<number>;
   }
 >(
   (
@@ -48,6 +54,7 @@ export const XStraightPointer = forwardRef<
       onPointerUpMissed,
       filterClipped = true,
       direction = ZAXIS,
+      pressedElementIds: customPressedElementIds = noPressedElementIds,
     },
     ref
   ) => {
@@ -65,9 +72,24 @@ export const XStraightPointer = forwardRef<
 
     const pressedElementIds = useMemo(() => new Set<number>(), []);
 
-    const properties = useMemo(() => ({ filterClipped, direction }), []);
+    const properties = useMemo(
+      () => ({
+        filterClipped,
+        direction,
+        customPressedElementIds: noPressedElementIds,
+      }),
+      []
+    );
     properties.filterClipped = filterClipped;
     properties.direction = direction;
+    const newCustomPressedElementIds = filterNewEntries(
+      properties.customPressedElementIds,
+      customPressedElementIds
+    );
+    let customPressedElementsChanged =
+      properties.customPressedElementIds.length !=
+        customPressedElementIds.length || newCustomPressedElementIds.length > 0;
+    properties.customPressedElementIds = customPressedElementIds;
 
     const translator = useMemo(
       () =>
@@ -100,7 +122,7 @@ export const XStraightPointer = forwardRef<
                   properties.direction
                 );
           },
-          () => [...pressedElementIds],
+          () => [...pressedElementIds, ...properties.customPressedElementIds],
           (position, rotation) => {
             if (objectRef.current == null) {
               return;
@@ -137,7 +159,13 @@ export const XStraightPointer = forwardRef<
     useEffect(() => translator.leave.bind(translator, {} as any), [translator]);
     //update translator every frame
     useFrame(() => {
-      translator.update({}, true, false);
+      translator.update(
+        {},
+        true,
+        customPressedElementsChanged,
+        ...newCustomPressedElementIds
+      );
+      customPressedElementsChanged = false;
     });
     return <object3D ref={objectRef} />;
   }

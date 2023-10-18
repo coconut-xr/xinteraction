@@ -2,6 +2,8 @@
 
 The following example shows how a pointer can be created based on a list of points, defining a curved line. The `XCurvedPointer` component works similarly to the `XStraightPointer` component but requires a `points` parameter. We illustrate how a teleportation interaction with a cursor can be implemented. The `Ground` component implements `onPointerEnter`, `onPointerMove`, and `onPointerLeave` events, which use the intersection `point` to position a cursor (red sphere). The `XCurvedPointer` can also be used to create pointers with a limited length and even allows to change the points at runtime for a dynamic curve.
 
+_In some cases it might be necassary/convenient to statically set specific elements as pressed by default. This can be achieved by assigning a array of element ids to 'pressedElementIds'._
+
 [CodeSandbox](https://codesandbox.io/s/xinteraction-curved-pointer-tdmnjv?file=/src/app.tsx)
 
 ![Screenshot](./curved.jpg)

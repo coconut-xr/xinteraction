@@ -65,6 +65,8 @@ function Box() {
 
 The `RotatingPointer` from the previous example only hovers the box. In this example, we will make the `RotatingPointer` click the box. We can cause `press`, `release`, `wheel`, and `cancel` events by retrieving a reference to the `XStraightPointer`. In this case, we will connect the `press` and `release` events to the key press and release events of the keyboard. Each time a key is pressed down, we call `pointer.press(1, event)`. The first parameter represents the button/input-device-element that is pressed and is any arbitrary number. For instance, by web standards, the button number "0" represents the left mouse button. An input device can have arbitrarily many input-device elements, which can be independently pressed and released. On the `Box` component, we add a `click` listener, which causes the box to scale by factor 1.2.
 
+_In some cases it might be necassary/convenient to statically set specific elements as pressed by default. This can be achieved by assigning a array of element ids to 'pressedElementIds'._
+
 [CodeSandbox](https://codesandbox.io/s/xinteraction-pointer-click-tz3rp9?file=/src/app.tsx)
 
 ![Screenshot](./clicking.jpg)
