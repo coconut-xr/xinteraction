@@ -88,7 +88,7 @@ function Box(props: any) {
 
 Instead or in addition to using events, such as pressing the enter key, to trigger events on input devices, it is also possible to issue press events when an object is at a certain distance from the input device. This, for instance, allows to create touch interactions. In the following, we modify the previous example by adding the `distanceElement` property to the `XSphereCollider` component. This property takes a `downRadius` and an `id`. The `downRadius` is the distance to the sphere center required for the input device to issue a press event, and the `id` represents the id of the input device element (button) that is pressed. Using the `distanceElement`, a touch interaction can be created. In the following example, moving the sphere in and out of the cube, a click event is caused on the cube.
 
-_In some cases it might be necassary/convenient to statically set specific elements as pressed by default. This can be achieved by assigning a array of element ids to 'pressedElementIds'._
+_In some cases it might be necassary/convenient to provide a initial set of pressed elements. This can be achieved by assigning a array of element ids to 'initialPressedElementIds'._
 
 [CodeSandbox](https://codesandbox.io/s/xinteraction-touch-g5jv48?file=/src/app.tsx)
 
