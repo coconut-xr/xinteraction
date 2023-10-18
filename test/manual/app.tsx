@@ -284,39 +284,43 @@ function RotateCubePointer({
           }}
         >
           <group position={[0, 0, 0.6]}>
-            <XStraightPointer
-              onIntersections={(intersections) => {
-                if (intersectionRef.current == null) {
-                  return;
-                }
-                if (intersections.length === 0) {
-                  intersectionRef.current.visible = false;
-                  return;
-                }
+            {enabled && (
+              <XStraightPointer
+                onIntersections={(intersections) => {
+                  if (intersectionRef.current == null) {
+                    return;
+                  }
+                  if (intersections.length === 0) {
+                    intersectionRef.current.visible = false;
+                    return;
+                  }
 
-                intersectionRef.current.visible = true;
-                const intersection = intersections[0];
+                  intersectionRef.current.visible = true;
+                  const intersection = intersections[0];
 
-                intersectionRef.current.position.copy(intersection.point);
-                if (intersection.face != null) {
-                  quaternionHelper.setFromUnitVectors(
-                    UP,
-                    intersection.face.normal
-                  );
-                  intersection.object.getWorldQuaternion(
-                    intersectionRef.current.quaternion
-                  );
-                  intersectionRef.current.quaternion.multiply(quaternionHelper);
-                  offsetHelper.set(0, 0.01, 0);
-                  offsetHelper.applyQuaternion(
-                    intersectionRef.current.quaternion
-                  );
-                  intersectionRef.current.position.add(offsetHelper);
-                }
-              }}
-              pressedElementIds={enabled ? [0] : undefined}
-              id={id}
-            />
+                  intersectionRef.current.position.copy(intersection.point);
+                  if (intersection.face != null) {
+                    quaternionHelper.setFromUnitVectors(
+                      UP,
+                      intersection.face.normal
+                    );
+                    intersection.object.getWorldQuaternion(
+                      intersectionRef.current.quaternion
+                    );
+                    intersectionRef.current.quaternion.multiply(
+                      quaternionHelper
+                    );
+                    offsetHelper.set(0, 0.01, 0);
+                    offsetHelper.applyQuaternion(
+                      intersectionRef.current.quaternion
+                    );
+                    intersectionRef.current.position.add(offsetHelper);
+                  }
+                }}
+                initialPressedElementIds={[0]}
+                id={id}
+              />
+            )}
           </group>
         </Box>
         <lineSegments position={[0, 0, 0.6]} geometry={lineGeometry}>

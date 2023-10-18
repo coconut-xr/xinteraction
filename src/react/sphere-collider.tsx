@@ -5,21 +5,16 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useRef,
 } from "react";
 import { Object3D, Event, Quaternion, Vector3 } from "three";
 import { EventTranslator } from "../index.js";
-import {
-  InputDeviceFunctions,
-  R3FEventDispatcher,
-  filterNewEntries,
-} from "./index.js";
+import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import {
   XSphereIntersection,
   intersectSphereFromCapturedEvents,
   intersectSphereFromObject,
 } from "../intersections/sphere.js";
-
-const noPressedElementIds: Array<number> = [];
 
 const worldPositionHelper = new Vector3();
 const worldRotationHelper = new Quaternion();
@@ -40,7 +35,7 @@ export const XSphereCollider = forwardRef<
     onPointerUpMissed?: (event: ThreeEvent<Event>) => void;
     onClickMissed?: (event: ThreeEvent<Event>) => void;
     filterClipped?: boolean;
-    pressedElementIds?: Array<number>;
+    initialPressedElementIds?: Array<number>;
   }
 >(
   (
@@ -54,13 +49,16 @@ export const XSphereCollider = forwardRef<
       onPointerDownMissed,
       onPointerUpMissed,
       filterClipped = true,
-      pressedElementIds: customPressedElementIds = noPressedElementIds,
+      initialPressedElementIds,
     },
     ref
   ) => {
     const object = useMemo(() => new Object3D(), []);
     const store = useStore();
-    const pressedElementIds = useMemo(() => new Set<number>(), []);
+    const pressedElementIds = useMemo(
+      () => new Set<number>(initialPressedElementIds),
+      []
+    );
 
     const dispatcher = useMemo(
       () => new R3FEventDispatcher<XSphereIntersection>(),
@@ -75,21 +73,12 @@ export const XSphereCollider = forwardRef<
         distanceElement,
         radius,
         filterClipped,
-        customPressedElementIds: noPressedElementIds,
       }),
       []
     );
     properties.distanceElement = distanceElement;
     properties.radius = radius;
     properties.filterClipped = filterClipped;
-    const newCustomPressedElementIds = filterNewEntries(
-      properties.customPressedElementIds,
-      customPressedElementIds
-    );
-    let customPressedElementsChanged =
-      properties.customPressedElementIds.length !=
-        customPressedElementIds.length || newCustomPressedElementIds.length > 0;
-    properties.customPressedElementIds = customPressedElementIds;
 
     const translator = useMemo(
       () =>
@@ -128,16 +117,9 @@ export const XSphereCollider = forwardRef<
                 intersection.distanceToFace <
                   2 * properties.distanceElement.downRadius * 2)
             ) {
-              return [
-                ...pressedElementIds,
-                ...properties.customPressedElementIds,
-                properties.distanceElement.id,
-              ];
+              return [...pressedElementIds, properties.distanceElement.id];
             }
-            return [
-              ...pressedElementIds,
-              ...properties.customPressedElementIds,
-            ];
+            return [...pressedElementIds];
           },
           (position, rotation) => {
             object.getWorldPosition(position);
@@ -171,14 +153,16 @@ export const XSphereCollider = forwardRef<
 
     //cleanup translator
     useEffect(() => translator.leave.bind(translator, {} as any), [translator]);
+    //update translator every frame (we use pressedElementsChangedRef to update the translator for the initial pressed elements)
+    const pressedElementsChangedRef = useRef(pressedElementIds.size > 0);
     useFrame(() => {
       translator.update(
         {},
         true,
-        customPressedElementsChanged,
-        ...newCustomPressedElementIds
+        pressedElementsChangedRef.current,
+        ...pressedElementIds
       );
-      customPressedElementsChanged = false;
+      pressedElementsChangedRef.current = false;
     });
     // eslint-disable-next-line react/no-unknown-property
     return <primitive object={object} />;

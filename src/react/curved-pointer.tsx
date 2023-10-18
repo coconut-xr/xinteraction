@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
 } from "react";
 import { Object3D, Quaternion, Vector3, Event } from "three";
 import { EventTranslator } from "../index.js";
@@ -12,14 +13,8 @@ import {
   intersectLinesFromCapturedEvents,
   intersectLinesFromObject,
 } from "../intersections/lines.js";
-import {
-  InputDeviceFunctions,
-  R3FEventDispatcher,
-  filterNewEntries,
-} from "./index.js";
+import { InputDeviceFunctions, R3FEventDispatcher } from "./index.js";
 import { ThreeEvent, useFrame, useStore } from "@react-three/fiber";
-
-const noPressedElementIds: Array<number> = [];
 
 const worldPositionHelper = new Vector3();
 const worldRotationHelper = new Quaternion();
@@ -39,7 +34,7 @@ export const XCurvedPointer = forwardRef<
     onPointerUpMissed?: (event: ThreeEvent<Event>) => void;
     onClickMissed?: (event: ThreeEvent<Event>) => void;
     filterClipped?: boolean;
-    pressedElementIds?: Array<number>;
+    initialPressedElementIds?: Array<number>;
   }
 >(
   (
@@ -52,7 +47,7 @@ export const XCurvedPointer = forwardRef<
       onPointerDownMissed,
       onPointerUpMissed,
       filterClipped = true,
-      pressedElementIds: customPressedElementIds = noPressedElementIds,
+      initialPressedElementIds,
     },
     ref
   ) => {
@@ -67,26 +62,20 @@ export const XCurvedPointer = forwardRef<
     dispatcher.onPointerUpMissed = onPointerUpMissed;
     dispatcher.onClickMissed = onClickMissed;
 
-    const pressedElementIds = useMemo(() => new Set<number>(), []);
+    const pressedElementIds = useMemo(
+      () => new Set<number>(initialPressedElementIds),
+      []
+    );
 
     const properties = useMemo(
       () => ({
         points,
         filterClipped,
-        customPressedElementIds: noPressedElementIds,
       }),
       []
     );
     properties.points = points;
     properties.filterClipped = filterClipped;
-    const newCustomPressedElementIds = filterNewEntries(
-      properties.customPressedElementIds,
-      customPressedElementIds
-    );
-    let customPressedElementsChanged =
-      properties.customPressedElementIds.length !=
-        customPressedElementIds.length || newCustomPressedElementIds.length > 0;
-    properties.customPressedElementIds = customPressedElementIds;
 
     const translator = useMemo(
       () =>
@@ -117,7 +106,7 @@ export const XCurvedPointer = forwardRef<
                   capturedEvents
                 );
           },
-          () => [...pressedElementIds, ...properties.customPressedElementIds],
+          () => [...pressedElementIds],
           (position, rotation) => {
             object.getWorldPosition(position);
             object.getWorldQuaternion(rotation);
@@ -150,15 +139,16 @@ export const XCurvedPointer = forwardRef<
 
     //cleanup translator
     useEffect(() => translator.leave.bind(translator, {} as any), [translator]);
-    //update translator every frame
+    //update translator every frame (we use pressedElementsChangedRef to update the translator for the initial pressed elements)
+    const pressedElementsChangedRef = useRef(pressedElementIds.size > 0); //is set initially to pressedElementsIds which is the same is initialPressedElements
     useFrame(() => {
       translator.update(
         {},
         true,
-        customPressedElementsChanged,
-        ...newCustomPressedElementIds
+        pressedElementsChangedRef.current,
+        ...pressedElementIds
       );
-      customPressedElementsChanged = false;
+      pressedElementsChangedRef.current = false;
     });
     // eslint-disable-next-line react/no-unknown-property
     return <primitive object={object} />;
