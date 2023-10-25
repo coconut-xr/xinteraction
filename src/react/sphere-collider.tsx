@@ -159,7 +159,7 @@ export const XSphereCollider = forwardRef<
       translator.update(
         {},
         true,
-        pressedElementsChangedRef.current,
+        pressedElementsChangedRef.current || distanceElement != null,
         ...pressedElementIds
       );
       pressedElementsChangedRef.current = false;
